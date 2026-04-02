@@ -1,0 +1,275 @@
+.heroSection {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 48px;
+  padding: 60px;
+  margin-bottom: 40px;
+}
+
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.heroImage {
+  object-fit: cover;
+  filter: brightness(0.6) saturate(1.2);
+  transition: transform 15s linear;
+}
+
+.heroSection:hover .heroImage {
+  transform: scale(1.1);
+}
+
+.heroMask {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg, 
+    rgba(5, 5, 5, 0.95) 0%, 
+    rgba(5, 5, 5, 0.6) 50%, 
+    rgba(5, 5, 5, 0.2) 100%
+  );
+  z-index: 1;
+}
+
+.heroGlow {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(245, 200, 66, 0.15) 0%, transparent 70%);
+  z-index: 2;
+  filter: blur(80px);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gradientTitle {
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  background: linear-gradient(135deg, #ffffff 0%, #f5c842 50%, #9a9487 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.06em;
+}
+
+.heroSubtitle {
+  font-size: 1.4rem;
+  line-height: 1.5;
+  color: #d1ccbc;
+  max-width: 650px;
+  margin-bottom: 40px;
+  font-weight: 500;
+}
+
+.ctaGroup {
+  display: flex;
+  gap: 20px;
+}
+
+/* VALUES NARRATIVE */
+.valuesSection {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.sectionLabel {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 60px;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.valueCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 48px 32px;
+  border-radius: 32px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.valueCard:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--accent);
+  transform: translateY(-8px);
+}
+
+.iconWrapper {
+  color: var(--accent);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(245, 200, 66, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(245, 200, 66, 0.1);
+  transition: all 0.4s ease;
+}
+
+.valueCard:hover .iconWrapper {
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 0 30px rgba(245, 200, 66, 0.4);
+}
+
+/* DIRECTORY VIP */
+.directorySection {
+  padding: 100px 0;
+}
+
+.vipGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 40px;
+}
+
+.vipCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 32px;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 40px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  color: inherit;
+  backdrop-filter: blur(20px);
+}
+
+.vipCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(245, 200, 66, 0.1), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.vipCard:hover {
+  transform: scale(1.02) translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 40px rgba(245, 200, 66, 0.1);
+}
+
+.vipCard:hover::before {
+  opacity: 1;
+}
+
+.vipLogoContainer {
+  width: 90px;
+  height: 90px;
+  border-radius: 24px;
+  background: var(--panel-3);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 28px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+.vipInfo {
+  flex-grow: 1;
+}
+
+.vipName {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.vipStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(245, 200, 66, 0.08);
+  padding: 4px 14px;
+  border-radius: 99px;
+  border: 1px solid rgba(245, 200, 66, 0.12);
+}
+
+.vipArrow {
+  font-size: 1.5rem;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vipCard:hover .vipArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 920px) {
+  .heroSection {
+    padding: 32px;
+    min-height: auto;
+    text-align: center;
+    border-radius: 32px;
+  }
+  .heroMask {
+    background: linear-gradient(0deg, rgba(5, 5, 5, 0.95) 30%, rgba(5, 5, 5, 0.5) 100%);
+  }
+  .valueGrid {
+    grid-template-columns: 1fr;
+  }
+  .ctaGroup {
+    flex-direction: column;
+  }
+  .vipGrid {
+    grid-template-columns: 1fr;
+  }
+}
