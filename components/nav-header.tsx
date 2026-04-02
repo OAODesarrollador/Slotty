@@ -17,10 +17,10 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
   };
 
   return (
-    <header className="desktop-header">
+    <header className="main-header">
       <div className="header-inner">
         <Link href={`/${tenantSlug}`} className="nav-logo">
-          <span className="eyebrow" style={{ fontSize: "1.1rem", color: "var(--text)" }}>
+          <span className="brand-name">
             {tenantName}
           </span>
         </Link>

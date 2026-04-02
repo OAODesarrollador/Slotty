@@ -25,8 +25,8 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
   return (
     <>
       <main className="page">
-        <section className="stack">
-            <article className="hero">
+        <section className="stack" style={{ gap: "40px" }}>
+            <article className="hero" style={{ padding: "30px 40px" }}>
               <div className="hero-media">
                 <Image
                   src="/barbero.png"
@@ -39,121 +39,72 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
                 <div className="hero-shade" />
                 <div className="hero-glow" />
               </div>
-              <div className="stack" style={{ position: "relative", zIndex: 10 }}>
-                <span className="eyebrow">{tenant.tenantName}</span>
-                <h1 className="hero-title">Reserva tu cita con los mejores expertos</h1>
-                <p className="muted" style={{ maxWidth: "500px" }}>
-                  Experiencia visual premium. Agenda tu turno de forma rápida, segura y profesional desde cualquier dispositivo.
+              <div className="stack" style={{ position: "relative", zIndex: 10, gap: "24px" }}>
+                <span className="eyebrow" style={{ color: "var(--accent)" }}>{tenant.tenantName} · Professional Care</span>
+                <h1 className="hero-title">Elevá tu estilo con manos expertas</h1>
+                <p className="page-lead" style={{ color: "rgba(255,255,255,0.7)", maxWidth: "540px" }}>
+                  Un refugio de sofisticación donde la tradición se encuentra con la tendencia. 
+                  Reservá tu espacio de distinción de forma instantánea.
                 </p>
-                <div className="actions" style={{ marginTop: "12px" }}>
-                  <Link className="btn" href={`/${slug}/reservar`}>
-                    Reservar ahora
+                <div className="actions" style={{ marginTop: "8px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                  <Link className="btn" href={`/${slug}/reservar`} style={{ minWidth: "200px" }}>
+                    Reservar Turno
                   </Link>
-                  <Link className="btn-secondary" href={`/${slug}/fila`}>
-                    Fila virtual
+                  <Link className="btn-secondary" href={`/${slug}/fila`} style={{ minWidth: "200px" }}>
+                    Fila Virtual
                   </Link>
                 </div>
               </div>
             </article>
+            
+          <aside className="card" style={{ padding: "24px", background: "rgba(255,255,255,0.02)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "24px", alignItems: "center", textAlign: "center" }}>
+              <div className="stack" style={{ gap: 4 }}>
+                <span className="eyebrow" style={{ fontSize: "0.6rem", opacity: 0.7 }}>Disponibilidad</span>
+                <strong style={{ fontSize: "1.4rem", color: "var(--success)" }}>Hoy Libre</strong>
+                <small className="muted" style={{ fontWeight: 600 }}>+15 huecos disponibles</small>
+              </div>
+              <div style={{ width: "1px", height: "40px", background: "var(--line)", opacity: 0.5, margin: "0 auto" }} className="mobile-hide" />
+              <div className="stack" style={{ gap: 4 }}>
+                <span className="eyebrow" style={{ fontSize: "0.6rem", opacity: 0.7 }}>Excelente Servicio</span>
+                <strong style={{ fontSize: "1.4rem", color: "var(--accent)" }}>4.9 / 5.0</strong>
+                <small className="muted" style={{ fontWeight: 600 }}>+250 reseñas positivas</small>
+              </div>
+              <div style={{ width: "1px", height: "40px", background: "var(--line)", opacity: 0.5, margin: "0 auto" }} className="mobile-hide" />
+              <div className="stack" style={{ gap: 4 }}>
+                <span className="eyebrow" style={{ fontSize: "0.6rem", opacity: 0.7 }}>Ubicación</span>
+                <strong style={{ fontSize: "1.4rem" }}>Centro</strong>
+                <small className="muted" style={{ fontWeight: 600 }}>Fácil acceso y parking</small>
+              </div>
+            </div>
+          </aside>
 
-            <aside className="card">
-              <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", justifyContent: "space-around", alignItems: "center" }}>
-                <div className="stack" style={{ gap: 8, textAlign: "center", flex: 1 }}>
-                  <span className="eyebrow" style={{ color: "var(--muted)" }}>Disponibilidad</span>
-                  <strong style={{ fontSize: "1.2rem" }}>Hoy disponible</strong>
-                  <small className="muted">+10 huecos libres</small>
-                </div>
-                <div style={{ width: "1px", height: "40px", background: "var(--line)", opacity: 0.5 }} />
-                <div className="stack" style={{ gap: 8, textAlign: "center", flex: 1 }}>
-                  <span className="eyebrow" style={{ color: "var(--muted)" }}>Calificación</span>
-                  <strong style={{ fontSize: "1.2rem" }}>4.9 / 5.0</strong>
-                  <small className="muted">Basado en +200 reseñas</small>
-                </div>
-              </div>
-            </aside>
-
-          <section className="grid cols-2">
-            <article className="card stack">
-              <div className="header-row">
-                <div className="stack" style={{ gap: 4 }}>
-                  <span className="eyebrow">Menú de servicios</span>
-                  <h2>Servicios destacados</h2>
-                </div>
-                <Link className="btn-ghost" href={`/${slug}/reservar`}>
-                  Ver todos
-                </Link>
-              </div>
-              <div className="list">
-                {services.slice(0, 4).map((service) => (
-                  <Link key={service.id} href={`/${slug}/reservar/${service.id}`} className="service-card">
-                    <div className="service-top">
-                      <div className="stack" style={{ gap: 4 }}>
-                        <strong>{service.name}</strong>
-                        <small>{service.duration_minutes} min · {service.description ?? "Calidad asegurada"}</small>
-                      </div>
-                      <span className="price-tag">{formatCurrency(service.price)}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </article>
-
-            <article className="card stack">
-              <div className="header-row">
-                <div className="stack" style={{ gap: 4 }}>
-                  <span className="eyebrow">Agenda rápida</span>
-                  <h2>Turnos recomendados</h2>
-                </div>
-                {firstService ? (
-                  <Link className="btn-ghost" href={`/${slug}/reservar/${firstService.id}`}>
-                    Ver agenda
-                  </Link>
-                ) : null}
-              </div>
-              <div className="list">
-                {availability.options.length > 0 ? (
-                  availability.options.slice(0, 3).map((slot) => (
-                    <Link key={`${slot.barberId}-${slot.start}`} href={`/${slug}/reservar/${firstService?.id}`} className="slot-card">
-                      <div className="service-top">
-                        <div className="stack" style={{ gap: 4 }}>
-                          <span className="time-pill">{slot.label}</span>
-                          <strong>{slot.barberName}</strong>
-                        </div>
-                        <span className="status-pill">Libre</span>
-                      </div>
-                      <small>Sugerido según tu preferencia habitual</small>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="notice">No hay turnos sugeridos en este momento.</div>
-                )}
-              </div>
-            </article>
-          </section>
-
-          <section className="grid cols-2">
-            <article className="card stack" style={{ border: "1px solid var(--line-strong)", background: "rgba(245, 200, 66, 0.02)" }}>
-              <span className="eyebrow">Walk-In</span>
-              <h2>Cola en tiempo real</h2>
-              <p className="muted">
-                ¿Estás cerca? Súmate a nuestra fila virtual y te avisamos cuando sea tu turno. Sin esperas innecesarias en el local.
+          <section className="grid cols-2" style={{ gap: "24px" }}>
+            <article className="card stack" style={{ 
+              background: "linear-gradient(135deg, rgba(245, 200, 66, 0.05), rgba(0,0,0,0))", 
+              border: "1px solid var(--line-strong)"
+            }}>
+              <span className="eyebrow">No esperes más</span>
+              <h2 style={{ fontSize: "2.2rem" }}>Fila Virtual</h2>
+              <p className="page-lead" style={{ fontSize: "1rem" }}>
+                ¿Cerca del local? Súmate a nuestra tecnología de fila en tiempo real y optimizá tu tiempo. Te avisamos por WhatsApp.
               </p>
-              <div className="actions">
-                <Link className="btn" href={`/${slug}/fila`}>
-                  Súmate a la fila
+              <div className="actions" style={{ marginTop: "12px" }}>
+                <Link className="btn" href={`/${slug}/fila`} style={{ width: "100%" }}>
+                  Súmate a la Fila de Hoy
                 </Link>
               </div>
             </article>
 
             <article className="card stack">
-              <span className="eyebrow">Feedback</span>
-              <h2>Tu opinión cuenta</h2>
-              <p className="muted">
-                Para nosotros lo más importante es que te vayas conforme. Ayúdanos a mejorar calificando tu última experiencia.
+              <span className="eyebrow">Experiencia Garantizada</span>
+              <h2 style={{ fontSize: "2.2rem" }}>Tu opinión importa</h2>
+              <p className="page-lead" style={{ fontSize: "1rem" }}>
+                Buscamos la excelencia en cada corte. Si ya te atendiste, calificá tu experiencia y ayúdanos a seguir mejorando.
               </p>
-              <div className="actions">
-                <Link className="btn-secondary" href={`/${slug}/reservar`}>
-                  Reservar de nuevo
+              <div className="actions" style={{ marginTop: "12px" }}>
+                <Link className="btn-secondary" href={`/${slug}/reservar`} style={{ width: "100%" }}>
+                  Compartir Feedback
                 </Link>
               </div>
             </article>
@@ -164,3 +115,5 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
     </>
   );
 }
+
+

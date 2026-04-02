@@ -31,6 +31,39 @@ export async function listFutureAppointmentsForBarber(
   return result.rows;
 }
 
+export async function listAppointmentsForBarbersInRange(
+  tenantId: string,
+  barberIds: string[],
+  rangeStart: Date,
+  rangeEnd: Date
+) {
+  if (barberIds.length === 0) {
+    return [];
+  }
+
+  const result = await query<{
+    id: string;
+    barber_id: string;
+    datetime_start: string;
+    datetime_end: string;
+    status: AppointmentStatus;
+  }>(
+    `
+      SELECT id, barber_id, datetime_start, datetime_end, status
+      FROM appointments
+      WHERE tenant_id = $1
+        AND barber_id = ANY($2::uuid[])
+        AND status IN ('pending_payment', 'pending_verification', 'scheduled', 'confirmed', 'checked_in', 'in_progress')
+        AND datetime_end > $3
+        AND datetime_start < $4
+      ORDER BY barber_id ASC, datetime_start ASC
+    `,
+    [tenantId, barberIds, rangeStart.toISOString(), rangeEnd.toISOString()]
+  );
+
+  return result.rows;
+}
+
 export async function getAppointmentDetail(tenantId: string, appointmentId: string) {
   const result = await query<{
     id: string;
@@ -139,6 +172,37 @@ export async function upsertCustomer(
   return result.rows[0];
 }
 
+export async function hasAppointmentConflict(
+  client: PoolClient,
+  input: {
+    tenantId: string;
+    barberId: string;
+    datetimeStart: Date;
+    datetimeEnd: Date;
+  }
+) {
+  const result = await client.query<{ id: string }>(
+    `
+      SELECT id
+      FROM appointments
+      WHERE tenant_id = $1
+        AND barber_id = $2
+        AND status IN ('pending_payment', 'pending_verification', 'scheduled', 'confirmed', 'checked_in', 'in_progress')
+        AND datetime_end > $3
+        AND datetime_start < $4
+      LIMIT 1
+    `,
+    [
+      input.tenantId,
+      input.barberId,
+      input.datetimeStart.toISOString(),
+      input.datetimeEnd.toISOString()
+    ]
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
 export async function insertAppointment(
   client: PoolClient,
   input: {
@@ -227,3 +291,4 @@ export async function insertPayment(
     ]
   );
 }
+

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/http";
@@ -9,16 +10,28 @@ function payloadFromFormData(formData: FormData) {
   return {
     barberId: String(formData.get("barberId") ?? ""),
     serviceId: String(formData.get("serviceId") ?? ""),
-    datetimeStart: String(formData.get("datetimeStart") ?? ""),
-    paymentMethod: String(formData.get("paymentMethod") ?? "pay_at_store"),
+    scheduledAt: String(formData.get("scheduledAt") ?? formData.get("datetimeStart") ?? ""),
     customer: {
-      fullName: String(formData.get("fullName") ?? ""),
-      phone: String(formData.get("phone") ?? ""),
-      email: String(formData.get("email") ?? ""),
-      notes: String(formData.get("notes") ?? "")
+      name: String(formData.get("name") ?? formData.get("fullName") ?? ""),
+      phone: String(formData.get("phone") ?? "")
     },
-    redirectBase: String(formData.get("redirectBase") ?? "")
+    notes: String(formData.get("notes") ?? "")
   };
+}
+
+function resolveRedirectBase(request: Request, tenantSlug: string, payload: unknown) {
+  const fallback = `/${tenantSlug}/reservar`;
+  if (!payload || typeof payload !== "object" || !("redirectBase" in payload)) {
+    return fallback;
+  }
+
+  const redirectBase = (payload as { redirectBase?: unknown }).redirectBase;
+  return typeof redirectBase === "string" && redirectBase.length > 0 ? redirectBase : fallback;
+}
+
+function revalidateBookingPages(tenantSlug: string) {
+  revalidatePath(`/${tenantSlug}`);
+  revalidatePath(`/${tenantSlug}/reservar`);
 }
 
 export async function POST(
@@ -31,14 +44,18 @@ export async function POST(
   const isJson = contentType.includes("application/json");
 
   const rawPayload = isJson ? await request.json() : payloadFromFormData(await request.formData());
+  console.log("=== APPOINTMENT PAYLOAD RECEIVED ===");
+  console.log(rawPayload);
+  console.log("=====================================");
+
   const parsed = appointmentPayloadSchema.safeParse(rawPayload);
 
   if (!parsed.success) {
     if (isJson) {
-      return fail("Payload invalido.", 400, parsed.error.flatten());
+      return fail("Payload inválido.", 400, parsed.error.flatten());
     }
 
-    const redirectBase = String((rawPayload as { redirectBase?: string }).redirectBase ?? `/${tenantSlug}`);
+    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=Payload%20invalido`, request.url));
   }
 
@@ -47,16 +64,17 @@ export async function POST(
       tenantId: tenant.tenantId,
       barberId: parsed.data.barberId,
       serviceId: parsed.data.serviceId,
-      datetimeStart: new Date(parsed.data.datetimeStart),
-      paymentMethod: parsed.data.paymentMethod,
+      datetimeStart: new Date(parsed.data.scheduledAt),
+      paymentMethod: "pay_at_store",
       customer: {
-        fullName: parsed.data.customer.fullName,
+        fullName: parsed.data.customer.name,
         phone: parsed.data.customer.phone,
-        email: parsed.data.customer.email || null,
-        notes: parsed.data.customer.notes || null
+        notes: parsed.data.notes || null
       },
       source: "online"
     });
+
+    revalidateBookingPages(tenantSlug);
 
     if (isJson) {
       return ok(result, { status: 201 });
@@ -64,14 +82,19 @@ export async function POST(
 
     return NextResponse.redirect(new URL(`/${tenantSlug}/mi-turno/${result.appointmentId}`, request.url));
   } catch (error: unknown) {
+    console.error("=== CREATE APPOINTMENT ERROR ===");
+    console.error(error);
+    console.error("=================================");
+
     const message = error instanceof Error ? error.message : "No se pudo crear la reserva.";
     const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+    const status = code === "23P01" || message === "Este horario ya no está disponible." ? 409 : 400;
 
     if (isJson) {
-      return fail(message, code === "23P01" ? 409 : 400);
+      return fail(message, status);
     }
 
-    const redirectBase = String((rawPayload as { redirectBase?: string }).redirectBase ?? `/${tenantSlug}`);
+    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=${encodeURIComponent(message)}`, request.url));
   }
 }

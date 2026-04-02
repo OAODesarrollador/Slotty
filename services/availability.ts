@@ -1,7 +1,12 @@
 import { addDays } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
-import { listFutureAppointmentsForBarber } from "@/repositories/appointments";
-import { listBarbersForService, listWorkingHours } from "@/repositories/barbers";
+import { listAppointmentsForBarbersInRange, listFutureAppointmentsForBarber } from "@/repositories/appointments";
+import {
+  listBarbersForService,
+  listWorkingHours,
+  listWorkingHoursForBarbers
+} from "@/repositories/barbers";
 import { getServiceById } from "@/repositories/services";
 import {
   addMinutes,
@@ -15,12 +20,15 @@ import {
   weekdayFromDateKey
 } from "@/lib/time";
 
-export interface AvailabilityOption {
-  barberId: string;
-  barberName: string;
-  barberRating: number;
+export interface PublicAvailabilitySlot {
   start: string;
   end: string;
+  barberId: string;
+  barberName: string;
+}
+
+export interface AvailabilityOption extends PublicAvailabilitySlot {
+  barberRating: number;
   label: string;
   score: number;
 }
@@ -31,8 +39,58 @@ type WorkingHourRow = {
   end_time: string;
 };
 
+type WorkingHourByBarberRow = WorkingHourRow & {
+  barber_id: string;
+};
+
+const SLOT_STEP_MINUTES = 15;
+
 function findWorkingWindow(hours: WorkingHourRow[], dayOfWeek: number) {
   return hours.find((item) => item.day_of_week === dayOfWeek);
+}
+
+function roundUpToStep(date: Date, stepMinutes: number) {
+  const rounded = new Date(date.getTime());
+  rounded.setUTCSeconds(0, 0);
+
+  const minutes = rounded.getUTCMinutes();
+  const remainder = minutes % stepMinutes;
+  if (remainder === 0 && rounded.getTime() >= date.getTime()) {
+    return rounded;
+  }
+
+  rounded.setUTCMinutes(minutes + (remainder === 0 ? stepMinutes : stepMinutes - remainder));
+  return rounded;
+}
+
+function isStepAligned(date: Date, stepMinutes: number) {
+  return date.getUTCSeconds() === 0
+    && date.getUTCMilliseconds() === 0
+    && date.getUTCMinutes() % stepMinutes === 0;
+}
+
+function formatSlotDate(date: Date, timezone: string) {
+  return formatInTimeZone(date, timezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
+}
+
+function buildDayRange(date: string, timezone: string) {
+  const dayStart = buildZonedDate(date, "00:00", timezone);
+  const nextDate = formatInTimeZone(nextDay(dayStart), timezone, "yyyy-MM-dd");
+  const dayEnd = buildZonedDate(nextDate, "00:00", timezone);
+
+  return { dayStart, dayEnd };
+}
+
+function overlapsExistingAppointments(
+  start: Date,
+  end: Date,
+  appointments: { datetime_start: string; datetime_end: string }[]
+) {
+  return appointments.some((appointment) => {
+    const appointmentStart = new Date(appointment.datetime_start);
+    const appointmentEnd = new Date(appointment.datetime_end);
+    return end > appointmentStart && start < appointmentEnd;
+  });
 }
 
 async function findEarliestForBarber(
@@ -114,6 +172,161 @@ async function findEarliestForBarber(
   }
 
   return null;
+}
+
+export async function getAvailableSlotsByDate(input: {
+  tenantId: string;
+  timezone: string;
+  serviceId: string;
+  date: string;
+  barberId?: string | null;
+}) {
+  const service = await getServiceById(input.tenantId, input.serviceId);
+  if (!service) {
+    throw new Error("Servicio no encontrado.");
+  }
+
+  let barbers = await listBarbersForService(input.tenantId, input.serviceId);
+  if (input.barberId) {
+    barbers = barbers.filter((barber) => barber.id === input.barberId);
+  }
+
+  if (barbers.length === 0) {
+    return {
+      date: input.date,
+      serviceId: input.serviceId,
+      slots: [] as PublicAvailabilitySlot[]
+    };
+  }
+
+  const dayOfWeek = weekdayFromDateKey(input.date, input.timezone);
+  const barberIds = barbers.map((barber) => barber.id);
+  const { dayStart, dayEnd } = buildDayRange(input.date, input.timezone);
+  const [workingHours, appointments] = await Promise.all([
+    listWorkingHoursForBarbers(input.tenantId, barberIds),
+    listAppointmentsForBarbersInRange(input.tenantId, barberIds, dayStart, dayEnd)
+  ]);
+
+  const hoursByBarber = new Map<string, WorkingHourByBarberRow[]>();
+  for (const row of workingHours) {
+    const current = hoursByBarber.get(row.barber_id) ?? [];
+    current.push(row);
+    hoursByBarber.set(row.barber_id, current);
+  }
+
+  const appointmentsByBarber = new Map<string, { datetime_start: string; datetime_end: string }[]>();
+  for (const appointment of appointments) {
+    const current = appointmentsByBarber.get(appointment.barber_id) ?? [];
+    current.push({
+      datetime_start: appointment.datetime_start,
+      datetime_end: appointment.datetime_end
+    });
+    appointmentsByBarber.set(appointment.barber_id, current);
+  }
+
+  const now = new Date();
+  const isToday = dateKeyInTimeZone(now, input.timezone) === input.date;
+  const slots: PublicAvailabilitySlot[] = [];
+
+  for (const barber of barbers) {
+    const workingWindow = findWorkingWindow(hoursByBarber.get(barber.id) ?? [], dayOfWeek);
+    if (!workingWindow) {
+      continue;
+    }
+
+    const windowStart = buildZonedDate(input.date, workingWindow.start_time.slice(0, 5), input.timezone);
+    const windowEnd = buildZonedDate(input.date, workingWindow.end_time.slice(0, 5), input.timezone);
+    const appointmentsForBarber = appointmentsByBarber.get(barber.id) ?? [];
+    let cursor = isToday ? roundUpToStep(laterThan(now, windowStart), SLOT_STEP_MINUTES) : windowStart;
+
+    while (cursor < windowEnd) {
+      const candidateEnd = addMinutes(cursor, service.duration_minutes);
+      if (!overlapsExistingAppointments(cursor, candidateEnd, appointmentsForBarber) && candidateEnd <= windowEnd) {
+        slots.push({
+          start: formatSlotDate(cursor, input.timezone),
+          end: formatSlotDate(candidateEnd, input.timezone),
+          barberId: barber.id,
+          barberName: barber.full_name
+        });
+      }
+
+      cursor = addMinutes(cursor, SLOT_STEP_MINUTES);
+    }
+  }
+
+  slots.sort((a, b) => a.start.localeCompare(b.start) || a.barberName.localeCompare(b.barberName));
+
+  return {
+    date: input.date,
+    serviceId: input.serviceId,
+    slots
+  };
+}
+
+export async function assertBookableAppointmentSlot(input: {
+  tenantId: string;
+  timezone: string;
+  barberId: string;
+  serviceDurationMinutes: number;
+  scheduledAt: Date;
+}) {
+  if (Number.isNaN(input.scheduledAt.getTime())) {
+    throw new Error("Horario inválido.");
+  }
+
+  if (!isStepAligned(input.scheduledAt, SLOT_STEP_MINUTES)) {
+    throw new Error("El horario debe coincidir con un slot válido.");
+  }
+
+  if (input.scheduledAt < new Date()) {
+    throw new Error("No se pueden reservar horarios pasados.");
+  }
+
+  const dateKey = dateKeyInTimeZone(input.scheduledAt, input.timezone);
+  const [workingHours, appointments] = await Promise.all([
+    listWorkingHours(input.tenantId, input.barberId),
+    listAppointmentsForBarbersInRange(
+      input.tenantId,
+      [input.barberId],
+      input.scheduledAt,
+      addMinutes(input.scheduledAt, input.serviceDurationMinutes)
+    )
+  ]);
+
+  const workingWindow = findWorkingWindow(
+    workingHours,
+    weekdayFromDateKey(dateKey, input.timezone)
+  );
+
+  if (!workingWindow) {
+    throw new Error("El barbero no trabaja en ese día.");
+  }
+
+  const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), input.timezone);
+  const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), input.timezone);
+  const datetimeEnd = addMinutes(input.scheduledAt, input.serviceDurationMinutes);
+
+  if (input.scheduledAt < windowStart || datetimeEnd > windowEnd) {
+    throw new Error("El horario seleccionado queda fuera del horario laboral.");
+  }
+
+  if (dateKeyInTimeZone(datetimeEnd, input.timezone) !== dateKey && datetimeEnd.getTime() !== windowEnd.getTime()) {
+    throw new Error("El horario seleccionado no entra completo en el día solicitado.");
+  }
+
+  const barberAppointments = appointments.map((appointment) => ({
+    datetime_start: appointment.datetime_start,
+    datetime_end: appointment.datetime_end
+  }));
+
+  if (overlapsExistingAppointments(input.scheduledAt, datetimeEnd, barberAppointments)) {
+    throw new Error("Este horario ya no está disponible.");
+  }
+
+  return {
+    datetimeEnd,
+    date: dateKey
+  };
 }
 
 export async function listAvailabilityOptions(

@@ -1,6 +1,7 @@
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
-import { listAvailabilityOptions } from "@/services/availability";
+import { availabilityQuerySchema } from "@/lib/validators";
+import { getAvailableSlotsByDate } from "@/services/availability";
 
 export async function GET(
   request: Request,
@@ -9,13 +10,29 @@ export async function GET(
   const { tenantSlug } = await params;
   const tenant = await requireTenantBySlug(tenantSlug);
   const { searchParams } = new URL(request.url);
-  const serviceId = searchParams.get("serviceId");
-  const barberId = searchParams.get("barberId");
 
-  if (!serviceId) {
-    return fail("serviceId es obligatorio.");
+  const parsed = availabilityQuerySchema.safeParse({
+    serviceId: searchParams.get("serviceId"),
+    date: searchParams.get("date"),
+    barberId: searchParams.get("barberId") ?? undefined
+  });
+
+  if (!parsed.success) {
+    return fail("Query inválida.", 400, parsed.error.flatten());
   }
 
-  const availability = await listAvailabilityOptions(tenant, serviceId, barberId);
-  return ok(availability);
+  try {
+    const availability = await getAvailableSlotsByDate({
+      tenantId: tenant.tenantId,
+      timezone: tenant.timezone,
+      serviceId: parsed.data.serviceId,
+      date: parsed.data.date,
+      barberId: parsed.data.barberId
+    });
+
+    return ok(availability);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "No se pudo obtener disponibilidad.";
+    return fail(message, message === "Servicio no encontrado." ? 404 : 400);
+  }
 }

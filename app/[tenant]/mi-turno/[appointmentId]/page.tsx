@@ -11,12 +11,15 @@ export default async function AppointmentDetailPage({
   params: Promise<{ tenant: string; appointmentId: string }>;
 }) {
   const { tenant: slug, appointmentId } = await params;
-  const tenant = await requireTenantBySlug(slug);
-  const appointment = await getAppointmentDetail(tenant.tenantId, appointmentId);
+  
+  try {
+    const tenant = await requireTenantBySlug(slug);
+    const appointment = await getAppointmentDetail(tenant.tenantId, appointmentId);
 
-  if (!appointment) {
-    notFound();
-  }
+    if (!appointment) {
+      console.warn(`APPOINTMENT NOT FOUND: ${appointmentId} for tenant ${slug}`);
+      notFound();
+    }
 
   // Traducción de estados para el usuario
   const statusMap: Record<string, string> = {
@@ -106,4 +109,9 @@ export default async function AppointmentDetailPage({
       </section>
     </main>
   );
+  } catch (error: unknown) {
+    console.error(`ERROR LOADING APPOINTMENT DETAIL: ${appointmentId}`);
+    console.error(error);
+    throw error; // Re-throw to show 500 page
+  }
 }
