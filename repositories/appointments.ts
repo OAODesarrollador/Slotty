@@ -206,6 +206,7 @@ export async function hasAppointmentConflict(
 export async function insertAppointment(
   client: PoolClient,
   input: {
+    id: string;
     tenantId: string;
     customerId: string;
     barberId: string;
@@ -220,6 +221,7 @@ export async function insertAppointment(
   const result = await client.query<{ id: string }>(
     `
       INSERT INTO appointments (
+        id,
         tenant_id,
         customer_id,
         barber_id,
@@ -230,10 +232,11 @@ export async function insertAppointment(
         source,
         customer_notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
     `,
     [
+      input.id,
       input.tenantId,
       input.customerId,
       input.barberId,
@@ -291,4 +294,3 @@ export async function insertPayment(
     ]
   );
 }
-

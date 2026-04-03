@@ -63,6 +63,12 @@ CREATE TABLE IF NOT EXISTS tenants (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS mercado_pago_public_key TEXT;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS mercado_pago_access_token TEXT;
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

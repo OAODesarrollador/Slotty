@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import type { PaymentMethod } from "@/lib/types";
 import { formatCurrency, formatDateTime, formatHour } from "@/lib/time";
+import { computePaymentBreakdown } from "@/services/payments";
 
 type ServiceItem = {
   id: string;
@@ -27,12 +29,25 @@ type AvailabilitySlot = {
   end: string;
 };
 
+type PaymentSettings = {
+  depositType: string;
+  depositValue: string;
+  allowPayAtStore: boolean;
+  allowBankTransfer: boolean;
+  allowMercadoPago: boolean;
+  transferAlias: string | null;
+  transferCbu: string | null;
+  transferHolderName: string | null;
+  transferBankName: string | null;
+};
+
 interface QuickBookingFlowProps {
   slug: string;
   tenantName: string;
   timezone: string;
   services: ServiceItem[];
   barbersByService: Record<string, BarberItem[]>;
+  paymentSettings: PaymentSettings | null;
   initialServiceId?: string;
   initialDate: string;
   minDate: string;
@@ -47,6 +62,7 @@ export function QuickBookingFlow({
   timezone,
   services,
   barbersByService,
+  paymentSettings,
   initialServiceId,
   initialDate,
   minDate,
@@ -63,9 +79,13 @@ export function QuickBookingFlow({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [payInFull, setPayInFull] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(initialError ?? "");
+  const [validationIssues, setValidationIssues] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
   
   const step2Ref = useRef<HTMLDivElement>(null);
@@ -76,10 +96,37 @@ export function QuickBookingFlow({
     [serviceId, services]
   );
   const barbers = serviceId ? barbersByService[serviceId] ?? [] : [];
+  const isTodaySelected = date === minDate;
+  const isPayAtStore = paymentMethod === "pay_at_store";
+
+  useEffect(() => {
+    if (paymentMethod === "pay_at_store" && date !== minDate) {
+      setDate(minDate);
+      setSelectedSlotId("");
+    }
+  }, [date, minDate, paymentMethod]);
+
   const selectedSlot = useMemo(
     () => slots.find((slot) => `${slot.barberId}-${slot.start}` === selectedSlotId) ?? null,
     [selectedSlotId, slots]
   );
+  const paymentBreakdown = useMemo(() => {
+    if (!selectedService || !paymentSettings) {
+      return null;
+    }
+
+    return computePaymentBreakdown(
+      Number(selectedService.price),
+      {
+        deposit_type: paymentSettings.depositType,
+        deposit_value: paymentSettings.depositValue
+      },
+      {
+        paymentMethod: paymentMethod ?? undefined,
+        payInFull
+      }
+    );
+  }, [selectedService, paymentSettings, paymentMethod, payInFull]);
 
   useEffect(() => {
     if (!serviceId || !date) {
@@ -109,6 +156,7 @@ export function QuickBookingFlow({
       .then((body) => {
         setSlots(body.slots ?? []);
         setError("");
+        setValidationIssues([]);
       })
       .catch((fetchError: unknown) => {
         if (controller.signal.aborted) {
@@ -128,11 +176,31 @@ export function QuickBookingFlow({
     return () => controller.abort();
   }, [barberId, date, serviceId, slug]);
 
+
+  useEffect(() => {
+    if (paymentMethod === "pay_at_store") {
+      setPayInFull(false);
+    }
+  }, [paymentMethod]);
+
+  const copyToClipboard = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyFeedback(`${label} copiado.`);
+      setTimeout(() => setCopyFeedback(""), 2000);
+    } catch {
+      setCopyFeedback(`No se pudo copiar ${label.toLowerCase()}.`);
+      setTimeout(() => setCopyFeedback(""), 2000);
+    }
+  };
   const handleServiceChange = (nextServiceId: string) => {
     setServiceId(nextServiceId);
     setBarberId("");
     setSelectedSlotId("");
-    setError("");
+    setPaymentMethod(null);
+    setPayInFull(false);
+        setError("");
+        setValidationIssues([]);
     
     // Auto Scroll to next step (Calendar/Professional)
     setTimeout(() => {
@@ -142,6 +210,8 @@ export function QuickBookingFlow({
 
   const handleSlotSelect = (slot: AvailabilitySlot) => {
     setSelectedSlotId(`${slot.barberId}-${slot.start}`);
+    setPaymentMethod(null);
+    setPayInFull(false);
     
     // Auto Scroll to confirmation step (Personal Data)
     setTimeout(() => {
@@ -149,35 +219,84 @@ export function QuickBookingFlow({
     }, 100);
   };
 
+  const isValidArgentinianPhone = (value: string) => {
+    const trimmed = value.trim();
+    if (!/^[+\d\s()\-]+$/.test(trimmed)) {
+      return false;
+    }
+
+    const digits = trimmed.replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 13;
+  };
+
+  const isValidCustomerName = (value: string) => {
+    const trimmed = value.trim();
+    return /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]+$/.test(trimmed);
+  };
+
   const validate = () => {
     const nextErrors: { name?: string; phone?: string } = {};
 
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName) {
       nextErrors.name = "Ingresá tu nombre.";
+    } else if (trimmedName.length < 3) {
+      nextErrors.name = "El nombre debe tener al menos 3 caracteres.";
+    } else if (trimmedName.length > 60) {
+      nextErrors.name = "El nombre no puede superar los 60 caracteres.";
+    } else if (!isValidCustomerName(trimmedName)) {
+      nextErrors.name = "El nombre solo puede contener letras y espacios.";
     }
 
-    if (!phone.trim()) {
+    if (!trimmedPhone) {
       nextErrors.phone = "Ingresá tu teléfono.";
-    } else if (phone.trim().length < 6) {
-      nextErrors.phone = "El teléfono es demasiado corto.";
+    } else if (!isValidArgentinianPhone(trimmedPhone)) {
+      nextErrors.phone = "Ingresá un teléfono válido. Ej: 11 1234 5678 o +54 9 11 1234 5678.";
     }
 
     setFieldErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return nextErrors;
+  };
+
+  const getValidationIssues = () => {
+    const nextErrors = validate();
+    const issues: string[] = [];
+
+    if (!selectedService) {
+      issues.push("Seleccioná un servicio.");
+    }
+    if (!date) {
+      issues.push("Seleccioná una fecha.");
+    }
+    if (!selectedSlot) {
+      issues.push("Seleccioná un horario.");
+    }
+    if (!paymentMethod) {
+      issues.push("Elegí una forma de pago.");
+    }
+    if (nextErrors.name) {
+      issues.push(nextErrors.name);
+    }
+    if (nextErrors.phone) {
+      issues.push(nextErrors.phone);
+    }
+
+    return issues;
   };
 
   const handleSubmit = async () => {
-    if (!selectedService || !selectedSlot) {
-      setError("Seleccioná un horario antes de confirmar.");
-      return;
-    }
-
-    if (!validate()) {
+    const issues = getValidationIssues();
+    if (issues.length > 0) {
+      setValidationIssues(issues);
+      setError("Revisá los datos pendientes para continuar.");
       return;
     }
 
     setSubmitting(true);
     setError("");
+    setValidationIssues([]);
 
     try {
       const response = await fetch(`/api/public/${slug}/appointments`, {
@@ -186,9 +305,11 @@ export function QuickBookingFlow({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          serviceId: selectedService.id,
-          barberId: selectedSlot.barberId,
-          scheduledAt: selectedSlot.start,
+          serviceId: selectedService!.id,
+          barberId: selectedSlot!.barberId,
+          scheduledAt: selectedSlot!.start,
+          paymentMethod: paymentMethod ?? undefined,
+          payInFull,
           customer: {
             name: name.trim(),
             phone: phone.trim()
@@ -202,6 +323,11 @@ export function QuickBookingFlow({
         throw new Error(body.error ?? "No se pudo confirmar la reserva.");
       }
 
+      if (body.checkoutUrl) {
+        window.location.href = body.checkoutUrl;
+        return;
+      }
+
       router.push(`/${slug}/mi-turno/${body.appointmentId}`);
       router.refresh();
     } catch (submitError: unknown) {
@@ -210,13 +336,12 @@ export function QuickBookingFlow({
       setSubmitting(false);
     }
   };
-
   return (
     <main className="page" style={{ paddingBottom: "100px" }}>
       <section className="shell stack" style={{ gap: "35px", paddingTop: "0" }}>
         
         <div className="header-row">
-          <div className="stack" style={{ gap: 10 }}>
+          <div className="stack" style={{ gap: 8 }}>
             <span className="eyebrow">Reserva Premium</span>
             <h1 style={{ fontSize: "2.2rem" }}>Tu próxima experiencia</h1>
             <p className="page-lead" style={{ fontSize: "0.95rem" }}>
@@ -258,14 +383,14 @@ export function QuickBookingFlow({
         </section>
 
         {/* STEP 2: PROFESSIONAL & SLOT SELECTION */}
-        <div ref={step2Ref} className="stack" style={{ gap: 24, padding: "24px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
+        <div ref={step2Ref} className="stack" style={{ gap: 24, padding: "4px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
           <div className="stack" style={{ gap: 6 }}>
-            <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Día y Profesional</h2>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Día y Horario</h2>
             <p className="muted" style={{ fontSize: "0.85rem" }}>Encontrá el espacio perfecto.</p>
           </div>
 
           <div className="stack" style={{ gap: 20 }}>
-            <div className="stack" style={{ gap: 10 }}>
+            <div className="stack" style={{ gap: 8 }}>
               <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Seleccioná el Día</span>
               <div 
                 style={{ 
@@ -290,7 +415,7 @@ export function QuickBookingFlow({
                     <button
                       key={iso}
                       type="button"
-                      onClick={() => setDate(iso)}
+                      onClick={() => { if (!isPayAtStore || iso === minDate) setDate(iso); }}
                       style={{
                         flexShrink: 0,
                         width: "74px",
@@ -307,7 +432,8 @@ export function QuickBookingFlow({
                         transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                         transform: active ? "scale(1.12)" : "scale(1)",
                         zIndex: active ? 1 : 0,
-                        cursor: "pointer"
+                            cursor: "pointer",
+                        opacity: isPayAtStore && iso !== minDate ? 0.35 : 1
                       }}
                     >
                       <span style={{ fontSize: "0.65rem", opacity: active ? 1 : 0.6, fontWeight: 800, textTransform: "uppercase" }}>
@@ -325,120 +451,188 @@ export function QuickBookingFlow({
               </div>
             </div>
 
-            <div className="stack" style={{ gap: 12 }}>
-              <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Barbero</span>
-              <div 
-                style={{ 
-                  display: "flex", 
-                  flexWrap: "nowrap", 
-                  overflowX: "auto", 
-                  gap: "20px", 
-                  padding: "10px 12px 20px",
-                  margin: "0 -12px",
-                  width: "calc(100% + 24px)",
-                  justifyContent: "center" 
-                }}
-                className="hide-scrollbar"
-              >
-                {/* ANYONE OPTION */}
-                <button
-                  type="button"
-                  onClick={() => setBarberId("")}
-                  style={{
-                    flexShrink: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "10px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    transition: "all 0.3s ease",
-                    transform: !barberId ? "scale(1.05)" : "scale(1)"
+            {/* STEP 2: PROFESSIONAL & SLOT SELECTION (BARBER) */}
+            <div className="stack" style={{ gap: 20 }}>
+              <div className="stack" style={{ gap: 12 }}>
+                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Barbero</span>
+                <div 
+                  style={{ 
+                    display: "flex", 
+                    flexWrap: "nowrap", 
+                    overflowX: "auto", 
+                    gap: "20px", 
+                    padding: "10px 12px 10px",
+                    margin: "0 -12px",
+                    width: "calc(100% + 24px)",
+                    justifyContent: "center" 
                   }}
+                  className="hide-scrollbar"
                 >
-                  <div style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: !barberId ? "rgba(245, 200, 66, 0.15)" : "rgba(255,255,255,0.03)",
-                    border: "2px solid",
-                    borderColor: !barberId ? "var(--accent)" : "rgba(255,255,255,0.1)",
-                    boxShadow: !barberId ? "0 0 20px rgba(245, 200, 66, 0.2)" : "none",
-                    transition: "all 0.3s ease",
-                    color: !barberId ? "var(--accent)" : "var(--muted)"
-                  }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  </div>
-                  <span style={{ 
-                    fontSize: "0.7rem", 
-                    fontWeight: 700, 
-                    color: !barberId ? "var(--accent)" : "var(--muted)",
-                    whiteSpace: "nowrap",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.02em"
-                  }}>Cualquiera</span>
-                </button>
+                  {/* ANYONE OPTION */}
+                  <button
+                    type="button"
+                    onClick={() => setBarberId("")}
+                    style={{
+                      flexShrink: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "10px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      transition: "all 0.3s ease",
+                      transform: !barberId ? "scale(1.05)" : "scale(1)"
+                    }}
+                  >
+                    <div style={{
+                      width: "64px",
+                      height: "64px",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: !barberId ? "rgba(245, 200, 66, 0.15)" : "rgba(255,255,255,0.03)",
+                      border: "2px solid",
+                      borderColor: !barberId ? "var(--accent)" : "rgba(255,255,255,0.1)",
+                      boxShadow: !barberId ? "0 0 20px rgba(245, 200, 66, 0.2)" : "none",
+                      transition: "all 0.3s ease",
+                      color: !barberId ? "var(--accent)" : "var(--muted)"
+                    }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <span style={{ 
+                      fontSize: "0.7rem", 
+                      fontWeight: 700, 
+                      color: !barberId ? "var(--accent)" : "var(--muted)",
+                      whiteSpace: "nowrap",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.02em"
+                    }}>Cualquiera</span>
+                  </button>
 
-                {/* BARBER LIST */}
-                {barbers.length > 0 ? (
-                  barbers.map((barber) => {
-                    const active = barber.id === barberId;
-                    const initials = barber.full_name.split(" ").map(n => n[0]).join("").slice(0, 2);
+                  {/* BARBER LIST */}
+                  {barbers.length > 0 ? (
+                    barbers.map((barber) => {
+                      const active = barber.id === barberId;
+                      const initials = barber.full_name.split(" ").map(n => n[0]).join("").slice(0, 2);
+                      return (
+                        <button
+                          key={barber.id}
+                          type="button"
+                          onClick={() => setBarberId(barber.id)}
+                          style={{
+                            flexShrink: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: "10px",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 0,
+                            transition: "all 0.3s ease",
+                            transform: active ? "scale(1.05)" : "scale(1)"
+                          }}
+                        >
+                          <div style={{
+                            width: "64px",
+                            height: "64px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "1.1rem",
+                            fontWeight: 800,
+                            background: active ? "rgba(245, 200, 66, 0.15)" : "rgba(255,255,255,0.03)",
+                            border: "2px solid",
+                            borderColor: active ? "var(--accent)" : "rgba(255,255,255,0.1)",
+                            boxShadow: active ? "0 0 20px rgba(245, 200, 66, 0.2)" : "none",
+                            transition: "all 0.3s ease",
+                            color: active ? "var(--accent)" : "var(--text)"
+                          }}>
+                            {initials}
+                          </div>
+                          <span style={{ 
+                            fontSize: "0.75rem", 
+                            fontWeight: 700, 
+                            color: active ? "var(--accent)" : "var(--muted)",
+                            whiteSpace: "nowrap"
+                          }}>{barber.full_name.split(" ")[0]}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="stack" style={{ gap: 4, opacity: 0.5, padding: "20px 0" }}>
+                      <small>No hay otros profesionales disponibles</small>
+                      <small style={{ fontSize: "0.7rem" }}>para este servicio en esta fecha.</small>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2: PROFESSIONAL & SLOT SELECTION (SLOTS) */}
+            <div className="stack" style={{ gap: 20 }}>
+              <div className="stack" style={{ gap: 6 }}>
+                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Horarios Disponibles</span>
+              </div>
+
+              <div 
+                className="grid" 
+                style={{ 
+                  gridTemplateColumns: "repeat(3, 1fr)", 
+                  gap: "8px", 
+                  width: "100%" 
+                }}
+              >
+                {availabilityLoading ? (
+                  <div className="muted" style={{ gridColumn: "span 3", textAlign: "center", padding: "40px" }}>Buscando espacios...</div>
+                ) : slots.length > 0 ? (
+                  slots.map((slot) => {
+                    const active = `${slot.barberId}-${slot.start}` === selectedSlotId;
                     return (
                       <button
-                        key={barber.id}
+                        key={`${slot.barberId}-${slot.start}`}
                         type="button"
-                        onClick={() => setBarberId(barber.id)}
+                        onClick={() => handleSlotSelect(slot)}
                         style={{
-                          flexShrink: 0,
+                          height: "48px",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          gap: "10px",
-                          background: "none",
-                          border: "none",
+                          justifyContent: "center",
+                          borderRadius: "12px",
+                          background: active ? "var(--accent)" : "rgba(255,255,255,0.03)",
+                          border: "1px solid",
+                          borderColor: active ? "var(--accent)" : "rgba(255,255,255,0.06)",
+                          color: active ? "var(--bg)" : "var(--text)",
                           cursor: "pointer",
-                          padding: 0,
-                          transition: "all 0.3s ease",
-                          transform: active ? "scale(1.05)" : "scale(1)"
+                          transition: "all 0.2s ease"
                         }}
                       >
-                        <div style={{
-                          width: "64px",
-                          height: "64px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "1.1rem",
-                          fontWeight: 800,
-                          background: active ? "rgba(245, 200, 66, 0.15)" : "rgba(255,255,255,0.03)",
-                          border: "2px solid",
-                          borderColor: active ? "var(--accent)" : "rgba(255,255,255,0.1)",
-                          boxShadow: active ? "0 0 20px rgba(245, 200, 66, 0.2)" : "none",
-                          transition: "all 0.3s ease",
-                          color: active ? "var(--accent)" : "var(--text)"
-                        }}>
-                          {initials}
-                        </div>
-                        <span style={{ 
-                          fontSize: "0.75rem", 
-                          fontWeight: 700, 
-                          color: active ? "var(--accent)" : "var(--muted)",
-                          whiteSpace: "nowrap"
-                        }}>{barber.full_name.split(" ")[0]}</span>
+                        <strong style={{ fontSize: "0.95rem", letterSpacing: "0.02em" }}>
+                          {formatHour(slot.start, timezone)}
+                        </strong>
+                        {!barberId && (
+                          <span style={{ fontSize: "0.55rem", opacity: active ? 0.8 : 0.4, fontWeight: 700, textTransform: "uppercase" }}>
+                            {slot.barberName.split(" ")[0]}
+                          </span>
+                        )}
                       </button>
                     );
                   })
                 ) : (
-                  <div className="stack" style={{ gap: 4, opacity: 0.5, padding: "20px 0" }}>
-                    <small>No hay otros profesionales disponibles</small>
-                    <small style={{ fontSize: "0.7rem" }}>para este servicio en esta fecha.</small>
+                  <div className="notice" style={{ gridColumn: "span 3", textAlign: "center", fontSize: "0.85rem", opacity: 0.7 }}>
+                    {barberId
+                      ? isTodaySelected
+                        ? "Este barbero ya no tiene turnos disponibles hoy. En la zona horaria del local ya pasó el último horario posible para este servicio. Probá con otro profesional o elegí otra fecha."
+                        : "Este barbero no tiene turnos disponibles para la fecha elegida. Probá con otro profesional o elegí otra fecha."
+                      : isTodaySelected
+                        ? "Hoy ya no quedan turnos disponibles. En la zona horaria del local ya pasó el último horario posible para este servicio. Probá con otra fecha."
+                        : "No hay turnos disponibles para la fecha elegida. Por favor, seleccioná otra fecha."
+                    }
                   </div>
                 )}
               </div>
@@ -446,66 +640,8 @@ export function QuickBookingFlow({
           </div>
         </div>
 
-        {/* STEP 2: PROFESSIONAL & SLOT SELECTION (SLOTS) */}
-        <div className="stack" style={{ gap: 20 }}>
-          <div className="stack" style={{ gap: 6 }}>
-            <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Horarios Disponibles</span>
-          </div>
-
-          <div 
-            className="grid" 
-            style={{ 
-              gridTemplateColumns: "repeat(3, 1fr)", 
-              gap: "8px", 
-              width: "100%" 
-            }}
-          >
-            {availabilityLoading ? (
-              <div className="muted" style={{ gridColumn: "span 3", textAlign: "center", padding: "40px" }}>Buscando espacios...</div>
-            ) : slots.length > 0 ? (
-              slots.map((slot) => {
-                const active = `${slot.barberId}-${slot.start}` === selectedSlotId;
-                return (
-                  <button
-                    key={`${slot.barberId}-${slot.start}`}
-                    type="button"
-                    onClick={() => handleSlotSelect(slot)}
-                    style={{
-                      height: "48px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: "12px",
-                      background: active ? "var(--accent)" : "rgba(255,255,255,0.03)",
-                      border: "1px solid",
-                      borderColor: active ? "var(--accent)" : "rgba(255,255,255,0.06)",
-                      color: active ? "var(--bg)" : "var(--text)",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    <strong style={{ fontSize: "0.95rem", letterSpacing: "0.02em" }}>
-                      {formatHour(slot.start, timezone)}
-                    </strong>
-                    {!barberId && (
-                      <span style={{ fontSize: "0.55rem", opacity: active ? 0.8 : 0.4, fontWeight: 700, textTransform: "uppercase" }}>
-                        {slot.barberName.split(" ")[0]}
-                      </span>
-                    )}
-                  </button>
-                );
-              })
-            ) : (
-              <div className="notice" style={{ gridColumn: "span 3", textAlign: "center", fontSize: "0.85rem", opacity: 0.7 }}>
-                {date ? "No hay turnos para este día." : "Seleccioná un día para ver horarios."}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* STEP 3: PERSONAL DATA & CONFIRMATION */}
-        <div ref={step3Ref} className="stack" style={{ gap: 20, padding: "20px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
+        <div ref={step3Ref} className="stack" style={{ gap: 20, padding: "10px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
           <div className="stack" style={{ gap: 6 }}>
             <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "white" }}>Finalizar Reserva</h2>
             <p className="muted" style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)" }}>Confirmá los detalles para asegurar tu lugar.</p>
@@ -551,7 +687,7 @@ export function QuickBookingFlow({
 
             {/* INPUTS SECTION (High Contrast Refined) */}
             <div className="stack" style={{ gap: 24 }}>
-              {error ? <div className="notice error" style={{ fontSize: "0.85rem", padding: "12px", background: "rgba(255,100,100,0.1)", border: "1px solid #ff4444", borderRadius: "8px" }}>{error}</div> : null}
+              {error ? <div className="notice error" style={{ fontSize: "0.85rem", padding: "12px", background: "rgba(255,100,100,0.1)", border: "1px solid #ff4444", borderRadius: "8px" }}><strong style={{ display: "block", marginBottom: validationIssues.length ? "8px" : 0 }}>{error}</strong>{validationIssues.length ? <div className="stack" style={{ gap: 4 }}>{validationIssues.map((issue) => <small key={issue} style={{ color: "#ffbaba", fontSize: "0.78rem" }}>- {issue}</small>)}</div> : null}</div> : null}
               
               <div className="grid cols-2-mobile-stack" style={{ gap: "24px" }}>
                 <div className="stack" style={{ gap: 10, flex: 1 }}>
@@ -595,24 +731,82 @@ export function QuickBookingFlow({
                 </div>
               </div>
 
-              <div className="stack" style={{ gap: 10 }}>
-                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Notas (opcional)</span>
-                <textarea 
-                  value={notes} 
-                  onChange={(event) => setNotes(event.target.value)} 
-                  rows={2} 
-                  style={{ 
-                    padding: "16px", 
-                    borderRadius: "12px", 
-                    fontSize: "1rem", 
-                    resize: "none",
-                    background: "#1c1c1c",
-                    border: "2px solid rgba(255,255,255,0.15)",
-                    color: "#ffffff",
-                    outline: "none",
-                    width: "100%"
-                  }} 
-                />
+              <div className="stack" style={{ gap: 8 }}>
+                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Pago</span>
+                <div className="summary-card" style={{ gap: 8, padding: "14px 16px", borderRadius: "18px" }}>
+                  {!paymentMethod ? <small className="muted" style={{ fontSize: "0.72rem" }}>Elegí una forma de pago para ver cuánto pagás ahora.</small> : null}
+                  {isPayAtStore ? <small className="muted" style={{ fontSize: "0.72rem" }}>En efectivo no se cobra seña online y solo podés reservar turnos para hoy.</small> : null}
+                  {paymentBreakdown ? (
+                    <div className="stack" style={{ gap: 6 }}>
+                      <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
+                        <small className="muted" style={{ fontSize: "0.72rem" }}>Total del servicio</small>
+                        <strong style={{ fontSize: "0.8rem" }}>{selectedService ? formatCurrency(selectedService.price) : "-"}</strong>
+                      </div>
+                      <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
+                        <small className="muted" style={{ fontSize: "0.72rem" }}>Pagás ahora</small>
+                        <strong style={{ fontSize: "0.8rem", color: "var(--accent)" }}>{formatCurrency(paymentBreakdown.amountRequiredNow)}</strong>
+                      </div>
+                      {paymentBreakdown.amountPendingAtStore > 0 ? (
+                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
+                          <small className="muted" style={{ fontSize: "0.72rem" }}>Saldo pendiente</small>
+                          <strong style={{ fontSize: "0.8rem" }}>{formatCurrency(paymentBreakdown.amountPendingAtStore)}</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Forma de pago</span>
+                  <div className="filter-row" style={{ flexWrap: "nowrap", gap: 8, justifyContent: "center", width: "100%" }}>
+                    {paymentSettings?.allowPayAtStore ? (
+                      <button type="button" className={`chip-button${paymentMethod === "pay_at_store" ? " active" : ""}`} onClick={() => setPaymentMethod("pay_at_store")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "pay_at_store" ? "var(--accent)" : undefined, background: paymentMethod === "pay_at_store" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "pay_at_store" ? "var(--accent)" : undefined }}>
+                        Efectivo
+                      </button>
+                    ) : null}
+                    {paymentSettings?.allowBankTransfer ? (
+                      <button type="button" className={`chip-button${paymentMethod === "bank_transfer" ? " active" : ""}`} onClick={() => setPaymentMethod("bank_transfer")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "bank_transfer" ? "var(--accent)" : undefined, background: paymentMethod === "bank_transfer" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "bank_transfer" ? "var(--accent)" : undefined }}>
+                        Transferencia
+                      </button>
+                    ) : null}
+                    {paymentSettings?.allowMercadoPago ? (
+                      <button type="button" className={`chip-button${paymentMethod === "mercado_pago" ? " active" : ""}`} onClick={() => setPaymentMethod("mercado_pago")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "mercado_pago" ? "var(--accent)" : undefined, background: paymentMethod === "mercado_pago" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "mercado_pago" ? "var(--accent)" : undefined }}>
+                        Mercado Pago
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div style={{ height: "4px" }} />
+                  {(paymentMethod === "bank_transfer" || paymentMethod === "mercado_pago") && paymentBreakdown?.supportsFullPayment ? (
+                    <>
+                      <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Qué vas a pagar ahora</span>
+                      <div className="filter-row" style={{ flexWrap: "nowrap", gap: 8, justifyContent: "center", width: "100%" }}>
+                        <button type="button" className={`chip-button${payInFull ? "" : " active"}`} onClick={() => setPayInFull(false)} style={{ minHeight: "34px", padding: "0 12px", fontSize: "0.74rem", borderColor: !payInFull ? "var(--accent)" : undefined, background: !payInFull ? "rgba(245, 200, 66, 0.12)" : undefined, color: !payInFull ? "var(--accent)" : undefined }}>
+                          Seña {formatCurrency(paymentBreakdown.minimumAmountRequiredNow)}
+                        </button>
+                        <button type="button" className={`chip-button${payInFull ? " active" : ""}`} onClick={() => setPayInFull(true)} style={{ minHeight: "34px", padding: "0 12px", fontSize: "0.74rem", borderColor: payInFull ? "var(--accent)" : undefined, background: payInFull ? "rgba(245, 200, 66, 0.12)" : undefined, color: payInFull ? "var(--accent)" : undefined }}>
+                          Total {selectedService ? formatCurrency(selectedService.price) : ""}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {paymentMethod === "bank_transfer" && paymentSettings ? (
+                    <div className="stack" style={{ gap: 6 }}>
+                      {paymentSettings.transferAlias ? (
+                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 8, flexDirection: "row" }}>
+                          <small className="muted" style={{ fontSize: "0.72rem" }}>Alias: {paymentSettings.transferAlias}</small>
+                          <button type="button" className="chip-button" onClick={() => copyToClipboard(paymentSettings.transferAlias || "", "Alias")} style={{ minHeight: "30px", padding: "0 10px", fontSize: "0.7rem" }}>Copiar</button>
+                        </div>
+                      ) : null}
+                      {paymentSettings.transferCbu ? (
+                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 8, flexDirection: "row" }}>
+                          <small className="muted" style={{ fontSize: "0.72rem" }}>CBU: {paymentSettings.transferCbu}</small>
+                          <button type="button" className="chip-button" onClick={() => copyToClipboard(paymentSettings.transferCbu || "", "CBU")} style={{ minHeight: "30px", padding: "0 10px", fontSize: "0.7rem" }}>Copiar</button>
+                        </div>
+                      ) : null}
+                      {copyFeedback ? <small className="muted" style={{ fontSize: "0.72rem" }}>{copyFeedback}</small> : null}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
@@ -621,15 +815,21 @@ export function QuickBookingFlow({
             <button 
               className="btn" 
               type="button" 
-              disabled={submitting || !selectedSlot || !selectedService} 
+              disabled={submitting || !selectedSlot || !selectedService || !paymentMethod || !paymentBreakdown} 
               onClick={handleSubmit}
               style={{ width: "100%", height: "56px", fontSize: "1.1rem", fontWeight: 800 }}
             >
-              {submitting ? "Procesando..." : "Confirmar Reserva"}
+              {submitting
+                ? "Procesando..."
+                : !paymentMethod
+                  ? "Elegí una forma de pago"
+                  : paymentMethod === "bank_transfer"
+                    ? `Confirmar transferencia por ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
+                    : `Confirmar reserva para hoy`}
             </button>
             
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <Link className="btn-ghost" href={`/${slug}`} style={{ border: "none", opacity: 0.5, fontSize: "0.8rem" }}>
+            <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+              <Link className="btn-ghost" href={`/${slug}`} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%", maxWidth: "420px" }}>
                 Cancelar y volver
               </Link>
             </div>
@@ -639,3 +839,50 @@ export function QuickBookingFlow({
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

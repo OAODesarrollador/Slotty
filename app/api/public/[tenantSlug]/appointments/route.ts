@@ -11,6 +11,8 @@ function payloadFromFormData(formData: FormData) {
     barberId: String(formData.get("barberId") ?? ""),
     serviceId: String(formData.get("serviceId") ?? ""),
     scheduledAt: String(formData.get("scheduledAt") ?? formData.get("datetimeStart") ?? ""),
+    paymentMethod: String(formData.get("paymentMethod") ?? "pay_at_store"),
+    payInFull: String(formData.get("payInFull") ?? "false") === "true",
     customer: {
       name: String(formData.get("name") ?? formData.get("fullName") ?? ""),
       phone: String(formData.get("phone") ?? "")
@@ -19,7 +21,7 @@ function payloadFromFormData(formData: FormData) {
   };
 }
 
-function resolveRedirectBase(request: Request, tenantSlug: string, payload: unknown) {
+function resolveRedirectBase(tenantSlug: string, payload: unknown) {
   const fallback = `/${tenantSlug}/reservar`;
   if (!payload || typeof payload !== "object" || !("redirectBase" in payload)) {
     return fallback;
@@ -44,10 +46,6 @@ export async function POST(
   const isJson = contentType.includes("application/json");
 
   const rawPayload = isJson ? await request.json() : payloadFromFormData(await request.formData());
-  console.log("=== APPOINTMENT PAYLOAD RECEIVED ===");
-  console.log(rawPayload);
-  console.log("=====================================");
-
   const parsed = appointmentPayloadSchema.safeParse(rawPayload);
 
   if (!parsed.success) {
@@ -55,7 +53,7 @@ export async function POST(
       return fail("Payload inválido.", 400, parsed.error.flatten());
     }
 
-    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
+    const redirectBase = resolveRedirectBase(tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=Payload%20invalido`, request.url));
   }
 
@@ -65,7 +63,8 @@ export async function POST(
       barberId: parsed.data.barberId,
       serviceId: parsed.data.serviceId,
       datetimeStart: new Date(parsed.data.scheduledAt),
-      paymentMethod: "pay_at_store",
+      paymentMethod: parsed.data.paymentMethod,
+      payInFull: parsed.data.payInFull,
       customer: {
         fullName: parsed.data.customer.name,
         phone: parsed.data.customer.phone,
@@ -80,12 +79,12 @@ export async function POST(
       return ok(result, { status: 201 });
     }
 
+    if (result.checkoutUrl) {
+      return NextResponse.redirect(result.checkoutUrl);
+    }
+
     return NextResponse.redirect(new URL(`/${tenantSlug}/mi-turno/${result.appointmentId}`, request.url));
   } catch (error: unknown) {
-    console.error("=== CREATE APPOINTMENT ERROR ===");
-    console.error(error);
-    console.error("=================================");
-
     const message = error instanceof Error ? error.message : "No se pudo crear la reserva.";
     const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
     const status = code === "23P01" || message === "Este horario ya no está disponible." ? 409 : 400;
@@ -94,7 +93,7 @@ export async function POST(
       return fail(message, status);
     }
 
-    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
+    const redirectBase = resolveRedirectBase(tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=${encodeURIComponent(message)}`, request.url));
   }
 }

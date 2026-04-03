@@ -21,6 +21,8 @@ export const appointmentPayloadSchema = z.object({
   barberId: z.string().uuid(),
   serviceId: z.string().uuid(),
   scheduledAt: z.string().datetime({ offset: true }),
+  paymentMethod: z.enum(["pay_at_store", "bank_transfer", "mercado_pago"]),
+  payInFull: z.boolean().optional().default(false),
   customer: z.object({
     name: z.string().trim().min(2),
     phone: z.string().trim().min(6)

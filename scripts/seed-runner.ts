@@ -73,8 +73,8 @@ export async function main() {
     const tenantResult = await pool.query<{ id: string }>(
       `
         INSERT INTO tenants (name, slug, booking_mode, deposit_type, deposit_value, allow_mercado_pago)
-        VALUES ($1, $2, 'pay_at_store', 'none', 0, true)
-        ON CONFLICT (slug) DO UPDATE SET updated_at = now()
+        VALUES ($1, $2, 'pay_at_store', 'none', 0, false)
+        ON CONFLICT (slug) DO UPDATE SET allow_mercado_pago = EXCLUDED.allow_mercado_pago, updated_at = now()
         RETURNING id
       `,
       [data.name, data.slug]

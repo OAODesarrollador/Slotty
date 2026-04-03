@@ -4,6 +4,7 @@ import { dateKeyInTimeZone, nowInTimeZone } from "@/lib/time";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { listBarbersForService } from "@/repositories/barbers";
 import { listPublicServices } from "@/repositories/services";
+import { getTenantSettings } from "@/repositories/tenants";
 
 export default async function ServicesPage({
   params,
@@ -15,7 +16,10 @@ export default async function ServicesPage({
   const { tenant: slug } = await params;
   const search = await searchParams;
   const tenant = await requireTenantBySlug(slug);
-  const services = await listPublicServices(tenant.tenantId);
+  const [services, tenantSettings] = await Promise.all([
+    listPublicServices(tenant.tenantId),
+    getTenantSettings(tenant.tenantId)
+  ]);
   const barbersByServiceEntries = await Promise.all(
     services.map(async (service) => [service.id, await listBarbersForService(tenant.tenantId, service.id)] as const)
   );
@@ -30,6 +34,17 @@ export default async function ServicesPage({
         timezone={tenant.timezone}
         services={services}
         barbersByService={Object.fromEntries(barbersByServiceEntries)}
+        paymentSettings={tenantSettings ? {
+          depositType: tenantSettings.deposit_type,
+          depositValue: tenantSettings.deposit_value,
+          allowPayAtStore: tenantSettings.allow_pay_at_store,
+          allowBankTransfer: tenantSettings.allow_bank_transfer,
+          allowMercadoPago: tenantSettings.mercado_pago_ready,
+          transferAlias: tenantSettings.transfer_alias,
+          transferCbu: tenantSettings.transfer_cbu,
+          transferHolderName: tenantSettings.transfer_holder_name,
+          transferBankName: tenantSettings.transfer_bank_name
+        } : null}
         initialServiceId={search.serviceId}
         initialDate={initialDate}
         minDate={todayDate}
