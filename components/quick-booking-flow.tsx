@@ -54,24 +54,26 @@ interface QuickBookingFlowProps {
   initialBarberId?: string;
   initialSlotStart?: string;
   initialError?: string;
+  hideErrors?: boolean; // Nuevo: para silenciar errores solo en la demo
 }
 
 export function QuickBookingFlow({
   slug,
   tenantName,
   timezone,
-  services,
-  barbersByService,
+  services = [],
+  barbersByService = {},
   paymentSettings,
   initialServiceId,
   initialDate,
   minDate,
   initialBarberId,
   initialSlotStart,
-  initialError
+  initialError,
+  hideErrors = false // Falso por defecto para que las reservas reales sigan mostrando avisos
 }: QuickBookingFlowProps) {
   const router = useRouter();
-  const [serviceId, setServiceId] = useState(initialServiceId ?? services[0]?.id ?? "");
+  const [serviceId, setServiceId] = useState(initialServiceId ?? (services && services.length > 0 ? services[0].id : ""));
   const [date, setDate] = useState(initialDate);
   const [barberId, setBarberId] = useState(initialBarberId ?? "");
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
@@ -338,7 +340,7 @@ export function QuickBookingFlow({
   };
   return (
     <main className="page" style={{ paddingBottom: "100px" }}>
-      <section className="shell stack" style={{ gap: "35px", paddingTop: "0" }}>
+      <section className="shell stack shell-center" style={{ gap: "35px", paddingTop: "0" }}>
         
         <div className="header-row">
           <div className="stack" style={{ gap: 8 }}>
@@ -356,7 +358,7 @@ export function QuickBookingFlow({
             <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Seleccioná el Servicio</h2>
           </div>
           
-          <div className="list service-grid-mobile">
+          <div className="list service-grid-mobile selection-grid">
             {services.map((service) => {
               const active = service.id === serviceId;
               return (
@@ -580,10 +582,9 @@ export function QuickBookingFlow({
               </div>
 
               <div 
-                className="grid" 
+                className="grid service-grid-mobile selection-grid" 
                 style={{ 
-                  gridTemplateColumns: "repeat(3, 1fr)", 
-                  gap: "8px", 
+                  gap: "10px", 
                   width: "100%" 
                 }}
               >
@@ -643,53 +644,63 @@ export function QuickBookingFlow({
         {/* STEP 3: PERSONAL DATA & CONFIRMATION */}
         <div ref={step3Ref} className="stack" style={{ gap: 20, padding: "10px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
           <div className="stack" style={{ gap: 6 }}>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "white" }}>Finalizar Reserva</h2>
-            <p className="muted" style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)" }}>Confirmá los detalles para asegurar tu lugar.</p>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "white" }}>Finalizar Reserva</h2>
+            <p className="muted" style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.6)" }}>Confirmá los detalles para asegurar tu lugar.</p>
           </div>
 
-          <div className="stack" style={{ gap: 24 }}>
-            {/* TICKET SUMMARY (Compact & Balanced) */}
+          <div className="stack" style={{ gap: 24, maxWidth: "700px", margin: "0 auto", width: "100%" }}>
+            
+            {/* TICKET SUMMARY (RESTORING ORIGINAL VERTICAL POSITION) */}
             <div className="summary-card" style={{ 
               background: "#161616", 
               border: "1px solid rgba(245, 200, 66, 0.3)", 
-              padding: "16px",
-              borderRadius: "16px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
+              padding: "20px",
+              borderRadius: "20px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.5)"
             }}>
-              <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.65rem", display: "block", marginBottom: "16px", letterSpacing: "0.05em", fontWeight: 900 }}>DETALLE DEL TURNO</span>
+              <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.7rem", display: "block", marginBottom: "16px", letterSpacing: "0.08em", fontWeight: 900 }}>DETALLE DEL TURNO</span>
               
-              <div className="stack" style={{ gap: "4px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "2px" }}>
-                  <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Servicio</span>
-                  <strong style={{ fontSize: "0.8rem", color: "white" }}>{selectedService?.name || "-"}</strong>
+              <div className="stack" style={{ gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "6px" }}>
+                  <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase" }}>Servicio</span>
+                  <strong style={{ fontSize: "0.85rem", color: "white" }}>{selectedService?.name || "-"}</strong>
                 </div>
                 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "2px" }}>
-                  <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Profesional</span>
-                  <strong style={{ fontSize: "0.8rem", color: "white" }}>{selectedSlot?.barberName?.split(" ")[0] || "-"}</strong>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "6px" }}>
+                  <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase" }}>Profesional</span>
+                  <strong style={{ fontSize: "0.85rem", color: "white" }}>{selectedSlot?.barberName || "-"}</strong>
                 </div>
                 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>Fecha y Hora</span>
-                  <strong style={{ fontSize: "0.8rem", color: "var(--accent)" }}>
+                  <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase" }}>Fecha y Hora</span>
+                  <strong style={{ fontSize: "0.85rem", color: "var(--accent)" }}>
                     {selectedSlot ? formatDateTime(selectedSlot.start, timezone).replace(" ", " \u00B7 ") : "-"}
                   </strong>
                 </div>
               </div>
 
-              <div style={{ height: "1px", background: "rgba(245, 200, 66, 0.2)", margin: "10px 0" }} />
+              <div style={{ height: "1px", background: "rgba(245, 200, 66, 0.2)", margin: "16px 0" }} />
               
-              <div className="summary-row" style={{ justifyContent: "space-between", display: "flex", alignItems: "center" }}>
-                <span style={{ fontWeight: 800, fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>TOTAL</span>
-                <span className="price-tag" style={{ fontSize: "1.25rem", color: "var(--accent)", fontWeight: 900 }}>{selectedService ? formatCurrency(selectedService.price) : "-"}</span>
+              <div className="summary-row" style={{ justifyContent: "space-between", display: "flex", alignItems: "center", flexDirection: "row" }}>
+                <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>TOTAL</span>
+                <span className="price-tag" style={{ fontSize: "1.5rem", color: "var(--accent)", fontWeight: 900 }}>{selectedService ? formatCurrency(selectedService.price) : "-"}</span>
               </div>
             </div>
 
-            {/* INPUTS SECTION (High Contrast Refined) */}
+            {/* INPUTS SECTION */}
             <div className="stack" style={{ gap: 24 }}>
-              {error ? <div className="notice error" style={{ fontSize: "0.85rem", padding: "12px", background: "rgba(255,100,100,0.1)", border: "1px solid #ff4444", borderRadius: "8px" }}><strong style={{ display: "block", marginBottom: validationIssues.length ? "8px" : 0 }}>{error}</strong>{validationIssues.length ? <div className="stack" style={{ gap: 4 }}>{validationIssues.map((issue) => <small key={issue} style={{ color: "#ffbaba", fontSize: "0.78rem" }}>- {issue}</small>)}</div> : null}</div> : null}
+            {error && !hideErrors ? (
+                <div className="notice error" style={{ fontSize: "0.85rem", padding: "12px", background: "rgba(255,100,100,0.1)", border: "1px solid #ff4444", borderRadius: "8px" }}>
+                  <strong style={{ display: "block", marginBottom: validationIssues.length ? "8px" : 0 }}>{error}</strong>
+                  {validationIssues.length ? (
+                    <div className="stack" style={{ gap: 4 }}>
+                      {validationIssues.map((issue) => <small key={issue} style={{ color: "#ffbaba", fontSize: "0.78rem" }}>- {issue}</small>)}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               
-              <div className="grid cols-2-mobile-stack" style={{ gap: "24px" }}>
+              <div className="grid cols-2" style={{ gap: "24px" }}>
                 <div className="stack" style={{ gap: 10, flex: 1 }}>
                   <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Nombre completo</span>
                   <input 
@@ -746,92 +757,47 @@ export function QuickBookingFlow({
                         <small className="muted" style={{ fontSize: "0.72rem" }}>Pagás ahora</small>
                         <strong style={{ fontSize: "0.8rem", color: "var(--accent)" }}>{formatCurrency(paymentBreakdown.amountRequiredNow)}</strong>
                       </div>
-                      {paymentBreakdown.amountPendingAtStore > 0 ? (
-                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
-                          <small className="muted" style={{ fontSize: "0.72rem" }}>Saldo pendiente</small>
-                          <strong style={{ fontSize: "0.8rem" }}>{formatCurrency(paymentBreakdown.amountPendingAtStore)}</strong>
-                        </div>
-                      ) : null}
                     </div>
                   ) : null}
 
                   <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Forma de pago</span>
-                  <div className="filter-row" style={{ flexWrap: "nowrap", gap: 8, justifyContent: "center", width: "100%" }}>
-                    {paymentSettings?.allowPayAtStore ? (
-                      <button type="button" className={`chip-button${paymentMethod === "pay_at_store" ? " active" : ""}`} onClick={() => setPaymentMethod("pay_at_store")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "pay_at_store" ? "var(--accent)" : undefined, background: paymentMethod === "pay_at_store" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "pay_at_store" ? "var(--accent)" : undefined }}>
-                        Efectivo
-                      </button>
-                    ) : null}
-                    {paymentSettings?.allowBankTransfer ? (
-                      <button type="button" className={`chip-button${paymentMethod === "bank_transfer" ? " active" : ""}`} onClick={() => setPaymentMethod("bank_transfer")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "bank_transfer" ? "var(--accent)" : undefined, background: paymentMethod === "bank_transfer" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "bank_transfer" ? "var(--accent)" : undefined }}>
-                        Transferencia
-                      </button>
-                    ) : null}
-                    {paymentSettings?.allowMercadoPago ? (
-                      <button type="button" className={`chip-button${paymentMethod === "mercado_pago" ? " active" : ""}`} onClick={() => setPaymentMethod("mercado_pago")} style={{ minHeight: "42px", minWidth: "0", flex: 1, padding: "0 12px", fontSize: "0.78rem", justifyContent: "center", whiteSpace: "nowrap", borderColor: paymentMethod === "mercado_pago" ? "var(--accent)" : undefined, background: paymentMethod === "mercado_pago" ? "rgba(245, 200, 66, 0.12)" : undefined, color: paymentMethod === "mercado_pago" ? "var(--accent)" : undefined }}>
-                        Mercado Pago
-                      </button>
-                    ) : null}
+                  <div className="filter-row" style={{ flexWrap: "wrap", gap: 8, justifyContent: "center", width: "100%" }}>
+                    {paymentSettings?.allowPayAtStore && (
+                      <button type="button" className={`chip-button${paymentMethod === "pay_at_store" ? " active" : ""}`} onClick={() => setPaymentMethod("pay_at_store")} style={{ minHeight: "42px", flex: 1 }}>Efectivo</button>
+                    )}
+                    {paymentSettings?.allowBankTransfer && (
+                      <button type="button" className={`chip-button${paymentMethod === "bank_transfer" ? " active" : ""}`} onClick={() => setPaymentMethod("bank_transfer")} style={{ minHeight: "42px", flex: 1 }}>Transferencia</button>
+                    )}
+                    {paymentSettings?.allowMercadoPago && (
+                      <button type="button" className={`chip-button${paymentMethod === "mercado_pago" ? " active" : ""}`} onClick={() => setPaymentMethod("mercado_pago")} style={{ minHeight: "42px", flex: 1 }}>Mercado Pago</button>
+                    )}
                   </div>
-
-                  <div style={{ height: "4px" }} />
-                  {(paymentMethod === "bank_transfer" || paymentMethod === "mercado_pago") && paymentBreakdown?.supportsFullPayment ? (
-                    <>
-                      <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Qué vas a pagar ahora</span>
-                      <div className="filter-row" style={{ flexWrap: "nowrap", gap: 8, justifyContent: "center", width: "100%" }}>
-                        <button type="button" className={`chip-button${payInFull ? "" : " active"}`} onClick={() => setPayInFull(false)} style={{ minHeight: "34px", padding: "0 12px", fontSize: "0.74rem", borderColor: !payInFull ? "var(--accent)" : undefined, background: !payInFull ? "rgba(245, 200, 66, 0.12)" : undefined, color: !payInFull ? "var(--accent)" : undefined }}>
-                          Seña {formatCurrency(paymentBreakdown.minimumAmountRequiredNow)}
-                        </button>
-                        <button type="button" className={`chip-button${payInFull ? " active" : ""}`} onClick={() => setPayInFull(true)} style={{ minHeight: "34px", padding: "0 12px", fontSize: "0.74rem", borderColor: payInFull ? "var(--accent)" : undefined, background: payInFull ? "rgba(245, 200, 66, 0.12)" : undefined, color: payInFull ? "var(--accent)" : undefined }}>
-                          Total {selectedService ? formatCurrency(selectedService.price) : ""}
-                        </button>
-                      </div>
-                    </>
-                  ) : null}
-
-                  {paymentMethod === "bank_transfer" && paymentSettings ? (
-                    <div className="stack" style={{ gap: 6 }}>
-                      {paymentSettings.transferAlias ? (
-                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 8, flexDirection: "row" }}>
-                          <small className="muted" style={{ fontSize: "0.72rem" }}>Alias: {paymentSettings.transferAlias}</small>
-                          <button type="button" className="chip-button" onClick={() => copyToClipboard(paymentSettings.transferAlias || "", "Alias")} style={{ minHeight: "30px", padding: "0 10px", fontSize: "0.7rem" }}>Copiar</button>
-                        </div>
-                      ) : null}
-                      {paymentSettings.transferCbu ? (
-                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 8, flexDirection: "row" }}>
-                          <small className="muted" style={{ fontSize: "0.72rem" }}>CBU: {paymentSettings.transferCbu}</small>
-                          <button type="button" className="chip-button" onClick={() => copyToClipboard(paymentSettings.transferCbu || "", "CBU")} style={{ minHeight: "30px", padding: "0 10px", fontSize: "0.7rem" }}>Copiar</button>
-                        </div>
-                      ) : null}
-                      {copyFeedback ? <small className="muted" style={{ fontSize: "0.72rem" }}>{copyFeedback}</small> : null}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="stack" style={{ gap: 14 }}>
-            <button 
-              className="btn" 
-              type="button" 
-              disabled={submitting || !selectedSlot || !selectedService || !paymentMethod || !paymentBreakdown} 
-              onClick={handleSubmit}
-              style={{ width: "100%", height: "56px", fontSize: "1.1rem", fontWeight: 800 }}
-            >
-              {submitting
-                ? "Procesando..."
-                : !paymentMethod
-                  ? "Elegí una forma de pago"
-                  : paymentMethod === "bank_transfer"
-                    ? `Confirmar transferencia por ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
-                    : `Confirmar reserva para hoy`}
-            </button>
             
-            <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-              <Link className="btn-ghost" href={`/${slug}`} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%", maxWidth: "420px" }}>
-                Cancelar y volver
-              </Link>
+            <div className="stack" style={{ gap: 14 }}>
+               <button 
+                className="btn" 
+                type="button" 
+                disabled={submitting || !selectedSlot || !selectedService || !paymentMethod || !paymentBreakdown} 
+                onClick={handleSubmit}
+                style={{ width: "100%", height: "56px", fontSize: "1.1rem", fontWeight: 800 }}
+              >
+                {submitting
+                  ? "Procesando..."
+                  : !paymentMethod
+                    ? "Elegí una forma de pago"
+                    : paymentMethod === "bank_transfer"
+                      ? `Confirmar transferencia por ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
+                      : `Confirmar reserva`}
+              </button>
+              
+              <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                <Link className="btn-ghost" href={`/${slug}`} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%" }}>
+                  Cancelar y volver
+                </Link>
+              </div>
             </div>
           </div>
         </div>

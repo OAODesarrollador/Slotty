@@ -1,159 +1,239 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getTenants } from "@/repositories/tenants";
+import { HeroScroll } from "@/components/hero-scroll";
+import { ScrollReveal } from "@/components/scroll-reveal";
+import { RootHeader } from "@/components/root-header";
+import { QuickBookingFlow } from "@/components/quick-booking-flow";
+import { ContentExplorer } from "@/components/content-explorer";
+import { AudienceMoment } from "@/components/audience-moment";
+import { PhoneReveal } from "@/components/phone-reveal";
 import styles from "./page.module.css";
-
-// ELEGANT SVG ICONS
-const IconFlow = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/>
-  </svg>
-);
-
-const IconGrowth = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/>
-  </svg>
-);
-
-const IconPremium = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l3 12"/><path d="M13 3l3 6-3 12"/><path d="M2 9h20"/>
-  </svg>
-);
 
 export default async function RootPage() {
   const tenants = await getTenants();
+  const today = new Date().toISOString().split("T")[0];
 
   return (
-    <main className="page">
-      {/* 1. HERO IMMERSIVE */}
-      <section className={styles.heroSection}>
-        <div className={styles.heroMedia}>
-          <Image
-            src="/Barberia.png"
-            alt="Slotty Luxury Experience"
-            fill
-            priority
-            className={styles.heroImage}
-            sizes="100vw"
-          />
-          <div className={styles.heroMask} />
-          <div className={styles.heroGlow} />
-        </div>
-        
-        <div className={styles.heroContent}>
-          <span className={styles.sectionLabel} style={{ color: "#fff", opacity: 0.8 }}>BIENVENIDO AL FUTURO</span>
-          <h1 className={styles.gradientTitle}>Transformamos cada Turno en una Experiencia de Lujo.</h1>
-          <p className={styles.heroSubtitle}>
-            Slotty es la plataforma definitiva donde la tecnología de vanguardia se encuentra con la excelencia del servicio. 
-            No gestionamos simples agendas, potenciamos marcas de prestigio.
-          </p>
-          <div className={styles.ctaGroup}>
-            <a href="#sedes" className="btn">Explorar Sedes</a>
-            <button className="btn-secondary" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
-              Saber más
-            </button>
-          </div>
-        </div>
-      </section>
+    <div className={styles.rootContainer}>
+      <ScrollReveal />
+      <RootHeader />
+      
+      {/* 1. HERO SCROLL */}
+      <HeroScroll tenants={tenants} />
 
-      {/* 2. VALUES NARRATIVE */}
-      <section className={styles.valuesSection}>
-        <span className={styles.sectionLabel}>EL ESTÁNDAR SLOTTY</span>
-        <h2 className={styles.sectionTitle}>Elevamos tu negocio al siguiente nivel.</h2>
-        
-        <div className={styles.valueGrid}>
-          <div className={styles.valueCard}>
-            <div className={styles.iconWrapper}>
-              <IconFlow />
-            </div>
-            <h3>Libertad Total</h3>
-            <p className="muted">
-              Tus clientes se suman a la fila desde donde estén, eliminando el estrés de la espera física. 
-              Fluidez absoluta para un servicio impecable.
-            </p>
+      <main className={styles.mainContent}>
+        {/* 2. SOLUTIONS FOR EVERY BUSINESS */}
+        <section id="solutions" className={styles.solutionsWrapper} data-animate>
+          <div className={styles.sectionHeader}>
+            <span className={styles.tagline}>Soluciones integrales</span>
+            <h2 className={styles.serifTitle}>Una plataforma, infinitas posibilidades.</h2>
           </div>
-          <div className={styles.valueCard}>
-            <div className={styles.iconWrapper}>
-              <IconGrowth />
-            </div>
-            <h3>Crecimiento Exponencial</h3>
-            <p className="muted">
-              Reservas automáticas, recordatorios inteligentes y optimización de agenda en tiempo real. 
-              Crecé sin límites operativos.
-            </p>
-          </div>
-          <div className={styles.valueCard}>
-            <div className={styles.iconWrapper}>
-              <IconPremium />
-            </div>
-            <h3>Prestigio Digital</h3>
-            <p className="muted">
-              Una interfaz que respira lujo y exclusividad. Proyectá la imagen de modernidad 
-              que tu marca y tus clientes merecen.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. DIRECTORY VIP */}
-      <section id="sedes" className={styles.directorySection}>
-        <div style={{ marginBottom: "60px" }}>
-          <span className={styles.sectionLabel}>DIRECTORIO EXCLUSIVO</span>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: "16px" }}>Nuestras Sedes Seleccionadas</h2>
-          <p className="muted" style={{ fontSize: "1.2rem" }}>Descubrí donde la perfección se encuentra con el estilo.</p>
-        </div>
-
-        <div className={styles.vipGrid}>
-          {tenants.map((tenant) => (
-            <Link key={tenant.id} href={`/${tenant.slug}`} className={styles.vipCard}>
-              <div className={styles.vipLogoContainer}>
-                {tenant.logo_url ? (
-                  <Image 
-                    src={tenant.logo_url} 
-                    alt={tenant.name} 
-                    fill 
-                    style={{ objectFit: "cover" }} 
-                  />
-                ) : (
-                  <div style={{ 
-                    width: "100%", 
-                    height: "100%", 
-                    display: "flex", 
-                    alignItems: "center", 
-                    justifyContent: "center",
-                    fontSize: "2.5rem",
-                    fontWeight: "900",
-                    color: "var(--accent)",
-                    fontFamily: "var(--font-display)"
-                  }}>
-                    {tenant.name.charAt(0)}
-                  </div>
-                )}
+          
+          <div className={styles.revealGrid}>
+            <div className={styles.revealCard}>
+              <div className={styles.cardVisual}>
+                 <Image 
+                  src="/slotty-pos.png" 
+                  alt="Hardware Terminal" 
+                  fill 
+                  style={{ objectFit: 'contain' }}
+                />
+                <span className={styles.hardwareBadge}>Hardware</span>
               </div>
-              <div className={styles.vipInfo}>
-                <h3 className={styles.vipName}>{tenant.name}</h3>
-                <div className={styles.vipStatus}>
-                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)" }} />
-                  Disponible ahora
+              <div className={styles.cardInfo}>
+                <h3>Terminal POS</h3>
+                <p>Pagos rápidos, seguros y sin complicaciones en el mostrador. Diseñado para el flujo constante de tu negocio.</p>
+              </div>
+            </div>
+
+            <div className={styles.revealCard}>
+              <div className={styles.cardVisual}>
+                 <Image 
+                  src="/slotty-hero.png" 
+                  alt="Software Interface" 
+                  fill 
+                  style={{ objectFit: 'contain' }}
+                />
+                <span className={styles.softwareBadge}>Software</span>
+              </div>
+              <div className={styles.cardInfo}>
+                <h3>Gestión de citas</h3>
+                <p>Agenda inteligente para tu equipo y tus clientes. Sincronización en tiempo real y recordatorios automáticos.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. INDUSTRY GRID */}
+        <section className={styles.directoryPartners} data-animate>
+          <div className={styles.dirHeaderSection}>
+            <span className={styles.tagline}>Especialización por industria</span>
+            <h2 className={styles.serifTitle}>Para cada tipo de negocio que busca crecer.</h2>
+          </div>
+          <div className={styles.dirPartnerGrid}>
+            <div className={styles.dirPartnerCard}>
+              <div className={styles.iconFrame}>
+                 <Image src="/grid-1.png" alt="Restaurantes" fill style={{ objectFit: 'cover' }} />
+              </div>
+              <div className={styles.cardDetails}>
+                 <span>Restaurantes</span>
+                 <small>POS especializado, gestión de mesas y pedidos online integrados.</small>
+              </div>
+            </div>
+            <div className={styles.dirPartnerCard}>
+              <div className={styles.iconFrame}>
+                 <Image src="/grid-2.png" alt="Retail" fill style={{ objectFit: 'cover' }} />
+              </div>
+              <div className={styles.cardDetails}>
+                 <span>Comercio Minorista</span>
+                 <small>Control de inventario omnicanal y checkout ultrarrápido.</small>
+              </div>
+            </div>
+            <div className={styles.dirPartnerCard}>
+              <div className={styles.iconFrame}>
+                 <Image src="/grid-3.png" alt="Salud" fill style={{ objectFit: 'cover' }} />
+              </div>
+              <div className={styles.cardDetails}>
+                 <span>Salud y Belleza</span>
+                 <small>Fidelización de clientes, suscripciones y pagos recurrentes.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. CONTENT EXPLORER (The Square PwNextContentExplorer Replica) */}
+        <ContentExplorer />
+
+        {/* 5. BLACK IMPACT SECTION (Ecosistema Slotty) */}
+        <section className={styles.blackImpactSection} data-animate>
+          <div className={styles.sectionHeader}>
+            <span className={styles.tagline}>Digital & Retail</span>
+            <h2 className={styles.serifTitle} style={{ color: '#ffffff' }}>Vende donde tus clientes estén.</h2>
+          </div>
+          <p className={styles.impactSubtitle}>Desde el mostrador físico hasta la tienda digital, Slotty unifica todo tu ecosistema en una única plataforma de alto rendimiento.</p>
+          <div className={styles.actionRow}>
+            <Link href="/discovery" className="btn">Explorar socios</Link>
+            <Link href="/admin/login" className="btn-secondary">Empezar ahora — Es gratis</Link>
+          </div>
+        </section>
+
+        {/* 6. AUDIENCE MOMENT (Square Replica) */}
+        <AudienceMoment />
+
+        {/* 7. QUICK BOOKING (Call to Action Interface) */}
+        <section className={styles.quickBookingSection}>
+          <div className={styles.quickBookingContainer}>
+            <div className={styles.quickBookingText}>
+              <span className={styles.tagline} style={{ color: '#006AFF' }}>RESERVA RÁPIDA</span>
+              <h2 className={styles.serifTitle} style={{ color: 'white', fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', maxWidth: '600px', marginBottom: '32px' }}>
+                Tu agenda, <br/> siempre en movimiento.
+              </h2>
+              <p className={styles.impactSubtitle} style={{ textAlign: 'left', margin: '0 0 40px', maxWidth: '480px' }}>
+                Experimenta la fluidez de nuestro sistema de reservas. Diseñado para ser intuitivo tanto para el dueño como para el cliente final.
+              </p>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', flex: 1 }}>
+                  <h4 style={{ color: 'white', marginBottom: '8px' }}>+40%</h4>
+                  <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Incremento en reservas online</p>
+                </div>
+                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', flex: 1 }}>
+                  <h4 style={{ color: 'white', marginBottom: '8px' }}>-25%</h4>
+                  <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Reducción de ausencias</p>
                 </div>
               </div>
-              <div className={styles.vipArrow}>→</div>
-            </Link>
-          ))}
-
-          {tenants.length === 0 && (
-            <div className="card" style={{ textAlign: "center", padding: "80px", gridColumn: "1 / -1" }}>
-              <p className="muted" style={{ fontSize: "1.2rem" }}>Próximamente nuevas sedes exclusivas.</p>
             </div>
-          )}
-        </div>
-      </section>
+            <div className={styles.quickBookingVisual}>
+              <PhoneReveal>
+                <QuickBookingFlow 
+                  slug="root"
+                  tenantName="Slotty Demo"
+                  timezone="UTC"
+                  minDate={today}
+                  initialDate={today}
+                  services={[
+                    { id: "s1", name: "Corte Vanguardia", price: "2500", duration_minutes: 45, description: "Corte premium a tijera o máquina." },
+                    { id: "s2", name: "Perfilado de Barba", price: "1200", duration_minutes: 20, description: "Diseño con toalla caliente." },
+                    { id: "s3", name: "Manicura Express", price: "1800", duration_minutes: 30, description: "Limatado y esmaltado." }
+                  ]}
+                  barbersByService={{
+                    "s1": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }, { id: "b2", full_name: "Julian Cuts", rating: "4.9" }],
+                    "s2": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }],
+                    "s3": [{ id: "b3", full_name: "Maria Nails", rating: "5.0" }]
+                  }}
+                  paymentSettings={{
+                    allowPayAtStore: true,
+                    allowBankTransfer: true,
+                    allowMercadoPago: true,
+                    depositType: "none",
+                    depositValue: "0",
+                    transferAlias: "SLOTTY.DEMO",
+                    transferCbu: "00000031000987654321",
+                    transferHolderName: "Slotty Software Inc",
+                    transferBankName: "Banco de la Nación Argentina"
+                  }}
+                  hideErrors={true} // Silenciador de errores activado para la demo
+                />
+              </PhoneReveal>
+            </div>
+          </div>
+        </section>
 
-      <footer style={{ padding: "100px 0 40px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="muted">© 2026 Slotty Platinum Edition. Todos los derechos reservados.</p>
-      </footer>
-    </main>
+        {/* 8. PARTNER SHOWCASE (Live DB Feed) */}
+        <section className={styles.directoryPartners} style={{ background: '#f9f9f9', padding: '120px 8%' }} data-animate>
+          <div className={styles.sectionHeader}>
+            <span className={styles.tagline}>Nuestra red</span>
+            <h2 className={styles.serifTitle}>Confían en Slotty.</h2>
+          </div>
+          <div className={styles.dirPartnerGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            {tenants.map((t) => (
+              <Link key={t.id} href={`/booking/${t.slug}`} className={styles.dirPartnerCard} style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '24px' }}>
+                <div style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: '#fff', border: '1px solid #eee', flexShrink: 0 }}>
+                   <Image src={t.logo_url || '/slotty-hero.png'} alt={t.name} fill style={{ objectFit: 'cover' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{t.name}</span>
+                  <small style={{ color: '#666' }}>{t.slug}.slotty.me</small>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 9. FOOTER */}
+        <footer className={styles.squareFooter}>
+          <div className={styles.footerGrid}>
+            <div className={styles.footerCol}>
+              <h5>PRODUCTO</h5>
+              <Link href="#">Terminal POS</Link>
+              <Link href="#">Agenda Online</Link>
+              <Link href="#">Pagos</Link>
+              <Link href="#">CRM</Link>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>INDUSTRIAS</h5>
+              <Link href="#">Barberías</Link>
+              <Link href="#">Retail</Link>
+              <Link href="#">Restaurantes</Link>
+              <Link href="#">Servicios Profesionales</Link>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>SOPORTE</h5>
+              <Link href="#">Centro de ayuda</Link>
+              <Link href="#">Seguridad</Link>
+              <Link href="#">Estado del sistema</Link>
+            </div>
+            <div className={styles.footerCol}>
+              <h5>PLATAFORMA</h5>
+              <Link href="/admin/login">Acceso Negocio</Link>
+              <Link href="/discovery">Directorio Global</Link>
+              <Link href="#">API Documentation</Link>
+              <span style={{ fontSize: '0.75rem', color: '#888', display: 'block', marginTop: 40 }}>© 2026 Slotty Software. Todos los derechos reservados.</span>
+            </div>
+          </div>
+        </footer>
+      </main>
+
+    </div>
   );
 }

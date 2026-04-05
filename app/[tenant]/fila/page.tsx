@@ -20,7 +20,7 @@ export default async function QueuePage({
   return (
     <>
       <main className="page">
-        <section className="phone-stage">
+        <section className="shell-center">
           <aside className="card stack" style={{ background: "var(--bg-2)", justifyContent: "center", position: "relative", overflow: "hidden" }}>
             <div className="hero-media">
                <Image 

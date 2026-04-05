@@ -25,7 +25,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
   return (
     <>
       <main className="page">
-        <section className="stack" style={{ gap: "40px" }}>
+        <section className="stack shell-center" style={{ gap: "40px" }}>
             <article className="hero" style={{ padding: "30px 40px" }}>
               <div className="hero-media">
                 <Image
