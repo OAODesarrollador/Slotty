@@ -152,14 +152,16 @@ export default async function RootPage() {
                   minDate={today}
                   initialDate={today}
                   services={[
-                    { id: "s1", name: "Corte Vanguardia", price: "2500", duration_minutes: 45, description: "Corte premium a tijera o máquina." },
-                    { id: "s2", name: "Perfilado de Barba", price: "1200", duration_minutes: 20, description: "Diseño con toalla caliente." },
-                    { id: "s3", name: "Manicura Express", price: "1800", duration_minutes: 30, description: "Limatado y esmaltado." }
+                    { id: "s1", name: "Corte", price: "8000", duration_minutes: 30, description: "" },
+                    { id: "s2", name: "Barba", price: "5000", duration_minutes: 20, description: "" },
+                    { id: "s3", name: "Corte + Barba", price: "12000", duration_minutes: 50, description: "" },
+                    { id: "s4", name: "Express", price: "4500", duration_minutes: 15, description: "" }
                   ]}
                   barbersByService={{
                     "s1": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }, { id: "b2", full_name: "Julian Cuts", rating: "4.9" }],
                     "s2": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }],
-                    "s3": [{ id: "b3", full_name: "Maria Nails", rating: "5.0" }]
+                    "s3": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }, { id: "b2", full_name: "Julian Cuts", rating: "4.9" }],
+                    "s4": [{ id: "b3", full_name: "Maria Nails", rating: "5.0" }]
                   }}
                   paymentSettings={{
                     allowPayAtStore: true,
@@ -187,7 +189,7 @@ export default async function RootPage() {
           </div>
           <div className={styles.dirPartnerGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
             {tenants.map((t) => (
-              <Link key={t.id} href={`/booking/${t.slug}`} className={styles.dirPartnerCard} style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '24px' }}>
+              <Link key={t.id} href={`/${t.slug}`} className={styles.dirPartnerCard} style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '24px' }}>
                 <div style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: '#fff', border: '1px solid #eee', flexShrink: 0 }}>
                    <Image src={t.logo_url || '/slotty-hero.png'} alt={t.name} fill style={{ objectFit: 'cover' }} />
                 </div>

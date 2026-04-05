@@ -18,10 +18,10 @@
 /* TYPOGRAPHY */
 .serifTitle {
   font-family: var(--font-serif), serif;
-  font-size: clamp(2.8rem, 6vw, 4.8rem); /* Tamaño intermedio editorial */
+  font-size: clamp(2.8rem, 6vw, 4.8rem); /* Restaurado para PC */
   font-weight: 400;
   letter-spacing: -0.03em;
-  line-height: 1; /* Altura de línea más apretada para impacto */
+  line-height: 1; 
   color: #111111;
 }
 
@@ -209,7 +209,7 @@
 
 /* 3. INDUSTRY GRID */
 .directoryPartners {
-  padding: 80px 8% 60px; /* Reducción drástica del espacio inferior de 160px a 60px */
+  padding: 80px 8% 60px; /* Restaurado para PC */
   background: #ffffff;
 }
 
@@ -318,11 +318,11 @@
 /* 5. QUICK BOOKING SECTION */
 .quickBookingSection {
   background: radial-gradient(circle at 70% 50%, #2a2a2a 0%, #000 100%);
-  padding: 80px 0 !important;
-  min-height: 850px !important; /* Aumentado para que el teléfono de 700px no sea recortado */
+  padding: 80px 0 !important; /* Restaurado para PC */
+  min-height: 850px !important; 
   display: flex;
   align-items: center;
-  overflow: visible !important; /* Desbloqueado para permitir el Handover del scroll */
+  overflow: visible !important; 
   position: relative;
 }
 
@@ -331,10 +331,10 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 80px;
+  gap: 80px; /* Restaurado para PC */
   align-items: center;
   width: 100%;
-  padding: 0 5%;
+  padding: 0 5%; /* Restaurado para PC */
 }
 
 .quickBookingText {
@@ -398,21 +398,75 @@
 }
 
 @media (max-width: 1024px) {
+  .solutionsWrapper,
+  .directoryPartners,
+  .blackImpactSection,
+  .quickBookingSection {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
 
-  .solutionsGrid,
+  .revealGrid,
   .dirPartnerGrid,
   .footerGrid {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
 
-  .ecoContainer {
+  .ecoContainer,
+  .quickBookingContainer {
     grid-template-columns: 1fr;
-    gap: 60px;
+    gap: 40px;
+  }
+
+  .quickBookingVisual {
+    height: auto;
+    margin-top: 40px;
   }
 
   .ecoVisualSticky {
     position: relative;
     height: 40vh;
     top: 0;
+  }
+
+  .hugeTitle {
+    font-size: 3.5rem;
+    margin-bottom: 24px;
+  }
+
+  .actionRow {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cardInfo {
+    padding: 24px;
+  }
+
+  .cardInfo h3 {
+    font-size: 1.8rem;
+  }
+
+  .cardInfo p {
+    font-size: 1.1rem;
+  }
+
+  .serifTitle {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .solutionsWrapper {
+    padding-top: 40px;
+  }
+  
+  .hugeTitle {
+    font-size: 2.8rem;
+  }
+
+  .impactSubtitle {
+    font-size: 1.1rem;
   }
 }

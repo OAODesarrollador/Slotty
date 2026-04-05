@@ -1,30 +1,41 @@
-.phoneFrame {
+.phoneContainer {
   position: relative;
-  width: 380px; /* Standard phone width in layout */
-  height: 600px; /* Reduced height as requested */
-  background: #000;
-  border-radius: 40px;
-  border: 12px solid #000; /* Darker border for higher contrast with background */
-  overflow: hidden;
-  box-shadow: 0 60px 140px rgba(0, 0, 0, 0.95), 
-              0 0 120px rgba(255, 255, 255, 0.3),
-              0 0 60px rgba(255, 255, 255, 0.15); /* Much brighter "clara" shadow */
+  width: 100%;
+  max-width: 310px;
   margin: 0 auto;
   z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Phone speaker/notch replica */
-.phoneFrame::before {
-  content: "";
+.phoneImageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 2.05; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mockupImage {
+  object-fit: contain !important;
+  pointer-events: none;
+  z-index: 5;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.screenArea {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 6px;
-  background: #333;
-  border-radius: 10px;
-  z-index: 20;
+  top: 9%;
+  left: 3%;
+  right: 3%;
+  bottom: 10%;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 10;
 }
 
 .scrollingContent {
@@ -32,12 +43,8 @@
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
-}
-
-.scrollingContent::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
 }
 
 .innerPadding {
@@ -46,159 +53,82 @@
   color: #ffffff !important;
 }
 
-/* Re-ajustando el contenido interno para que sea un CLON del sistema original */
-/* Forzar que el grid de nombre/teléfono sea de una sola columna dentro del móvil */
-.innerPadding :global(.grid.cols-2),
-.innerPadding :global(.grid) {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
+/* CLONACION: OCULTAR DESCRIPCIONES LARGAS PERO MANTENER ENCABEZADO */
+.innerPadding :global(.desktop-show),
+.innerPadding :global(.muted),
+.innerPadding :global(.page-lead) {
+    display: none !important;
 }
 
-/* Selección de servicios en 2 columnas */
+/* CLONACION: DISEÑO DE TARJETAS CENTRADO Y COMPACTO */
 .innerPadding :global(.selection-grid) {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-}
-
-/* Forzar que se vean las descripciones y elementos móbiles */
-.innerPadding :global(.desktop-show) {
-    display: block !important;
-}
-
-.innerPadding :global(.muted) {
-    display: block !important;
-}
-
-/* Asegurar que el ticket de confirmación sumary se vea bien */
-.innerPadding :global(.summary-row) {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-}
-
-/* Botones de pago al 100% de ancho */
-.innerPadding :global(.filter-row) {
-    flex-direction: column !important;
-}
-
-.innerPadding :global(.chip-button) {
-    width: 100% !important;
-}
-
-.innerPadding :global(.page) {
+    gap: 10px !important;
     padding: 0 !important;
-    background: transparent !important;
 }
 
-.innerPadding :global(.shell) {
-  /* Mantener el diseño original de cristales y bordes del sistema */
-  margin: 12px !important;
-  padding: 24px !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98)) !important;
-  backdrop-filter: blur(20px) !important;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7) !important;
-}
-
-/* Recuperar la tipografía y colores exactos del sistema para el teléfono */
-.innerPadding :global(.btn) {
-    background: #006AFF !important;
-    color: #fff !important;
-    border-radius: 99px !important;
-}
-
-.innerPadding :global(.price-tag) {
-    color: #f5c842 !important; /* Dorado característico */
-    font-family: var(--font-outfit), sans-serif !important;
-}
-
-.innerPadding :global(.eyebrow) {
-    color: #f5c842 !important;
-    font-family: var(--font-outfit), sans-serif !important;
-    letter-spacing: 0.3em !important;
-}
-
-.innerPadding :global(h1) {
-    font-family: var(--font-outfit), sans-serif !important;
-    font-size: 1.6rem !important;
-    letter-spacing: -0.05em !important;
-    color: white !important;
-    margin-bottom: 8px !important;
-}
-
-.innerPadding :global(h2) {
-    font-family: var(--font-outfit), sans-serif !important;
-    font-size: 1.3rem !important;
-    letter-spacing: -0.03em !important;
-    color: white !important;
-    margin-top: 24px !important;
-    margin-bottom: 16px !important;
-}
-
-/* AJUSTE PARA CLONAR EL DISEÑO DE TARJETAS COMPACTAS (Referencia Imagen 2) */
 .innerPadding :global(.service-card) {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     text-align: center !important;
-    padding: 16px 12px !important;
-    min-height: 140px !important; /* Altura compacta como la imagen */
+    padding: 16px 8px !important;
+    min-height: 110px !important;
     gap: 8px !important;
     background: rgba(255, 255, 255, 0.02) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 20px !important;
+    border-radius: 16px !important;
 }
 
-/* Ocultar descripción para limpiar la vista */
-.innerPadding :global(.service-card) .muted,
-.innerPadding :global(.service-card) .desktop-show,
-.innerPadding :global(.service-card) small {
-    display: none !important;
-}
-
-/* El nombre del servicio arriba */
-.innerPadding :global(.service-card) strong {
-    font-size: 0.95rem !important;
-    line-height: 1.2 !important;
-    color: #ffffff !important;
-    margin-bottom: 4px !important;
-}
-
-/* El precio justo debajo del nombre, en dorado y centrado */
 .innerPadding :global(.service-top) {
-    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 2px !important;
     width: 100% !important;
 }
 
-.innerPadding :global(.price-tag) {
-    font-size: 1rem !important;
-    font-weight: 800 !important;
-    color: #f5c842 !important;
-    background: rgba(245, 200, 66, 0.1) !important;
-    padding: 4px 10px !important;
-    border-radius: 8px !important;
-    margin: 4px 0 !important;
+.innerPadding :global(.service-card strong) {
+    font-size: 0.8rem !important;
+    color: white !important;
 }
 
-/* La pastilla del tiempo abajo */
-.innerPadding :global(.chip-row) {
-    margin-top: 4px !important;
+.innerPadding :global(.price-tag) {
+    font-size: 0.85rem !important;
+    background: rgba(245, 200, 66, 0.1) !important;
+    color: #f5c842 !important;
+    padding: 2px 10px !important;
+    border-radius: 6px !important;
+    margin: 4px 0 !important;
 }
 
 .innerPadding :global(.chip) {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
     color: #aaaaaa !important;
-    padding: 4px 12px !important;
+    padding: 2px 12px !important;
 }
 
-.innerPadding :global(.service-card.active) {
-    background: rgba(245, 200, 66, 0.08) !important;
-    border: 2px solid #f5c842 !important;
-    box-shadow: 0 0 20px rgba(245, 200, 66, 0.2) !important;
+.innerPadding :global(.page) {
+    padding: 10px 0 !important;
+    background: transparent !important;
+}
+
+.innerPadding :global(.shell) {
+  margin: 10px !important;
+  padding: 14px !important;
+  border-radius: 20px !important;
+  background: #080808 !important;
+}
+
+.innerPadding :global(.eyebrow) {
+    font-size: 0.6rem !important;
+    letter-spacing: 0.2em !important;
+    margin-bottom: 4px !important;
+}
+
+.innerPadding :global(h1) {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
 }

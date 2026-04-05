@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useEffect } from "react";
 import styles from "./phone-reveal.module.css";
 
@@ -10,6 +11,7 @@ interface PhoneRevealProps {
 export function PhoneReveal({ children }: PhoneRevealProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const startTouchY = useRef<number | null>(null);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -20,61 +22,80 @@ export function PhoneReveal({ children }: PhoneRevealProps) {
       if (!scrollable) return;
 
       const { scrollTop, scrollHeight, clientHeight } = scrollable;
-      const maxScroll = scrollHeight - clientHeight;
-
+      const atTop = scrollTop === 0;
+      const atBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight;
       const delta = e.deltaY;
-      const oldScrollTop = scrollable.scrollTop;
-      
-      // Intentamos desplazar el contenido interno primero
-      scrollable.scrollTop += delta;
-      
-      const newScrollTop = scrollable.scrollTop;
 
-      // Si la posición de scroll del teléfono cambió, significa que consumimos el movimiento
-      if (oldScrollTop !== newScrollTop) {
-        e.preventDefault();
-      } 
-      // Si NO cambió (llegamos al límite), permitimos que el evento fluya 
-      // y opcionalmente ayudamos al navegador a despertar el scroll de la página
-      else {
-        // No llamamos a e.preventDefault() para dejar que el navegador vea el evento
-        // Pero para asegurar suavidad total en todos los navegadores, inyectamos un pequeño empuje
-        if (delta !== 0) {
-          window.scrollBy({ top: delta, behavior: 'auto' });
-        }
+      if ((atTop && delta < 0) || (atBottom && delta > 0)) {
+        return; // Permitir que el scroll se propague si estamos en los límites
       }
+
+      scrollable.scrollTop += delta;
+      e.preventDefault();
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startTouchY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const scrollable = scrollRef.current;
+      if (!scrollable || startTouchY.current === null) return;
+
+      const currentY = e.touches[0].clientY;
+      const delta = startTouchY.current - currentY;
+      const { scrollTop, scrollHeight, clientHeight } = scrollable;
+
+      const atTop = scrollTop === 0;
+      const atBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight;
+
+      if ((atTop && delta < 0) || (atBottom && delta > 0)) {
+        startTouchY.current = currentY; 
+        return; // El scroll lo maneja el navegador hacia afuera
+      }
+
+      scrollable.scrollTop += delta;
+      startTouchY.current = currentY;
+      
+      if (e.cancelable) e.preventDefault(); // Detenemos el scroll afuera mientras deslizamos adentro
     };
 
     const section = frame.closest('section');
     if (section) {
+      // Usamos passive: false para poder prevenir el scroll de la página si estamos dentro del móvil
       section.addEventListener("wheel", handleWheel, { passive: false });
+      section.addEventListener("touchstart", handleTouchStart, { passive: true });
+      section.addEventListener("touchmove", handleTouchMove, { passive: false });
     }
 
     return () => {
       if (section) {
         section.removeEventListener("wheel", handleWheel);
+        section.removeEventListener("touchstart", handleTouchStart);
+        section.removeEventListener("touchmove", handleTouchMove);
       }
     };
   }, []);
 
   return (
-    <div ref={frameRef} className={styles.phoneFrame}>
-      {/* 
-        This scrollRef will have overflow: auto 
-        but we'll hide the scrollbar and control it via wheel-jacking too if needed 
-      */}
-      <div 
-        ref={scrollRef}
-        className={styles.scrollingContent}
-        style={{ 
-          height: '100%', 
-          overflowY: 'auto', 
-          msOverflowStyle: 'none', 
-          scrollbarWidth: 'none' 
-        }}
-      >
-        <div className={styles.innerPadding}>
-          {children}
+    <div ref={frameRef} className={styles.phoneContainer}>
+      <div className={styles.phoneImageWrapper}>
+        <Image 
+          src="/iphone-frame.png" 
+          alt="Phone Frame" 
+          fill 
+          priority
+          className={styles.mockupImage}
+        />
+        <div className={styles.screenArea}>
+          <div 
+            ref={scrollRef}
+            className={styles.scrollingContent}
+          >
+            <div className={styles.innerPadding}>
+              {children}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -53,6 +53,7 @@ export function ContentExplorer() {
                   className={`${styles.accordionItem} ${activeIndex === idx ? styles.active : ""}`}
                   onMouseEnter={() => setActiveIndex(idx)}
                   onMouseLeave={() => setActiveIndex(-1)}
+                  onClick={() => setActiveIndex(activeIndex === idx ? -1 : idx)}
                 >
                   <div className={styles.accordionHeader}>
                     <span className={styles.number}>{item.id}</span>
