@@ -397,6 +397,15 @@
   text-decoration: none;
 }
 
+.footerRights {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid #eee;
+}
+
 @media (max-width: 1024px) {
   .solutionsWrapper,
   .directoryPartners,
@@ -407,10 +416,20 @@
   }
 
   .revealGrid,
-  .dirPartnerGrid,
-  .footerGrid {
+  .dirPartnerGrid {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+
+  .footerGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 20px;
+  }
+
+  .footerRights {
+    text-align: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .ecoContainer,

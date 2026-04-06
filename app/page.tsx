@@ -230,8 +230,10 @@ export default async function RootPage() {
               <Link href="/admin/login">Acceso Negocio</Link>
               <Link href="/discovery">Directorio Global</Link>
               <Link href="#">API Documentation</Link>
-              <span style={{ fontSize: '0.75rem', color: '#888', display: 'block', marginTop: 40 }}>© 2026 Slotty Software. Todos los derechos reservados.</span>
             </div>
+          </div>
+          <div className={styles.footerRights}>
+            © 2026 Slotty Software. Todos los derechos reservados.
           </div>
         </footer>
       </main>

@@ -229,7 +229,8 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
 
         <div className={styles.titles}>
           <h1 className={styles.bigTitle}>
-            <span className={styles.preText}>Impulsa todo tu negocio con</span> Slotty.
+            <span className={styles.preText}>Impulsa todo tu negocio con</span>
+            <span className={styles.slottyAccent}> Slotty.</span>
           </h1>
           <div className={styles.partnerLogos}>
             {[...tenants, ...tenants].map((t, idx) => (

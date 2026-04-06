@@ -57,15 +57,23 @@
   color: #ffffff !important;
   background: none !important;
   -webkit-text-fill-color: #ffffff !important;
+  -webkit-text-stroke: 0.7px rgba(0,0,0,0.45); /* NUEVO: Perfilado ultrafino y elegante */
   text-shadow: 0 4px 30px rgba(0,0,0,0.5);
   margin-bottom: 60px;
 }
 
 .preText {
-  font-size: 0.85em; /* Un poco más chico que Slotty */
-  opacity: 0.7; /* Menos intensidad */
-  display: block; /* Para una composición editorial más limpia */
+  font-size: 0.85em;
+  opacity: 0.85; /* NUEVO: Un tono más suave que Slotty pero con presencia */
+  display: block;
   margin-bottom: 10px;
+}
+
+.slottyAccent {
+  /* Doble efecto: Elevación (negro) + Brillo (azul) */
+  text-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.8), /* Profundidad */
+    0 0 40px rgba(0, 106, 255, 0.3); /* Brillo de marca */
 }
 
 .partnerLogos {
