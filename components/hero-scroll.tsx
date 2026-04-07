@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./hero-scroll.module.css";
 
 interface Tenant {
@@ -56,15 +57,20 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
       // Rotación: 0deg al inicio (escala 1), -3deg al final (targetScale)
       const rotation = progress * -3;
       const opacity = 0.5 + (currentScale - targetScale) / (1 - targetScale) * 0.5;
+      
+      // Desenfoque dinámico: más difuso al principio (escala 1), nítido al final (targetScale)
+      const maxBlur = 5; // Pixeles de desenfoque al inicio
+      const currentBlur = (1 - progress) * maxBlur;
 
       media.style.width = `${currentWidthVw}vw`;
       media.style.height = `calc(100vh - (${progress} * (100vh - ${currentWidthVw * 9/16}vw)))`;
       media.style.transform = `translate(-50%, -50%) rotate(${!isUnlockedRef.current ? rotation : 0}deg)`;
+      media.style.filter = `blur(${currentBlur}px)`; // Difuso dinámico
       
       // Esquinas redondeadas (24px para coincidir con el mosaico)
       const currentRadius = Math.min(24, progress * 120); 
       media.style.borderRadius = `${currentRadius}px`;
-      media.style.opacity = opacity.toString();
+      media.style.opacity = (opacity * 0.85).toString(); // Máximo 0.85 para efecto translúcido
 
       if (mosaic) {
         const mosaicOpacity = currentScale <= 0.8 ? Math.min(1, (0.8 - currentScale) / 0.2) : 0;
@@ -229,9 +235,15 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
 
         <div className={styles.titles}>
           <h1 className={styles.bigTitle}>
-            <span className={styles.preText}>Impulsa todo tu negocio con</span>
-            <span className={styles.slottyAccent}> Slotty.</span>
+            No es falta de clientes, es falta de gestión, <br/> 
+            <span className={styles.slottyAccent}>Slotty</span> lo soluciona
           </h1>
+          <p className={styles.subHeadline}>
+            Organizá turnos, cobrá anticipos y mantené tu barbería funcionando sin desorden.
+          </p>
+          <Link href="#demo" className={styles.ctaButton}>
+            Ver como funciona...
+          </Link>
           <div className={styles.partnerLogos}>
             {[...tenants, ...tenants].map((t, idx) => (
               <span key={`${t.id}-${idx}`}>{t.name.toUpperCase()}</span>

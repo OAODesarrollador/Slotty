@@ -122,7 +122,7 @@ export default async function RootPage() {
         <AudienceMoment />
 
         {/* 7. QUICK BOOKING (Call to Action Interface) */}
-        <section className={styles.quickBookingSection}>
+        <section id="demo" className={styles.quickBookingSection}>
           <div className={styles.quickBookingContainer}>
             <div className={styles.quickBookingText}>
               <span className={styles.tagline} style={{ color: '#006AFF' }}>RESERVA RÁPIDA</span>
