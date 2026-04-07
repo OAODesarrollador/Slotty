@@ -60,20 +60,15 @@ export function PhoneReveal({ children }: PhoneRevealProps) {
       if (e.cancelable) e.preventDefault(); // Detenemos el scroll afuera mientras deslizamos adentro
     };
 
-    const section = frame.closest('section');
-    if (section) {
-      // Usamos passive: false para poder prevenir el scroll de la página si estamos dentro del móvil
-      section.addEventListener("wheel", handleWheel, { passive: false });
-      section.addEventListener("touchstart", handleTouchStart, { passive: true });
-      section.addEventListener("touchmove", handleTouchMove, { passive: false });
-    }
+    // Solo interceptamos el scroll si el evento ocurre DENTRO del frame del teléfono
+    frame.addEventListener("wheel", handleWheel, { passive: false });
+    frame.addEventListener("touchstart", handleTouchStart, { passive: true });
+    frame.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return () => {
-      if (section) {
-        section.removeEventListener("wheel", handleWheel);
-        section.removeEventListener("touchstart", handleTouchStart);
-        section.removeEventListener("touchmove", handleTouchMove);
-      }
+      frame.removeEventListener("wheel", handleWheel);
+      frame.removeEventListener("touchstart", handleTouchStart);
+      frame.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
 

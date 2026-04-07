@@ -36,60 +36,72 @@
   display: block;
 }
 
+.tagline {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #006AFF;
+  background: rgba(0, 106, 255, 0.08); /* Fondo cápsula tenue */
+  padding: 6px 16px;
+  border-radius: 100px;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
 /* 2. SOLUTIONS GRID */
 .solutionsWrapper {
-  padding: 20px 8% 80px; /* Reducción agresiva para pegar el texto al Hero */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 8%;
   max-width: 1600px;
   margin: 0 auto;
 }
 
 .sectionHeader {
   max-width: 1000px;
-  margin-bottom: 60px;
-  text-align: left !important; /* Forzado a la izquierda */
-  position: relative;
-  z-index: 10;
+  margin-bottom: 24px;
+  text-align: left !important;
 }
 
-.tagline {
-  font-family: var(--font-display), sans-serif;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #006AFF;
-  margin-bottom: 24px;
-  display: block;
+.sectionHeader h2 {
+  font-size: clamp(2rem, 3.5vw, 3.2rem) !important;
+  line-height: 1.1;
 }
 
 .revealGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 48px;
+  grid-template-columns: repeat(2, minmax(300px, 500px)); /* Limita el ancho de las tarjetas */
+  justify-content: center; /* Centradas en el monitor */
+  gap: 80px;
 }
 
 .revealCard {
   background: #fdfdfd;
-  border-radius: 48px;
+  border-radius: 32px;
   overflow: hidden;
   transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid #f0f0f0;
   position: relative;
+  max-height: 480px;
+  width: 100%;
 }
 
 .revealCard:hover {
-  transform: translateY(-20px);
-  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.06);
-  border-color: #e0e0e0;
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06);
 }
 
 .cardVisual {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: 200px;
   background: #f5f5f7;
   overflow: hidden;
-  padding: 30px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,36 +110,27 @@
 .hardwareBadge,
 .softwareBadge {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  padding: 6px 14px;
+  top: 16px;
+  left: 16px;
+  padding: 8px 16px; /* Mas grande */
   border-radius: 99px;
-  font-size: 0.7rem;
+  font-size: 0.8rem; /* Mas grande */
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   z-index: 2;
-}
-
-.hardwareBadge {
   background: #000;
   color: #fff;
 }
 
-.softwareBadge {
-  background: #006AFF;
-  color: #fff;
-}
-
 .cardInfo {
-  padding: 48px;
+  padding: 24px 32px;
 }
 
 .cardInfo h3 {
   font-family: var(--font-display), sans-serif;
-  font-size: 2.4rem;
+  font-size: 1.5rem; /* Más compacto */
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   letter-spacing: -0.02em;
 }
 
@@ -136,12 +139,40 @@
   color: #555555;
   line-height: 1.5;
   font-weight: 400;
+  margin-bottom: 24px;
+}
+
+.cardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardList li {
+  font-size: 1.1rem;
+  color: #666;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.4;
+}
+
+.cardList li::before {
+  content: "→";
+  color: #006AFF;
+  font-weight: 700;
 }
 
 /* 3. ECOSYSTEM - STICKY SYSTEM REPLICA */
 .ecoSection {
-  padding: 240px 5%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
   background: #f5f5f7;
+  overflow: hidden;
 }
 
 .ecoContainer {
@@ -207,22 +238,27 @@
 /* 4. BLACK IMPACT */
 
 
-/* 3. INDUSTRY GRID */
+/* 3. INDUSTRY GRID / PARTNER SHOWCASE */
 .directoryPartners {
-  padding: 80px 8% 60px; /* Restaurado para PC */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 100px 8%;
   background: #ffffff;
 }
 
 .dirHeaderSection {
   text-align: left;
-  margin-bottom: 80px;
+  margin-bottom: 40px;
   max-width: 800px;
 }
 
 .dirPartnerGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 80px;
 }
 
 .dirPartnerCard {
@@ -235,14 +271,22 @@
   text-decoration: none;
   color: #111111;
   transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1);
-  background: #ffffff;
+  background: #fcfcfc;
 }
 
 .dirPartnerCard:hover {
   border-color: #006AFF;
-  background: #fdfdfd;
-  transform: translateY(-12px);
+  transform: translateY(-8px);
   box-shadow: 0 30px 60px rgba(0, 106, 255, 0.05);
+}
+
+.dirPartnerCard svg {
+  stroke: #333333;
+  transition: stroke 0.3s ease;
+}
+
+.dirPartnerCard:hover svg {
+  stroke: #006AFF;
 }
 
 .iconFrame {
@@ -251,7 +295,7 @@
   height: 56px;
   border-radius: 16px;
   overflow: hidden;
-  background: #f5f5f7;
+  background: #f0f0f2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,10 +320,13 @@
   line-height: 1.5;
 }
 
-/* 4. BLACK IMPACT SECTION */
 .blackImpactSection {
   background: #000000;
-  padding: 40px 8% 100px !important; /* Reducción agresiva forzada */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 8% !important;
   text-align: left !important;
   color: #ffffff;
   position: relative;
@@ -318,12 +365,12 @@
 /* 5. QUICK BOOKING SECTION */
 .quickBookingSection {
   background: radial-gradient(circle at 70% 50%, #2a2a2a 0%, #000 100%);
-  padding: 80px 0 !important; /* Restaurado para PC */
-  min-height: 850px !important; 
+  height: 100vh;
   display: flex;
   align-items: center;
-  overflow: visible !important; 
+  overflow: hidden; 
   position: relative;
+  padding: 60px 0;
 }
 
 .quickBookingContainer {
@@ -374,7 +421,11 @@
 
 /* FOOTER */
 .squareFooter {
-  padding: 160px 5% 80px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 8%;
   border-top: 1px solid #eee;
 }
 

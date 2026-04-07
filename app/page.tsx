@@ -23,30 +23,20 @@ export default async function RootPage() {
       <HeroScroll tenants={tenants} />
 
       <main className={styles.mainContent}>
-        {/* 2. SOLUTIONS FOR EVERY BUSINESS */}
+        {/* 2. SOLUTIONS FOR EVERY BUSINESS (THE PAIN POINTS) */}
         <section id="solutions" className={styles.solutionsWrapper} data-animate>
           <div className={styles.sectionHeader}>
-            <span className={styles.tagline}>Soluciones integrales</span>
-            <h2 className={styles.serifTitle}>Una plataforma, infinitas posibilidades.</h2>
+            <span className={styles.tagline}>EL PROBLEMA</span>
+            <h2 className={styles.serifTitle} style={{ maxWidth: '900px' }}>
+              Turnos que se pisan. Clientes que no vienen. Tiempo que no vuelve.
+            </h2>
+            <p className={styles.impactSubtitle} style={{ marginTop: '24px', textAlign: 'left', margin: '24px 0 0' }}>
+              Mientras organizás turnos manualmente, perdés tiempo y oportunidades de ingreso.
+            </p>
           </div>
           
           <div className={styles.revealGrid}>
-            <div className={styles.revealCard}>
-              <div className={styles.cardVisual}>
-                 <Image 
-                  src="/slotty-pos.png" 
-                  alt="Hardware Terminal" 
-                  fill 
-                  style={{ objectFit: 'contain' }}
-                />
-                <span className={styles.hardwareBadge}>Hardware</span>
-              </div>
-              <div className={styles.cardInfo}>
-                <h3>Terminal POS</h3>
-                <p>Pagos rápidos, seguros y sin complicaciones en el mostrador. Diseñado para el flujo constante de tu negocio.</p>
-              </div>
-            </div>
-
+            {/* IZQUIERDA: Reservas y agenda inteligente */}
             <div className={styles.revealCard}>
               <div className={styles.cardVisual}>
                  <Image 
@@ -58,45 +48,82 @@ export default async function RootPage() {
                 <span className={styles.softwareBadge}>Software</span>
               </div>
               <div className={styles.cardInfo}>
-                <h3>Gestión de citas</h3>
-                <p>Agenda inteligente para tu equipo y tus clientes. Sincronización en tiempo real y recordatorios automáticos.</p>
+                <h3>Reservas y agenda inteligente</h3>
+                <ul className={styles.cardList}>
+                  <li>Turnos organizados sin cruces</li>
+                  <li>Disponibilidad real por barbero</li>
+                  <li>Confirmación automática de citas</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* DERECHA: Control del flujo de clientes */}
+            <div className={styles.revealCard}>
+              <div className={styles.cardVisual}>
+                 <Image 
+                  src="/slotty-pos.png" 
+                  alt="Hardware Terminal" 
+                  fill 
+                  style={{ objectFit: 'contain' }}
+                />
+                <span className={styles.hardwareBadge}>Operaciones</span>
+              </div>
+              <div className={styles.cardInfo}>
+                <h3>Control del flujo de clientes</h3>
+                <ul className={styles.cardList}>
+                  <li>Cobro anticipado para reducir ausencias</li>
+                  <li>Asignación automática de turnos</li>
+                  <li>Gestión de clientes sin reserva (walk-ins)</li>
+                </ul>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 3. INDUSTRY GRID */}
+        {/* 3. BARBERSHOP PERFECTION (The Difference) */}
         <section className={styles.directoryPartners} data-animate>
           <div className={styles.dirHeaderSection}>
-            <span className={styles.tagline}>Especialización por industria</span>
-            <h2 className={styles.serifTitle}>Para cada tipo de negocio que busca crecer.</h2>
+            <span className={styles.tagline}>EL SISTEMA</span>
+            <h2 className={styles.serifTitle}>La mayoría de los sistemas no entienden tu barbería</h2>
+            <p className={styles.impactSubtitle} style={{ marginTop: '24px', textAlign: 'left', margin: '24px 0 0' }}>
+              Slotty está hecho para tu forma de trabajar.
+            </p>
           </div>
           <div className={styles.dirPartnerGrid}>
             <div className={styles.dirPartnerCard}>
               <div className={styles.iconFrame}>
-                 <Image src="/grid-1.png" alt="Restaurantes" fill style={{ objectFit: 'cover' }} />
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
               <div className={styles.cardDetails}>
-                 <span>Restaurantes</span>
-                 <small>POS especializado, gestión de mesas y pedidos online integrados.</small>
+                 <span>Servicios con tiempos reales</span>
+                 <small>Cada corte define su duración sin que tengas que ajustar la agenda manualmente.</small>
               </div>
             </div>
             <div className={styles.dirPartnerCard}>
               <div className={styles.iconFrame}>
-                 <Image src="/grid-2.png" alt="Retail" fill style={{ objectFit: 'cover' }} />
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <div className={styles.cardDetails}>
-                 <span>Comercio Minorista</span>
-                 <small>Control de inventario omnicanal y checkout ultrarrápido.</small>
+                 <span>Barberos con su propia disponibilidad</span>
+                 <small>Cada profesional maneja sus horarios sin generar conflictos.</small>
               </div>
             </div>
             <div className={styles.dirPartnerCard}>
               <div className={styles.iconFrame}>
-                 <Image src="/grid-3.png" alt="Salud" fill style={{ objectFit: 'cover' }} />
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </div>
               <div className={styles.cardDetails}>
-                 <span>Salud y Belleza</span>
-                 <small>Fidelización de clientes, suscripciones y pagos recurrentes.</small>
+                 <span>Clientes sin turno (walk-ins)</span>
+                 <small>Asignación automática según disponibilidad en el momento.</small>
+              </div>
+            </div>
+            <div className={styles.dirPartnerCard}>
+              <div className={styles.iconFrame}>
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <div className={styles.cardDetails}>
+                 <span>Cobros adaptados a tu negocio</span>
+                 <small>Seña o pago total según cómo trabajes.</small>
               </div>
             </div>
           </div>
@@ -105,18 +132,6 @@ export default async function RootPage() {
         {/* 4. CONTENT EXPLORER (The Square PwNextContentExplorer Replica) */}
         <ContentExplorer />
 
-        {/* 5. BLACK IMPACT SECTION (Ecosistema Slotty) */}
-        <section className={styles.blackImpactSection} data-animate>
-          <div className={styles.sectionHeader}>
-            <span className={styles.tagline}>Digital & Retail</span>
-            <h2 className={styles.serifTitle} style={{ color: '#ffffff' }}>Vende donde tus clientes estén.</h2>
-          </div>
-          <p className={styles.impactSubtitle}>Desde el mostrador físico hasta la tienda digital, Slotty unifica todo tu ecosistema en una única plataforma de alto rendimiento.</p>
-          <div className={styles.actionRow}>
-            <Link href="/discovery" className="btn">Explorar socios</Link>
-            <Link href="/admin/login" className="btn-secondary">Empezar ahora — Es gratis</Link>
-          </div>
-        </section>
 
         {/* 6. AUDIENCE MOMENT (Square Replica) */}
         <AudienceMoment />

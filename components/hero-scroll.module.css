@@ -51,9 +51,9 @@
 
 .bigTitle {
   font-family: var(--font-serif), serif;
-  font-size: clamp(3rem, 7vw, 5.5rem); 
-  line-height: 1.0;
-  letter-spacing: -0.04em;
+  font-size: clamp(2.5rem, 6.8vmin, 5rem); /* Un poco mas grande manteniendo la escala universal */
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   font-weight: 500;
   
   /* OVERRIDE GLOBALS */
@@ -63,16 +63,16 @@
   background-clip: unset !important;
   
   text-shadow: 0 4px 50px rgba(0,0,0,0.8);
-  margin-bottom: 70px; /* Mas espacio aún para bajar el subtexto */
+  margin-bottom: 0.6em; /* Margen elástico basado en el tamaño de letra */
 }
 
 .subHeadline {
   font-family: var(--font-serif), serif; /* Mas acorde al estilo elegante */
-  font-size: clamp(1.4rem, 2.8vw, 2rem); /* Mas grande */
+  font-size: clamp(1.4rem, 3.8vmin, 2.2rem); /* Un poco mas grande */
   line-height: 1.3;
   color: #ffffff;
-  max-width: 900px;
-  margin: 0 auto 80px;
+  max-width: 750px; /* Mas centrado y compacto */
+  margin: 0 auto 1.5em; /* Margen elástico */
   text-shadow: 0 4px 30px rgba(0,0,0,0.8);
   opacity: 0.9;
 }
@@ -132,7 +132,7 @@
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: 0.2em;
-  margin-top: 60px; /* Mas compacto para no perderlo abajo */
+  margin-top: 1.5em; /* Margen elástico para el banner */
   animation: marquee 50s linear infinite;
   white-space: nowrap;
 }

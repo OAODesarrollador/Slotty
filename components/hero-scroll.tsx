@@ -239,7 +239,7 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
             <span className={styles.slottyAccent}>Slotty</span> lo soluciona
           </h1>
           <p className={styles.subHeadline}>
-            Organizá turnos, cobrá anticipos y mantené tu barbería funcionando sin desorden.
+            Reservas con seña, asignación automática y control real de tu barbería.
           </p>
           <Link href="#demo" className={styles.ctaButton}>
             Ver como funciona...

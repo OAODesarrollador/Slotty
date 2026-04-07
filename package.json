@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "npm run dev:setup && next dev",
     "dev:setup": "tsx scripts/dev-setup.ts",
+    "dev:tunnel": "tsx scripts/tunnel.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
