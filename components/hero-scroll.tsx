@@ -235,26 +235,37 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
 
         <div className={styles.titles}>
           <h1 className={styles.bigTitle}>
-            No es falta de clientes, es falta de gestión, <br/> 
-            <span className={styles.slottyAccent}>Slotty</span> lo soluciona
+            Convertí cada horario libre en una reserva
           </h1>
           <p className={styles.subHeadline}>
-            Reservas con seña, asignación automática y control real de tu barbería.
+            Automatizá tu agenda, reducí ausencias y mantené tu barbería siempre activa.
           </p>
           <Link href="#demo" className={styles.ctaButton}>
-            Ver como funciona...
+            Ver demo en 2 minutos
           </Link>
-          <div className={styles.partnerLogos}>
-            {[...tenants, ...tenants].map((t, idx) => (
-              <span key={`${t.id}-${idx}`}>{t.name.toUpperCase()}</span>
-            ))}
-            {tenants.length < 3 && (
-              <>
-                <span>SLOTTY PARTNER</span>
-                <span>VANGUARD CUTS</span>
-                <span>ELITE GROOMING</span>
-              </>
-            )}
+          <div className={styles.partnerLogosViewport}>
+            <div className={styles.partnerLogosTrack}>
+              <div className={styles.partnerLogos}>
+                <span>Hecho para tu negocio</span>
+                <span>•</span>
+                <span>Agenda automática</span>
+                <span>•</span>
+                <span>Reservas 24/7</span>
+                <span>•</span>
+                <span>Menos ausencias</span>
+                <span>•</span>
+              </div>
+              <div className={styles.partnerLogos} aria-hidden="true">
+                <span>Hecho para tu negocio</span>
+                <span>•</span>
+                <span>Agenda automática</span>
+                <span>•</span>
+                <span>Reservas 24/7</span>
+                <span>•</span>
+                <span>Menos ausencias</span>
+                <span>•</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

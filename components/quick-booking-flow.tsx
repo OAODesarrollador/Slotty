@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -41,6 +41,8 @@ type PaymentSettings = {
   transferBankName: string | null;
 };
 
+export type BookingGuideStep = "service" | "schedule" | "details" | "payment";
+
 interface QuickBookingFlowProps {
   slug: string;
   tenantName: string;
@@ -55,6 +57,7 @@ interface QuickBookingFlowProps {
   initialSlotStart?: string;
   initialError?: string;
   hideErrors?: boolean; // Nuevo: para silenciar errores solo en la demo
+  onGuideSectionMount?: (step: BookingGuideStep, node: HTMLDivElement | null) => void;
 }
 
 export function QuickBookingFlow({
@@ -70,7 +73,8 @@ export function QuickBookingFlow({
   initialBarberId,
   initialSlotStart,
   initialError,
-  hideErrors = false // Falso por defecto para que las reservas reales sigan mostrando avisos
+  hideErrors = false, // Falso por defecto para que las reservas reales sigan mostrando avisos
+  onGuideSectionMount
 }: QuickBookingFlowProps) {
   const router = useRouter();
   const [serviceId, setServiceId] = useState(initialServiceId ?? (services && services.length > 0 ? services[0].id : ""));
@@ -92,6 +96,15 @@ export function QuickBookingFlow({
   
   const step2Ref = useRef<HTMLDivElement>(null);
   const step3Ref = useRef<HTMLDivElement>(null);
+
+  const bindGuideSection = (step: BookingGuideStep, localRef?: MutableRefObject<HTMLDivElement | null>) => {
+    return (node: HTMLDivElement | null) => {
+      if (localRef) {
+        localRef.current = node;
+      }
+      onGuideSectionMount?.(step, node);
+    };
+  };
 
   const selectedService = useMemo(
     () => services.find((service) => service.id === serviceId) ?? null,
@@ -353,7 +366,7 @@ export function QuickBookingFlow({
         </div>
 
         {/* STEP 1: SERVICES SELECTION */}
-        <section className="stack" style={{ gap: 20 }}>
+        <section ref={bindGuideSection("service")} className="stack" style={{ gap: 20 }}>
           <div className="stack" style={{ gap: 6 }}>
             <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Seleccioná el Servicio</h2>
           </div>
@@ -385,7 +398,7 @@ export function QuickBookingFlow({
         </section>
 
         {/* STEP 2: PROFESSIONAL & SLOT SELECTION */}
-        <div ref={step2Ref} className="stack" style={{ gap: 24, padding: "4px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
+        <div ref={bindGuideSection("schedule", step2Ref)} className="stack" style={{ gap: 24, padding: "4px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
           <div className="stack" style={{ gap: 6 }}>
             <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Día y Horario</h2>
             <p className="muted" style={{ fontSize: "0.85rem" }}>Encontrá el espacio perfecto.</p>
@@ -642,7 +655,7 @@ export function QuickBookingFlow({
         </div>
 
         {/* STEP 3: PERSONAL DATA & CONFIRMATION */}
-        <div ref={step3Ref} className="stack" style={{ gap: 20, padding: "10px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
+        <div ref={bindGuideSection("details", step3Ref)} className="stack" style={{ gap: 20, padding: "10px 0", borderTop: "1px solid var(--line)", scrollMarginTop: "140px" }}>
           <div className="stack" style={{ gap: 6 }}>
             <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "white" }}>Finalizar Reserva</h2>
             <p className="muted" style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.6)" }}>Confirmá los detalles para asegurar tu lugar.</p>
@@ -742,7 +755,7 @@ export function QuickBookingFlow({
                 </div>
               </div>
 
-              <div className="stack" style={{ gap: 8 }}>
+              <div ref={bindGuideSection("payment")} className="stack" style={{ gap: 8 }}>
                 <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Pago</span>
                 <div className="summary-card" style={{ gap: 8, padding: "14px 16px", borderRadius: "18px" }}>
                   {!paymentMethod ? <small className="muted" style={{ fontSize: "0.72rem" }}>Elegí una forma de pago para ver cuánto pagás ahora.</small> : null}

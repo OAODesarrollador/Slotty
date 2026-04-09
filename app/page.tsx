@@ -4,15 +4,30 @@ import { getTenants } from "@/repositories/tenants";
 import { HeroScroll } from "@/components/hero-scroll";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { RootHeader } from "@/components/root-header";
-import { QuickBookingFlow } from "@/components/quick-booking-flow";
 import { ContentExplorer } from "@/components/content-explorer";
-import { AudienceMoment } from "@/components/audience-moment";
-import { PhoneReveal } from "@/components/phone-reveal";
+import { HowItWorksShowcase } from "@/components/how-it-works-showcase";
 import styles from "./page.module.css";
 
 export default async function RootPage() {
   const tenants = await getTenants();
   const today = new Date().toISOString().split("T")[0];
+  const acquisitionCards = [
+    {
+      title: "Aparecé cuando buscan dónde atenderse",
+      description: "Tu barbería puede mostrarse a personas que no tienen una definida y están listas para reservar.",
+      icon: "search"
+    },
+    {
+      title: "Recibí nuevos turnos automáticamente",
+      description: "Sumá reservas sin depender solo de tus redes o contactos actuales.",
+      icon: "calendar"
+    },
+    {
+      title: "Más visibilidad para crecer",
+      description: "El sistema no solo organiza tu agenda, también te ayuda a generar nuevas oportunidades.",
+      icon: "spark"
+    }
+  ];
 
   return (
     <div className={styles.rootContainer}>
@@ -28,10 +43,10 @@ export default async function RootPage() {
           <div className={styles.sectionHeader}>
             <span className={styles.tagline}>EL PROBLEMA</span>
             <h2 className={styles.serifTitle} style={{ maxWidth: '900px' }}>
-              Turnos que se pisan. Clientes que no vienen. Tiempo que no vuelve.
+              Esto es lo que te hace perder turnos todos los días
             </h2>
             <p className={styles.impactSubtitle} style={{ marginTop: '24px', textAlign: 'left', margin: '24px 0 0' }}>
-              Mientras organizás turnos manualmente, perdés tiempo y oportunidades de ingreso.
+              Mientras resolvés la agenda de forma manual, perdés tiempo, orden y oportunidades de ingreso.
             </p>
           </div>
           
@@ -39,20 +54,24 @@ export default async function RootPage() {
             {/* IZQUIERDA: Reservas y agenda inteligente */}
             <div className={styles.revealCard}>
               <div className={styles.cardVisual}>
-                 <Image 
-                  src="/slotty-hero.png" 
-                  alt="Software Interface" 
-                  fill 
-                  style={{ objectFit: 'contain' }}
-                />
-                <span className={styles.softwareBadge}>Software</span>
+                <div style={{ width: 48, height: 48, background: 'rgba(245, 200, 66, 0.18)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(245, 200, 66, 0.3)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c29931" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4" />
+                    <path d="M8 2v4" />
+                    <path d="M3 10h18" />
+                    <path d="M8 14h3" />
+                    <path d="M13 14h3" />
+                    <path d="M8 18h3" />
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardInfo}>
-                <h3>Reservas y agenda inteligente</h3>
+                <h3>Turnos mal organizados</h3>
                 <ul className={styles.cardList}>
-                  <li>Turnos organizados sin cruces</li>
-                  <li>Disponibilidad real por barbero</li>
-                  <li>Confirmación automática de citas</li>
+                  <li>Horarios que se pisan</li>
+                  <li>Espacios vacíos entre reservas</li>
+                  <li>Disponibilidad confusa por barbero</li>
                 </ul>
               </div>
             </div>
@@ -60,20 +79,22 @@ export default async function RootPage() {
             {/* DERECHA: Control del flujo de clientes */}
             <div className={styles.revealCard}>
               <div className={styles.cardVisual}>
-                 <Image 
-                  src="/slotty-pos.png" 
-                  alt="Hardware Terminal" 
-                  fill 
-                  style={{ objectFit: 'contain' }}
-                />
-                <span className={styles.hardwareBadge}>Operaciones</span>
+                <div style={{ width: 48, height: 48, background: 'rgba(245, 200, 66, 0.18)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(245, 200, 66, 0.3)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c29931" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="4" y="6" width="16" height="12" rx="2" />
+                    <path d="M9 10h6" />
+                    <circle cx="18" cy="18" r="3" />
+                    <path d="M16.5 16.5l3 3" />
+                    <path d="M19.5 16.5l-3 3" />
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardInfo}>
-                <h3>Control del flujo de clientes</h3>
+                <h3>Clientes que no se concretan</h3>
                 <ul className={styles.cardList}>
-                  <li>Cobro anticipado para reducir ausencias</li>
-                  <li>Asignación automática de turnos</li>
-                  <li>Gestión de clientes sin reserva (walk-ins)</li>
+                  <li>Reservas que no se confirman</li>
+                  <li>Ausencias que te hacen perder plata</li>
+                  <li>Tiempo perdido resolviendo cada turno</li>
                 </ul>
               </div>
             </div>
@@ -81,139 +102,85 @@ export default async function RootPage() {
         </section>
 
         {/* 3. BARBERSHOP PERFECTION (The Difference) */}
-        <section className={styles.directoryPartners} data-animate>
-          <div className={styles.dirHeaderSection}>
-            <span className={styles.tagline}>EL SISTEMA</span>
-            <h2 className={styles.serifTitle}>La mayoría de los sistemas no entienden tu barbería</h2>
-            <p className={styles.impactSubtitle} style={{ marginTop: '24px', textAlign: 'left', margin: '24px 0 0' }}>
-              Slotty está hecho para tu forma de trabajar.
-            </p>
-          </div>
-          <div className={styles.dirPartnerGrid}>
-            <div className={styles.dirPartnerCard}>
-              <div className={styles.iconFrame}>
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <div className={styles.cardDetails}>
-                 <span>Servicios con tiempos reales</span>
-                 <small>Cada corte define su duración sin que tengas que ajustar la agenda manualmente.</small>
-              </div>
-            </div>
-            <div className={styles.dirPartnerCard}>
-              <div className={styles.iconFrame}>
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div className={styles.cardDetails}>
-                 <span>Barberos con su propia disponibilidad</span>
-                 <small>Cada profesional maneja sus horarios sin generar conflictos.</small>
-              </div>
-            </div>
-            <div className={styles.dirPartnerCard}>
-              <div className={styles.iconFrame}>
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              </div>
-              <div className={styles.cardDetails}>
-                 <span>Clientes sin turno (walk-ins)</span>
-                 <small>Asignación automática según disponibilidad en el momento.</small>
-              </div>
-            </div>
-            <div className={styles.dirPartnerCard}>
-              <div className={styles.iconFrame}>
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              </div>
-              <div className={styles.cardDetails}>
-                 <span>Cobros adaptados a tu negocio</span>
-                 <small>Seña o pago total según cómo trabajes.</small>
-              </div>
-            </div>
-          </div>
-        </section>
+                <HowItWorksShowcase today={today} />
 
         {/* 4. CONTENT EXPLORER (The Square PwNextContentExplorer Replica) */}
         <ContentExplorer />
 
 
-        {/* 6. AUDIENCE MOMENT (Square Replica) */}
-        <AudienceMoment />
-
-        {/* 7. QUICK BOOKING (Call to Action Interface) */}
-        <section id="demo" className={styles.quickBookingSection}>
-          <div className={styles.quickBookingContainer}>
-            <div className={styles.quickBookingText}>
-              <span className={styles.tagline} style={{ color: '#006AFF' }}>RESERVA RÁPIDA</span>
-              <h2 className={styles.serifTitle} style={{ color: 'white', fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', maxWidth: '600px', marginBottom: '32px' }}>
-                Tu agenda, <br/> siempre en movimiento.
-              </h2>
-              <p className={styles.impactSubtitle} style={{ textAlign: 'left', margin: '0 0 40px', maxWidth: '480px' }}>
-                Experimenta la fluidez de nuestro sistema de reservas. Diseñado para ser intuitivo tanto para el dueño como para el cliente final.
-              </p>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', flex: 1 }}>
-                  <h4 style={{ color: 'white', marginBottom: '8px' }}>+40%</h4>
-                  <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Incremento en reservas online</p>
-                </div>
-                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', flex: 1 }}>
-                  <h4 style={{ color: 'white', marginBottom: '8px' }}>-25%</h4>
-                  <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Reducción de ausencias</p>
-                </div>
-              </div>
-            </div>
-            <div className={styles.quickBookingVisual}>
-              <PhoneReveal>
-                <QuickBookingFlow 
-                  slug="root"
-                  tenantName="Slotty Demo"
-                  timezone="UTC"
-                  minDate={today}
-                  initialDate={today}
-                  services={[
-                    { id: "s1", name: "Corte", price: "8000", duration_minutes: 30, description: "" },
-                    { id: "s2", name: "Barba", price: "5000", duration_minutes: 20, description: "" },
-                    { id: "s3", name: "Corte + Barba", price: "12000", duration_minutes: 50, description: "" },
-                    { id: "s4", name: "Express", price: "4500", duration_minutes: 15, description: "" }
-                  ]}
-                  barbersByService={{
-                    "s1": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }, { id: "b2", full_name: "Julian Cuts", rating: "4.9" }],
-                    "s2": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }],
-                    "s3": [{ id: "b1", full_name: "Alex Pro", rating: "5.0" }, { id: "b2", full_name: "Julian Cuts", rating: "4.9" }],
-                    "s4": [{ id: "b3", full_name: "Maria Nails", rating: "5.0" }]
-                  }}
-                  paymentSettings={{
-                    allowPayAtStore: true,
-                    allowBankTransfer: true,
-                    allowMercadoPago: true,
-                    depositType: "none",
-                    depositValue: "0",
-                    transferAlias: "SLOTTY.DEMO",
-                    transferCbu: "00000031000987654321",
-                    transferHolderName: "Slotty Software Inc",
-                    transferBankName: "Banco de la Nación Argentina"
-                  }}
-                  hideErrors={true} // Silenciador de errores activado para la demo
-                />
-              </PhoneReveal>
-            </div>
-          </div>
-        </section>
 
         {/* 8. PARTNER SHOWCASE (Live DB Feed) */}
         <section className={styles.directoryPartners} style={{ background: '#f9f9f9', padding: '120px 8%' }} data-animate>
           <div className={styles.sectionHeader}>
-            <span className={styles.tagline}>Nuestra red</span>
-            <h2 className={styles.serifTitle}>Confían en Slotty.</h2>
+            <span className={styles.tagline}>Nuevos clientes</span>
+            <h2 className={styles.serifTitle}>También podés recibir clientes que todavía no te conocen</h2>
+            <p className={styles.impactSubtitle} style={{ marginTop: '24px', textAlign: 'left', margin: '24px 0 0', maxWidth: '760px' }}>
+              Personas que buscan una barbería pueden encontrar tu negocio y reservar directamente desde la plataforma.
+            </p>
           </div>
-          <div className={styles.dirPartnerGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+          <div className={styles.dirPartnerGrid} style={{ gridTemplateColumns: 'repeat(3, minmax(360px, 420px))', justifyContent: 'center' }}>
+            {acquisitionCards.map((card) => (
+              <div key={card.title} className={styles.dirPartnerCard} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '24px', padding: '32px', minHeight: '180px' }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, overflow: 'hidden', background: 'rgba(245, 200, 66, 0.18)', border: '1px solid rgba(245, 200, 66, 0.3)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {card.icon === 'search' ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c29931" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                  ) : card.icon === 'calendar' ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c29931" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 14h4"/></svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c29931" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><path d="M3 12h18"/><path d="m5.5 5.5 13 13"/><path d="m18.5 5.5-13 13"/></svg>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '1.35rem', lineHeight: 1.2 }}>{card.title}</span>
+                  <small style={{ color: '#666', lineHeight: 1.6, fontSize: '1rem' }}>{card.description}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '28px' }}>
             {tenants.map((t) => (
-              <Link key={t.id} href={`/${t.slug}`} className={styles.dirPartnerCard} style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '24px' }}>
-                <div style={{ position: 'relative', width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', background: '#fff', border: '1px solid #eee', flexShrink: 0 }}>
-                   <Image src={t.logo_url || '/slotty-hero.png'} alt={t.name} fill style={{ objectFit: 'cover' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{t.name}</span>
-                  <small style={{ color: '#666' }}>{t.slug}.slotty.me</small>
-                </div>
+              <Link
+                key={t.id}
+                href={`/${t.slug}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 18px',
+                  borderRadius: '999px',
+                  background: '#fff',
+                  border: '1px solid #e7e7e7',
+                  color: '#111',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.95rem'
+                }}
+              >
+                <span style={{ position: 'relative', width: 26, height: 26, borderRadius: '50%', overflow: 'hidden', background: '#f4f4f4', flexShrink: 0 }}>
+                  <Image src={t.logo_url || '/slotty-hero.png'} alt={t.name} fill style={{ objectFit: 'cover' }} />
+                </span>
+                <span>{t.name}</span>
               </Link>
             ))}
+          </div>
+        </section>
+
+        <section className={styles.finalCtaSection} data-animate>
+          <div className={styles.finalCtaShell}>
+            <span className={`${styles.tagline} ${styles.finalCtaEyebrow}`}>EMPEZÁ HOY</span>
+            <h2 className={styles.finalCtaTitle}>Empezá a llenar tu agenda desde hoy</h2>
+            <p className={styles.finalCtaText}>
+              Organizá tus turnos, reducí ausencias y abrí tu barbería a nuevos clientes desde un solo lugar.
+            </p>
+            <div className={styles.finalCtaActions}>
+              <Link href="#demo" className={`btn ${styles.finalCtaPrimary}`}>Ver demo en 2 minutos</Link>
+              <Link href="#demo" className={`btn-secondary ${styles.finalCtaSecondary}`}>Solicitar acceso</Link>
+            </div>
+            <ul className={styles.finalCtaBullets}>
+              <li>Sin instalaciones</li>
+              <li>Configuración simple</li>
+              <li>Adaptado a tu forma de trabajo</li>
+            </ul>
           </div>
         </section>
 

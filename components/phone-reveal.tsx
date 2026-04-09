@@ -6,12 +6,18 @@ import styles from "./phone-reveal.module.css";
 
 interface PhoneRevealProps {
   children: React.ReactNode;
+  onScrollContainerReady?: (node: HTMLDivElement | null) => void;
 }
 
-export function PhoneReveal({ children }: PhoneRevealProps) {
+export function PhoneReveal({ children, onScrollContainerReady }: PhoneRevealProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const startTouchY = useRef<number | null>(null);
+
+  useEffect(() => {
+    onScrollContainerReady?.(scrollRef.current);
+    return () => onScrollContainerReady?.(null);
+  }, [onScrollContainerReady]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -86,6 +92,7 @@ export function PhoneReveal({ children }: PhoneRevealProps) {
           <div 
             ref={scrollRef}
             className={styles.scrollingContent}
+            data-phone-scroll="true"
           >
             <div className={styles.innerPadding}>
               {children}

@@ -1,0 +1,204 @@
+.section {
+  min-height: 100vh;
+  padding: 100px 8%;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fc 100%);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  max-width: 900px;
+  margin-bottom: 40px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.controlPanel {
+  position: sticky;
+  top: 110px;
+}
+
+.stepperCard {
+  border: 1px solid #eceef4;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 36px;
+  padding: 28px;
+  box-shadow: 0 24px 70px rgba(17, 17, 17, 0.06);
+}
+
+.stepperHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.stepperKicker,
+.activeLabel {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #f5c842;
+}
+
+.stepperIntro,
+.activeExplanation p,
+.stepContent span,
+.phoneCaption {
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: #666;
+  margin: 0;
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stepButton {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  width: 100%;
+  border: 1px solid #ebedf2;
+  border-radius: 26px;
+  background: #fcfcfd;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.stepButton:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 66, 0.25);
+}
+
+.stepButtonActive {
+  background: linear-gradient(180deg, #fffdf5 0%, #fff4cf 100%);
+  border-color: rgba(245, 200, 66, 0.4);
+  box-shadow: 0 20px 40px rgba(245, 200, 66, 0.08);
+}
+
+.stepId {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #f1f3f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.stepButtonActive .stepId {
+  background: #f5c842;
+  color: #050505;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stepContent strong,
+.activeExplanation strong {
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: #111;
+}
+
+.activeExplanation {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eceef4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phoneColumn {
+  display: flex;
+  justify-content: center;
+}
+
+.phoneShell {
+  width: 100%;
+  max-width: 720px;
+  border-radius: 40px;
+  padding: 26px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 70px rgba(17, 17, 17, 0.06);
+  position: relative;
+}
+
+.phoneCaption {
+  color: #6f6242;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.liveDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #18c964;
+  box-shadow: 0 0 0 6px rgba(24, 201, 100, 0.12);
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .controlPanel {
+    position: static;
+  }
+
+  .phoneShell {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .stepperCard,
+  .phoneShell {
+    padding: 20px;
+    border-radius: 28px;
+  }
+
+  .stepButton {
+    padding: 16px;
+    border-radius: 22px;
+  }
+}

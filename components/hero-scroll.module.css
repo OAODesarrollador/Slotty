@@ -123,23 +123,36 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
-.partnerLogos {
+.partnerLogosViewport {
+  width: 100%;
+  overflow: hidden;
+  margin-top: 5.8em;
+}
+
+.partnerLogosTrack {
   display: flex;
   width: max-content;
-  gap: 120px;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.partnerLogos {
+  display: flex;
+  flex-shrink: 0;
+  width: max-content;
+  gap: 72px;
+  padding-right: 72px;
   opacity: 1;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: 0.2em;
-  margin-top: 1.5em; /* Margen elástico para el banner */
-  animation: marquee 50s linear infinite;
   white-space: nowrap;
 }
 
 @keyframes marquee {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(calc(-50% - 36px)); }
 }
 
 /* Background Mosaic Reveal (Standalone Style) */
@@ -179,6 +192,9 @@
     padding: 14px 28px;
     font-size: 0.95rem;
     margin-bottom: 60px; /* Reducido para subir mas el banner */
+  }
+  .partnerLogosViewport {
+    margin-top: 7.2em;
   }
   .gridItemStandalone {
     width: 40vw;
