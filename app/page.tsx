@@ -6,6 +6,7 @@ import { ScrollReveal } from "@/components/scroll-reveal";
 import { RootHeader } from "@/components/root-header";
 import { ContentExplorer } from "@/components/content-explorer";
 import { HowItWorksShowcase } from "@/components/how-it-works-showcase";
+import { LeadCaptureSection } from "@/components/lead-capture-section";
 import styles from "./page.module.css";
 
 export default async function RootPage() {
@@ -184,38 +185,34 @@ export default async function RootPage() {
           </div>
         </section>
 
+        <LeadCaptureSection />
+
         {/* 9. FOOTER */}
         <footer className={styles.squareFooter}>
           <div className={styles.footerGrid}>
             <div className={styles.footerCol}>
-              <h5>PRODUCTO</h5>
-              <Link href="#">Terminal POS</Link>
-              <Link href="#">Agenda Online</Link>
-              <Link href="#">Pagos</Link>
-              <Link href="#">CRM</Link>
+              <h5>Slotty</h5>
+              <p className={styles.footerBrandText}>Sistema de reservas para negocios de servicios</p>
             </div>
             <div className={styles.footerCol}>
-              <h5>INDUSTRIAS</h5>
-              <Link href="#">Barberías</Link>
-              <Link href="#">Retail</Link>
-              <Link href="#">Restaurantes</Link>
-              <Link href="#">Servicios Profesionales</Link>
+              <h5>Producto</h5>
+              <Link href="#demo">Cómo funciona</Link>
+              <Link href="#benefits">Beneficios</Link>
+              <Link href="#start">Empezar</Link>
             </div>
             <div className={styles.footerCol}>
-              <h5>SOPORTE</h5>
-              <Link href="#">Centro de ayuda</Link>
-              <Link href="#">Seguridad</Link>
-              <Link href="#">Estado del sistema</Link>
+              <h5>Contacto</h5>
+              <span className={styles.footerContactValue}>WhatsApp: +543704054127</span>
+              <Link href="https://wa.me/543704054127" target="_blank" rel="noreferrer">Hablá por WhatsApp</Link>
             </div>
             <div className={styles.footerCol}>
-              <h5>PLATAFORMA</h5>
-              <Link href="/admin/login">Acceso Negocio</Link>
-              <Link href="/discovery">Directorio Global</Link>
-              <Link href="#">API Documentation</Link>
+              <h5>Legal</h5>
+              <Link href="/terminos">Términos</Link>
+              <Link href="/privacidad">Privacidad</Link>
             </div>
           </div>
           <div className={styles.footerRights}>
-            © 2026 Slotty Software. Todos los derechos reservados.
+            © 2026 Slotty
           </div>
         </footer>
       </main>

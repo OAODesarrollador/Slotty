@@ -240,6 +240,7 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
           <p className={styles.subHeadline}>
             Automatizá tu agenda, reducí ausencias y mantené tu barbería siempre activa.
           </p>
+          <p className={styles.heroMicrocopy}>Incluye tu propia página de reservas lista para compartir</p>
           <Link href="#demo" className={styles.ctaButton}>
             Ver demo en 2 minutos
           </Link>

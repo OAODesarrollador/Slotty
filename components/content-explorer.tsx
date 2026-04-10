@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import Image from "next/image";
 import styles from "./content-explorer.module.css";
 
@@ -28,7 +28,13 @@ const EXPLORER_DATA = [
 export function ContentExplorer() {
   const [openIndex, setOpenIndex] = useState(1); // "Clientes y cobros" abierto por defecto
 
-  const SECTIONS = [
+  const SECTIONS: {
+    title: string;
+    description: string;
+    image: string;
+    icon: ReactNode;
+    exampleLink?: string;
+  }[] = [
     {
       title: "Reservas en un solo lugar",
       description: "Todos los turnos organizados dentro del mismo sistema, sin cruces, sin confusión y sin perder información entre canales.",
@@ -42,15 +48,16 @@ export function ContentExplorer() {
       icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
     },
     {
-      title: "Operación diaria más ordenada",
-      description: "Horarios, disponibilidad y atención funcionando en conjunto para que la barbería trabaje con menos fricción.",
+      title: "Tu propia página de reservas",
+      description: "Cada negocio tiene su espacio con un link propio para que los clientes reserven directamente, sin depender de terceros.",
       image: "/eco-operacion.png",
-      icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l2.12-2.12a5 5 0 0 0-7.07-7.07L11.38 5.6"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.34 12.58a5 5 0 1 0 7.07 7.07l1.17-1.17"/></svg>,
+      exampleLink: "nombrenegocio.slotty.com"
     }
   ];
 
   return (
-    <section className={styles.explorerSection}>
+    <section id="benefits" className={styles.explorerSection}>
       <div className={styles.container}>
         
         {/* 1. HEADER UNIFICADO */}
@@ -93,6 +100,9 @@ export function ContentExplorer() {
               <div className={styles.cardContent}>
                 <div className={styles.contentInner}>
                   <p>{section.description}</p>
+                  {section.exampleLink ? (
+                    <div className={styles.linkExample}>{section.exampleLink}</div>
+                  ) : null}
                 </div>
               </div>
 

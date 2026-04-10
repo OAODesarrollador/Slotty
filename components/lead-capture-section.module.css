@@ -1,0 +1,224 @@
+.section {
+  padding: 110px 8%;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf6e9 100%);
+}
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px;
+  border-radius: 42px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(252, 248, 238, 0.98) 100%);
+  border: 1px solid rgba(194, 153, 49, 0.18);
+  box-shadow: 0 28px 70px rgba(24, 24, 24, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.contentColumn {
+  display: flex;
+  align-items: center;
+}
+
+.header {
+  text-align: left;
+}
+
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #a36a00;
+  background: rgba(245, 200, 66, 0.24);
+  padding: 8px 18px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 1px solid rgba(194, 153, 49, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 140, 0.2), 0 1px 2px rgba(138, 90, 0, 0.06);
+  margin-bottom: 22px;
+}
+
+.title {
+  font-family: var(--font-serif), serif;
+  font-size: clamp(2.5rem, 4.3vw, 4.1rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 400;
+  color: #111111;
+  margin: 0;
+  max-width: 480px;
+}
+
+.subtitle {
+  margin: 18px 0 0;
+  max-width: 460px;
+  font-size: 1.08rem;
+  line-height: 1.65;
+  color: #5b5b5b;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+  padding: 32px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow: 0 20px 40px rgba(24, 24, 24, 0.05);
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #1c1c1c;
+}
+
+.optional {
+  color: #7d7d7d;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-height: 58px;
+  padding: 0 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: #111111;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.input::placeholder {
+  color: #8b8b8b;
+}
+
+.input:focus {
+  border-color: rgba(194, 153, 49, 0.7);
+  box-shadow: 0 0 0 4px rgba(245, 200, 66, 0.14);
+}
+
+.inputError {
+  border-color: rgba(189, 58, 58, 0.72);
+  box-shadow: 0 0 0 4px rgba(189, 58, 58, 0.08);
+}
+
+.errorText {
+  font-size: 0.9rem;
+  color: #b53737;
+}
+
+.actions {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 58px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f5c842, #c29931);
+  color: #050505;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+  box-shadow: 0 14px 30px rgba(245, 200, 66, 0.22);
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(245, 200, 66, 0.28);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.microcopy {
+  margin: 0;
+  color: #747474;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.feedback {
+  margin: 2px 0 0;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.feedbackSuccess {
+  background: rgba(43, 125, 71, 0.1);
+  color: #22613a;
+  border: 1px solid rgba(43, 125, 71, 0.18);
+}
+
+.feedbackError {
+  background: rgba(189, 58, 58, 0.08);
+  color: #a33434;
+  border: 1px solid rgba(189, 58, 58, 0.16);
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 40px 28px;
+    border-radius: 30px;
+  }
+
+  .contentColumn {
+    display: block;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .title {
+    font-size: 2.35rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .form {
+    padding: 22px;
+  }
+
+  .input,
+  .submitButton {
+    min-height: 56px;
+  }
+}

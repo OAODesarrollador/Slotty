@@ -210,6 +210,21 @@
   max-width: 600px;
 }
 
+.linkExample {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 66, 0.4);
+  background: rgba(10, 10, 11, 0.45);
+  color: #f5c842;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .cardConnector {
   position: absolute;
   bottom: 0;
@@ -259,6 +274,11 @@
     overflow: hidden;
   }
   .dynamicCard.isOpen .cardContent {
-    max-height: 200px;
+    max-height: 240px;
+  }
+  .linkExample {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
   }
 }
