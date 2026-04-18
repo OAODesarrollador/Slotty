@@ -326,25 +326,31 @@ h2 {
   min-height: 56px;
   padding: 0 40px;
   border-radius: 99px; /* Pill shape Square standard */
+  position: relative;
+  overflow: hidden;
   cursor: pointer;
   font-weight: 700;
   font-size: 1rem;
   transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
   font-family: var(--font-inter), sans-serif;
   letter-spacing: -0.01em;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .btn {
-  background: var(--accent);
+  background: linear-gradient(135deg, rgba(245, 200, 66, 0.92), rgba(194, 153, 49, 0.82));
   color: var(--accent-ink);
-  border: none;
-  box-shadow: 0 4px 14px rgba(245, 200, 66, 0.28);
+  border: 1px solid rgba(255, 226, 140, 0.35);
+  box-shadow: 0 10px 30px rgba(245, 200, 66, 0.22);
 }
 
 .btn:hover {
   transform: translateY(-2px);
-  background: var(--accent-2);
-  box-shadow: 0 8px 24px rgba(245, 200, 66, 0.38);
+  background: linear-gradient(135deg, rgba(255, 226, 140, 0.94), rgba(245, 200, 66, 0.86));
+  border-color: rgba(245, 200, 66, 0.55);
+  box-shadow: 0 14px 34px rgba(245, 200, 66, 0.28);
+  color: var(--accent-ink);
 }
 
 .btn:active {
@@ -352,15 +358,18 @@ h2 {
 }
 
 .btn-secondary {
-  background: rgba(10, 10, 10, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: var(--accent-ink);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #ffffff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  border-color: rgba(245, 200, 66, 0.36);
   transform: translateY(-2px);
+  color: var(--accent);
+  box-shadow: 0 12px 28px rgba(245, 200, 66, 0.12);
 }
 
 .main-header {
@@ -620,15 +629,38 @@ body.header-scrolled .main-header {
 }
 
 .btn-ghost {
-  background: rgba(10, 10, 10, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: var(--muted);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  color: var(--accent);
+  border-color: rgba(245, 200, 66, 0.28);
+  box-shadow: 0 10px 24px rgba(245, 200, 66, 0.1);
+}
+
+.btn:active,
+.btn-secondary:active,
+.btn-ghost:active,
+.btn.active,
+.btn-secondary.active,
+.btn-ghost.active,
+.btn[aria-current="page"],
+.btn-secondary[aria-current="page"],
+.btn-ghost[aria-current="page"] {
+  border-color: rgba(245, 200, 66, 0.42);
+  box-shadow: 0 0 0 1px rgba(245, 200, 66, 0.16), 0 12px 28px rgba(245, 200, 66, 0.12);
+}
+
+.btn-secondary:active,
+.btn-ghost:active,
+.btn-secondary.active,
+.btn-ghost.active,
+.btn-secondary[aria-current="page"],
+.btn-ghost[aria-current="page"] {
+  color: var(--accent);
 }
 
 /* MOBILE OPTIMIZATIONS (Consolidated) */
@@ -846,24 +878,44 @@ body.header-scrolled .main-header {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 8px;
+  padding: 10px 12px;
   border-radius: 12px;
-  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.25s ease;
+}
+
+.dock-item:hover {
+  color: var(--accent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  border-color: rgba(245, 200, 66, 0.22);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
 }
 
 .dock-item.is-active {
   color: var(--accent);
+  background: linear-gradient(180deg, rgba(245, 200, 66, 0.14), rgba(255, 255, 255, 0.06));
+  border-color: rgba(245, 200, 66, 0.34);
+  box-shadow: 0 0 0 1px rgba(245, 200, 66, 0.14), 0 12px 28px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
 }
 
 .dock-icon {
   font-size: 1rem;
   margin-bottom: 2px;
   opacity: 0.7;
+  transition: all 0.25s ease;
+}
+
+.dock-item:hover .dock-icon {
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 .dock-item.is-active .dock-icon {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .dock-center {

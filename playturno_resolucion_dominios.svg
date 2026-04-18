@@ -1,0 +1,94 @@
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F7F9FC"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#48566f"/>
+    </marker>
+    <style>
+      .title { font: 700 42px Arial, sans-serif; fill:#1b2436; }
+      .subtitle { font: 400 18px Arial, sans-serif; fill:#556277; }
+      .step { font: 700 24px Arial, sans-serif; fill:#1b2436; }
+      .body { font: 400 16px Arial, sans-serif; fill:#3b485c; }
+      .small { font: 400 14px Arial, sans-serif; fill:#64748b; }
+      .card { fill:#ffffff; stroke:#c7d3e4; stroke-width:2.2; rx:20; }
+      .line { stroke:#48566f; stroke-width:4; fill:none; marker-end:url(#arrow); }
+      .branch { stroke:#48566f; stroke-width:4; fill:none; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#bg)"/>
+
+  <text x="540" y="72" text-anchor="middle" class="title">Cómo resuelve PlayTurno cada dominio</text>
+  <text x="540" y="104" text-anchor="middle" class="subtitle">El mismo sistema responde distinto según el host solicitado</text>
+
+  <rect x="320" y="160" width="440" height="106" class="card"/>
+  <text x="540" y="198" text-anchor="middle" class="step">1. Usuario ingresa una URL</text>
+  <text x="540" y="224" text-anchor="middle" class="body">
+    <tspan x="540" dy="0">Ej.: playturno.online · club-deportivo.playturno.online</tspan>
+    <tspan x="540" dy="20">· clu-deportivo.playturno.online</tspan>
+  </text>
+
+  <line x1="540" y1="266" x2="540" y2="308" class="line"/>
+
+  <rect x="300" y="310" width="480" height="138" class="card"/>
+  <text x="540" y="350" text-anchor="middle" class="step">2. Resolución por host</text>
+  <text x="540" y="378" text-anchor="middle" class="body">
+    <tspan x="540" dy="0">Middleware / lógica del backend identifica si es</tspan>
+    <tspan x="540" dy="24">principal, tenant válido o fallback</tspan>
+  </text>
+  <text x="540" y="424" text-anchor="middle" class="small">No depende de una sola página fija</text>
+
+  <line x1="540" y1="448" x2="540" y2="468" class="line"/>
+  <line x1="210" y1="468" x2="870" y2="468" class="branch"/>
+  <line x1="210" y1="468" x2="210" y2="518" class="line"/>
+  <line x1="540" y1="468" x2="540" y2="518" class="line"/>
+  <line x1="870" y1="468" x2="870" y2="518" class="line"/>
+
+  <rect x="70" y="520" width="280" height="196" class="card"/>
+  <text x="210" y="558" text-anchor="middle" class="step">A. Dominio principal</text>
+  <text x="210" y="590" text-anchor="middle" class="body">playturno.online</text>
+  <text x="210" y="624" text-anchor="middle" class="body">
+    <tspan x="210" dy="0">Muestra la página principal</tspan>
+    <tspan x="210" dy="24">del sistema / landing</tspan>
+  </text>
+  <text x="210" y="694" text-anchor="middle" class="small">Entrada general al producto</text>
+
+  <rect x="400" y="520" width="280" height="196" class="card"/>
+  <text x="540" y="558" text-anchor="middle" class="step">B. Tenant válido</text>
+  <text x="540" y="590" text-anchor="middle" class="body">
+    <tspan x="540" dy="0">club-deportivo</tspan>
+    <tspan x="540" dy="20">.playturno.online</tspan>
+  </text>
+  <text x="540" y="638" text-anchor="middle" class="body">
+    <tspan x="540" dy="0">Carga el sitio del negocio</tspan>
+    <tspan x="540" dy="24">y su experiencia de reserva</tspan>
+  </text>
+  <text x="540" y="694" text-anchor="middle" class="small">Frontend público por tenant</text>
+
+  <rect x="730" y="520" width="280" height="196" class="card"/>
+  <text x="870" y="558" text-anchor="middle" class="step">C. Error de escritura</text>
+  <text x="870" y="590" text-anchor="middle" class="body">
+    <tspan x="870" dy="0">clu-deportivo</tspan>
+    <tspan x="870" dy="20">.playturno.online</tspan>
+  </text>
+  <text x="870" y="638" text-anchor="middle" class="body">
+    <tspan x="870" dy="0">No devuelve un error feo:</tspan>
+    <tspan x="870" dy="24">muestra una página útil</tspan>
+  </text>
+  <text x="870" y="694" text-anchor="middle" class="small">Sugiere dominios / clubes disponibles</text>
+
+  <line x1="210" y1="716" x2="210" y2="798" class="line"/>
+  <line x1="540" y1="716" x2="540" y2="798" class="line"/>
+  <line x1="870" y1="716" x2="870" y2="798" class="line"/>
+
+  <rect x="260" y="798" width="560" height="160" class="card"/>
+  <text x="540" y="844" text-anchor="middle" class="step">Resultado</text>
+  <text x="540" y="878" text-anchor="middle" class="body">
+    <tspan x="540" dy="0">Mejor UX, menos fricción y una arquitectura</tspan>
+    <tspan x="540" dy="24">preparada para múltiples negocios</tspan>
+  </text>
+  <text x="540" y="928" text-anchor="middle" class="body">sin depender de rutas manuales por cada cliente</text>
+</svg>

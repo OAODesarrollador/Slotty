@@ -51,6 +51,8 @@
   position: relative;
   padding: 0;
   color: #ffffff !important;
+  display: flex;
+  justify-content: center;
 }
 
 /* CLONACION: OCULTAR DESCRIPCIONES LARGAS PERO MANTENER ENCABEZADO */
@@ -62,9 +64,12 @@
 
 /* CLONACION: DISEÑO DE TARJETAS CENTRADO Y COMPACTO */
 .innerPadding :global(.selection-grid) {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
     padding: 0 !important;
+    width: calc(100% - 6px) !important;
+    max-width: 232px !important;
+    margin: 0 auto !important;
 }
 
 .innerPadding :global(.service-card) {
@@ -80,6 +85,30 @@
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 16px !important;
 }
+
+.innerPadding :global(.service-card[data-phone-demo-service="true"]) {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    transform: scale(1) !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.innerPadding :global(.service-card[data-phone-demo-service="true"][data-phone-demo-hovered="true"]) {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28) !important;
+}
+
+.innerPadding :global(.service-card[data-phone-demo-service="true"][data-phone-demo-active="true"]) {
+    background: rgba(245, 200, 66, 0.12) !important;
+    border-color: var(--accent) !important;
+    transform: scale(1.12) !important;
+    box-shadow: none !important;
+}
+
 
 .innerPadding :global(.service-top) {
     flex-direction: column !important;
@@ -111,12 +140,17 @@
 }
 
 .innerPadding :global(.page) {
+    width: 100% !important;
     padding: 10px 0 !important;
     background: transparent !important;
+    display: flex !important;
+    justify-content: center !important;
 }
 
 .innerPadding :global(.shell) {
-  margin: 10px !important;
+  width: calc(100% - 22px) !important;
+  max-width: 252px !important;
+  margin: 10px auto !important;
   padding: 14px !important;
   border-radius: 20px !important;
   background: #080808 !important;
@@ -131,4 +165,20 @@
 .innerPadding :global(h1) {
     font-size: 1.1rem !important;
     line-height: 1.2 !important;
+    text-align: center !important;
+}
+
+.innerPadding :global(h2),
+.innerPadding :global(.header-row),
+.innerPadding :global(.page-lead),
+.innerPadding :global(.summary-card),
+.innerPadding :global(.filter-row) {
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.innerPadding :global(.header-row),
+.innerPadding :global(h2) {
+    text-align: center !important;
 }

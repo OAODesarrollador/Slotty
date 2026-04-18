@@ -1,0 +1,127 @@
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="soft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F7F9FC"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5B6472"/>
+    </marker>
+    <style>
+      .title { font: 700 38px Arial, sans-serif; fill:#111827; }
+      .subtitle { font: 400 19px Arial, sans-serif; fill:#4B5563; }
+      .box { fill:#FFFFFF; stroke:#D1D5DB; stroke-width:2; rx:18; }
+      .box2 { fill:#F9FAFB; stroke:#D1D5DB; stroke-width:2; rx:18; }
+      .hdr { font: 700 21px Arial, sans-serif; fill:#111827; }
+      .hdr-sm { font: 700 18px Arial, sans-serif; fill:#111827; }
+      .txt { font: 400 18px Arial, sans-serif; fill:#374151; }
+      .txt-sm { font: 400 16px Arial, sans-serif; fill:#374151; }
+      .small { font: 400 15px Arial, sans-serif; fill:#6B7280; }
+      .label { font: 700 16px Arial, sans-serif; fill:#334155; }
+      .line { stroke:#5B6472; stroke-width:3; marker-end:url(#arrow); }
+      .dash { stroke:#94A3B8; stroke-width:2.5; stroke-dasharray:8 8; marker-end:url(#arrow); }
+      .pill { fill:#EEF2FF; stroke:#C7D2FE; stroke-width:1.5; rx:14; }
+      .pilltxt { font: 700 14px Arial, sans-serif; fill:#3730A3; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="1080" fill="url(#soft)"/>
+
+  <text x="540" y="68" text-anchor="middle" class="title">PlayTurno · arquitectura multitenant basada en subdominios</text>
+  <text x="540" y="100" text-anchor="middle" class="subtitle">Dominio principal, tenants por subdominio y fallback útil ante errores de escritura</text>
+
+  <!-- Top row -->
+  <rect x="60" y="150" width="290" height="120" class="box"/>
+  <text x="205" y="193" text-anchor="middle" class="hdr">playturno.online</text>
+  <text x="205" y="222" text-anchor="middle" class="txt">Landing / entrada principal</text>
+  <text x="205" y="240" text-anchor="middle" class="small">
+    <tspan x="205" dy="0">Presentación del producto y</tspan>
+    <tspan x="205" dy="17">acceso al ecosistema</tspan>
+  </text>
+
+  <rect x="395" y="150" width="290" height="120" class="box"/>
+  <text x="540" y="188" text-anchor="middle" class="hdr-sm">
+    <tspan x="540" dy="0">club-deportivo</tspan>
+    <tspan x="540" dy="19">.playturno.online</tspan>
+  </text>
+  <text x="540" y="223" text-anchor="middle" class="txt">Tenant válido</text>
+  <text x="540" y="241" text-anchor="middle" class="small">
+    <tspan x="540" dy="0">Sitio público de reservas</tspan>
+    <tspan x="540" dy="17">de un negocio concreto</tspan>
+  </text>
+
+  <rect x="730" y="150" width="290" height="120" class="box"/>
+  <text x="875" y="188" text-anchor="middle" class="hdr-sm">
+    <tspan x="875" dy="0">clu-deportivo</tspan>
+    <tspan x="875" dy="19">.playturno.online</tspan>
+  </text>
+  <text x="875" y="223" text-anchor="middle" class="txt-sm">Subdominio mal escrito</text>
+  <text x="875" y="241" text-anchor="middle" class="small">
+    <tspan x="875" dy="0">No muestra error técnico</tspan>
+    <tspan x="875" dy="17">ni 404 seco</tspan>
+  </text>
+
+  <!-- Resolution layer -->
+  <rect x="250" y="330" width="580" height="120" class="box2"/>
+  <text x="540" y="372" text-anchor="middle" class="hdr">Resolución por host / middleware / backend</text>
+  <text x="540" y="400" text-anchor="middle" class="txt">Detecta el dominio pedido y decide cómo responder</text>
+  <rect x="340" y="415" width="120" height="28" class="pill"/><text x="400" y="434" text-anchor="middle" class="pilltxt">principal</text>
+  <rect x="480" y="415" width="120" height="28" class="pill"/><text x="540" y="434" text-anchor="middle" class="pilltxt">tenant válido</text>
+  <rect x="620" y="415" width="120" height="28" class="pill"/><text x="680" y="434" text-anchor="middle" class="pilltxt">fallback</text>
+
+  <line x1="205" y1="270" x2="430" y2="328" class="line"/>
+  <line x1="540" y1="270" x2="540" y2="328" class="line"/>
+  <line x1="875" y1="270" x2="650" y2="328" class="line"/>
+
+  <!-- Branches -->
+  <rect x="80" y="520" width="280" height="150" class="box"/>
+  <text x="220" y="560" text-anchor="middle" class="hdr">Ruta 1 · dominio principal</text>
+  <text x="220" y="590" text-anchor="middle" class="txt">Carga la página pública</text>
+  <text x="220" y="618" text-anchor="middle" class="txt">de PlayTurno</text>
+  <text x="220" y="640" text-anchor="middle" class="small">
+    <tspan x="220" dy="0">Marketing, presentación</tspan>
+    <tspan x="220" dy="17">y acceso general</tspan>
+  </text>
+
+  <rect x="400" y="520" width="280" height="150" class="box"/>
+  <text x="540" y="560" text-anchor="middle" class="hdr">Ruta 2 · tenant válido</text>
+  <text x="540" y="590" text-anchor="middle" class="txt">Cliente entra al sitio</text>
+  <text x="540" y="618" text-anchor="middle" class="txt">del negocio correspondiente</text>
+  <text x="540" y="646" text-anchor="middle" class="small">Frontend público de reservas</text>
+
+  <rect x="720" y="520" width="280" height="150" class="box"/>
+  <text x="860" y="560" text-anchor="middle" class="hdr">Ruta 3 · fallback inteligente</text>
+  <text x="860" y="590" text-anchor="middle" class="txt">Informa que el dominio</text>
+  <text x="860" y="618" text-anchor="middle" class="txt">está disponible o no existe</text>
+  <text x="860" y="640" text-anchor="middle" class="small">
+    <tspan x="860" dy="0">Sugiere clubes/tenants</tspan>
+    <tspan x="860" dy="17">para acceder</tspan>
+  </text>
+
+  <line x1="540" y1="450" x2="220" y2="518" class="dash"/>
+  <line x1="540" y1="450" x2="540" y2="518" class="line"/>
+  <line x1="540" y1="450" x2="860" y2="518" class="dash"/>
+
+  <!-- Technical stack -->
+  <line x1="540" y1="670" x2="540" y2="738" class="line"/>
+  <line x1="860" y1="670" x2="600" y2="738" class="line"/>
+  <rect x="410" y="740" width="260" height="74" class="box"/>
+  <text x="540" y="783" text-anchor="middle" class="hdr">Cliente (web / mobile)</text>
+
+  <line x1="540" y1="814" x2="540" y2="852" class="line"/>
+  <rect x="410" y="852" width="260" height="74" class="box"/>
+  <text x="540" y="895" text-anchor="middle" class="hdr">Frontend (Next.js)</text>
+
+  <line x1="540" y1="926" x2="540" y2="964" class="line"/>
+  <rect x="410" y="964" width="260" height="74" class="box"/>
+  <text x="540" y="1007" text-anchor="middle" class="hdr">API / Backend</text>
+
+  <line x1="690" y1="1001" x2="812" y2="1001" class="line"/>
+  <rect x="820" y="964" width="180" height="74" class="box"/>
+  <text x="910" y="994" text-anchor="middle" class="hdr">DB</text>
+  <text x="910" y="1018" text-anchor="middle" class="txt">SQLite / Turso</text>
+
+  <line x1="910" y1="964" x2="910" y2="922" class="line"/>
+  <rect x="800" y="860" width="220" height="58" class="pill"/>
+  <text x="910" y="895" text-anchor="middle" class="pilltxt">tenant_id → separa negocios</text>
+</svg>

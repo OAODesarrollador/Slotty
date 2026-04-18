@@ -188,6 +188,7 @@ export function HowItWorksShowcase({ today }: HowItWorksShowcaseProps) {
                     transferBankName: "Banco de la Nación Argentina"
                   }}
                   hideErrors={true}
+                  isPhoneDemo={true}
                   onGuideSectionMount={registerSection}
                 />
               </PhoneReveal>

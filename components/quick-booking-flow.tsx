@@ -29,6 +29,102 @@ type AvailabilitySlot = {
   end: string;
 };
 
+const DEMO_BARBER_NAMES: Record<string, string> = {
+  b1: "Alex Pro",
+  b2: "Julian Cuts",
+  b3: "Maria Nails"
+};
+
+const DEMO_SERVICE_SLOT_BLUEPRINTS: Record<string, Record<string, string[]>> = {
+  s1: {
+    b1: ["09:00", "10:30", "12:00", "15:30", "18:00"],
+    b2: ["09:30", "11:00", "14:00", "16:30"]
+  },
+  s2: {
+    b1: ["10:00", "11:30", "13:30", "17:00"]
+  },
+  s3: {
+    b1: ["09:00", "13:00", "17:30"],
+    b2: ["10:30", "15:00"]
+  },
+  s4: {
+    b3: ["08:30", "09:15", "10:00", "10:45", "11:30", "16:00", "16:45"]
+  }
+};
+
+function getDaysBetween(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const diff = end.getTime() - start.getTime();
+  return Math.max(0, Math.round(diff / 86400000));
+}
+
+function addMinutesToDate(isoDateTime: string, minutes: number) {
+  const next = new Date(isoDateTime);
+  next.setMinutes(next.getMinutes() + minutes);
+  return next.toISOString();
+}
+
+function buildDemoSlots(args: {
+  serviceId: string;
+  barberId: string;
+  date: string;
+  minDate: string;
+  durationMinutes: number;
+}) {
+  const { serviceId, barberId, date, minDate, durationMinutes } = args;
+  const serviceBlueprint = DEMO_SERVICE_SLOT_BLUEPRINTS[serviceId] ?? {};
+  const dayOffset = getDaysBetween(minDate, date);
+
+  const shouldHideServiceForDay =
+    (serviceId === "s3" && dayOffset % 4 === 2) ||
+    (serviceId === "s4" && dayOffset % 3 === 1);
+
+  if (shouldHideServiceForDay) {
+    return [] as AvailabilitySlot[];
+  }
+
+  const selectedBarberIds = barberId
+    ? [barberId]
+    : Object.keys(serviceBlueprint);
+
+  const slots = selectedBarberIds.flatMap((currentBarberId) => {
+    const baseTimes = serviceBlueprint[currentBarberId] ?? [];
+
+    if (!baseTimes.length) {
+      return [] as AvailabilitySlot[];
+    }
+
+    const shouldHideBarberForDay =
+      (currentBarberId === "b2" && dayOffset % 2 === 0) ||
+      (currentBarberId === "b3" && dayOffset % 5 === 3);
+
+    if (shouldHideBarberForDay) {
+      return [] as AvailabilitySlot[];
+    }
+
+    const visibleTimes = baseTimes.filter((_, index) => (index + dayOffset) % 3 !== 1);
+
+    return visibleTimes.map((time, index) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      const shiftedMinutes = minutes + (dayOffset % 2) * 15;
+      const startsAt = new Date(`${date}T00:00:00`);
+      startsAt.setHours(hours, shiftedMinutes + (index % 2 === 0 ? 0 : 5), 0, 0);
+      const start = startsAt.toISOString();
+      const end = addMinutesToDate(start, durationMinutes);
+
+      return {
+        barberId: currentBarberId,
+        barberName: DEMO_BARBER_NAMES[currentBarberId] ?? "Profesional",
+        start,
+        end
+      } satisfies AvailabilitySlot;
+    });
+  });
+
+  return slots.sort((a, b) => a.start.localeCompare(b.start));
+}
+
 type PaymentSettings = {
   depositType: string;
   depositValue: string;
@@ -57,6 +153,7 @@ interface QuickBookingFlowProps {
   initialSlotStart?: string;
   initialError?: string;
   hideErrors?: boolean; // Nuevo: para silenciar errores solo en la demo
+  isPhoneDemo?: boolean;
   onGuideSectionMount?: (step: BookingGuideStep, node: HTMLDivElement | null) => void;
 }
 
@@ -74,6 +171,7 @@ export function QuickBookingFlow({
   initialSlotStart,
   initialError,
   hideErrors = false, // Falso por defecto para que las reservas reales sigan mostrando avisos
+  isPhoneDemo = false,
   onGuideSectionMount
 }: QuickBookingFlowProps) {
   const router = useRouter();
@@ -88,9 +186,12 @@ export function QuickBookingFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [payInFull, setPayInFull] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState("");
+  const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
+  const [demoConfirmation, setDemoConfirmation] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(initialError ?? "");
+  const [paymentNotice, setPaymentNotice] = useState("");
   const [validationIssues, setValidationIssues] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
   
@@ -113,13 +214,16 @@ export function QuickBookingFlow({
   const barbers = serviceId ? barbersByService[serviceId] ?? [] : [];
   const isTodaySelected = date === minDate;
   const isPayAtStore = paymentMethod === "pay_at_store";
+  const payAtStoreOnlyTodayMessage = "El pago en efectivo solo está disponible para reservas de hoy. Ajustamos la fecha para que puedas continuar.";
 
   useEffect(() => {
     if (paymentMethod === "pay_at_store" && date !== minDate) {
       setDate(minDate);
       setSelectedSlotId("");
+      setPaymentNotice(payAtStoreOnlyTodayMessage);
+      setValidationIssues([]);
     }
-  }, [date, minDate, paymentMethod]);
+  }, [date, minDate, payAtStoreOnlyTodayMessage, paymentMethod]);
 
   const selectedSlot = useMemo(
     () => slots.find((slot) => `${slot.barberId}-${slot.start}` === selectedSlotId) ?? null,
@@ -147,6 +251,26 @@ export function QuickBookingFlow({
     if (!serviceId || !date) {
       setSlots([]);
       return;
+    }
+
+    if (isPhoneDemo) {
+      setAvailabilityLoading(true);
+      const timer = window.setTimeout(() => {
+        const nextSlots = buildDemoSlots({
+          serviceId,
+          barberId,
+          date,
+          minDate,
+          durationMinutes: selectedService?.duration_minutes ?? 30
+        });
+
+        setSlots(nextSlots);
+        setError("");
+        setValidationIssues([]);
+        setAvailabilityLoading(false);
+      }, 260);
+
+      return () => window.clearTimeout(timer);
     }
 
     const controller = new AbortController();
@@ -189,8 +313,27 @@ export function QuickBookingFlow({
       });
 
     return () => controller.abort();
-  }, [barberId, date, serviceId, slug]);
+  }, [barberId, date, isPhoneDemo, minDate, selectedService?.duration_minutes, serviceId, slug]);
 
+  useEffect(() => {
+    if (!selectedSlotId) {
+      return;
+    }
+
+    const hasSelectedSlot = slots.some((slot) => `${slot.barberId}-${slot.start}` === selectedSlotId);
+    if (!hasSelectedSlot) {
+      setSelectedSlotId("");
+    }
+  }, [selectedSlotId, slots]);
+
+  useEffect(() => {
+    if (!isPhoneDemo) {
+      return;
+    }
+
+    setName((current) => current || "Lucas Gomez");
+    setPhone((current) => current || "11 3456 7890");
+  }, [isPhoneDemo]);
 
   useEffect(() => {
     if (paymentMethod === "pay_at_store") {
@@ -214,6 +357,7 @@ export function QuickBookingFlow({
     setSelectedSlotId("");
     setPaymentMethod(null);
     setPayInFull(false);
+    setDemoConfirmation("");
         setError("");
         setValidationIssues([]);
     
@@ -227,6 +371,7 @@ export function QuickBookingFlow({
     setSelectedSlotId(`${slot.barberId}-${slot.start}`);
     setPaymentMethod(null);
     setPayInFull(false);
+    setDemoConfirmation("");
     
     // Auto Scroll to confirmation step (Personal Data)
     setTimeout(() => {
@@ -306,12 +451,23 @@ export function QuickBookingFlow({
     if (issues.length > 0) {
       setValidationIssues(issues);
       setError("Revisá los datos pendientes para continuar.");
+      setDemoConfirmation("");
       return;
     }
 
     setSubmitting(true);
     setError("");
     setValidationIssues([]);
+    setDemoConfirmation("");
+
+    if (isPhoneDemo) {
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      setSubmitting(false);
+      setDemoConfirmation(
+        `Reserva simulada para ${selectedService?.name ?? "el servicio"} el ${selectedSlot ? formatDateTime(selectedSlot.start, timezone) : "horario elegido"}.`
+      );
+      return;
+    }
 
     try {
       const response = await fetch(`/api/public/${slug}/appointments`, {
@@ -347,7 +503,6 @@ export function QuickBookingFlow({
       router.refresh();
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : "No se pudo confirmar la reserva.");
-    } finally {
       setSubmitting(false);
     }
   };
@@ -374,12 +529,21 @@ export function QuickBookingFlow({
           <div className="list service-grid-mobile selection-grid">
             {services.map((service) => {
               const active = service.id === serviceId;
+              const hovered = isPhoneDemo && hoveredServiceId === service.id && !active;
               return (
                 <button
                   key={service.id}
                   type="button"
-                  className={`service-card ${active ? "active" : ""}`}
+                  className={isPhoneDemo ? "service-card" : `service-card ${active ? "active" : ""}`}
+                  data-phone-demo-service={isPhoneDemo ? "true" : undefined}
+                  data-phone-demo-active={isPhoneDemo && active ? "true" : undefined}
+                  data-phone-demo-hovered={isPhoneDemo && hovered ? "true" : undefined}
                   onClick={() => handleServiceChange(service.id)}
+                  onMouseEnter={isPhoneDemo ? () => setHoveredServiceId(service.id) : undefined}
+                  onMouseLeave={isPhoneDemo ? () => setHoveredServiceId(null) : undefined}
+                  style={isPhoneDemo ? {
+                    zIndex: active ? 1 : 0
+                  } : undefined}
                 >
                   <div className="service-top">
                     <div className="stack" style={{ gap: 4 }}>
@@ -430,7 +594,18 @@ export function QuickBookingFlow({
                     <button
                       key={iso}
                       type="button"
-                      onClick={() => { if (!isPayAtStore || iso === minDate) setDate(iso); }}
+                      onClick={() => {
+                        if (!isPayAtStore || iso === minDate) {
+                          setDate(iso);
+                          setDemoConfirmation("");
+                          if (paymentNotice === payAtStoreOnlyTodayMessage) {
+                            setPaymentNotice("");
+                          }
+                        } else {
+                          setPaymentNotice(payAtStoreOnlyTodayMessage);
+                          setValidationIssues([]);
+                        }
+                      }}
                       style={{
                         flexShrink: 0,
                         width: "74px",
@@ -486,7 +661,10 @@ export function QuickBookingFlow({
                   {/* ANYONE OPTION */}
                   <button
                     type="button"
-                    onClick={() => setBarberId("")}
+                    onClick={() => {
+                      setBarberId("");
+                      setDemoConfirmation("");
+                    }}
                     style={{
                       flexShrink: 0,
                       display: "flex",
@@ -536,7 +714,10 @@ export function QuickBookingFlow({
                         <button
                           key={barber.id}
                           type="button"
-                          onClick={() => setBarberId(barber.id)}
+                          onClick={() => {
+                            setBarberId(barber.id);
+                            setDemoConfirmation("");
+                          }}
                           style={{
                             flexShrink: 0,
                             display: "flex",
@@ -667,19 +848,19 @@ export function QuickBookingFlow({
             <div className="summary-card" style={{ 
               background: "#161616", 
               border: "1px solid rgba(245, 200, 66, 0.3)", 
-              padding: "20px",
+              padding: "18px 20px",
               borderRadius: "20px",
               boxShadow: "0 10px 40px rgba(0,0,0,0.5)"
             }}>
-              <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.7rem", display: "block", marginBottom: "16px", letterSpacing: "0.08em", fontWeight: 900 }}>DETALLE DEL TURNO</span>
+              <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.66rem", display: "block", marginBottom: "12px", letterSpacing: "0.08em", fontWeight: 900 }}>RESUMEN</span>
               
-              <div className="stack" style={{ gap: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "6px" }}>
+              <div className="stack" style={{ gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "5px" }}>
                   <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase" }}>Servicio</span>
                   <strong style={{ fontSize: "0.85rem", color: "white" }}>{selectedService?.name || "-"}</strong>
                 </div>
                 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "5px" }}>
                   <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase" }}>Profesional</span>
                   <strong style={{ fontSize: "0.85rem", color: "white" }}>{selectedSlot?.barberName || "-"}</strong>
                 </div>
@@ -692,7 +873,7 @@ export function QuickBookingFlow({
                 </div>
               </div>
 
-              <div style={{ height: "1px", background: "rgba(245, 200, 66, 0.2)", margin: "16px 0" }} />
+              <div style={{ height: "1px", background: "rgba(245, 200, 66, 0.2)", margin: "14px 0 12px" }} />
               
               <div className="summary-row" style={{ justifyContent: "space-between", display: "flex", alignItems: "center", flexDirection: "row" }}>
                 <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>TOTAL</span>
@@ -713,78 +894,123 @@ export function QuickBookingFlow({
                 </div>
               ) : null}
               
-              <div className="grid cols-2" style={{ gap: "24px" }}>
-                <div className="stack" style={{ gap: 10, flex: 1 }}>
-                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Nombre completo</span>
-                  <input 
-                    value={name} 
-                    onChange={(event) => setName(event.target.value)} 
-                    placeholder="Tu nombre y apellido" 
-                    style={{ 
-                      padding: "16px", 
-                      borderRadius: "12px", 
-                      fontSize: "1rem",
-                      background: "#1c1c1c",
-                      border: "2px solid rgba(255,255,255,0.15)",
-                      color: "#ffffff",
-                      outline: "none",
-                      width: "100%"
-                    }} 
-                  />
-                  {fieldErrors.name ? <small style={{ color: "#ff8484", fontSize: "0.75rem", fontWeight: 600 }}>{fieldErrors.name}</small> : null}
-                </div>
-                
-                <div className="stack" style={{ gap: 10, flex: 1 }}>
-                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>WhatsApp</span>
-                  <input 
-                    value={phone} 
-                    onChange={(event) => setPhone(event.target.value)} 
-                    placeholder="Ej: 11 1234 5678" 
-                    style={{ 
-                      padding: "16px", 
-                      borderRadius: "12px", 
-                      fontSize: "1rem",
-                      background: "#1c1c1c",
-                      border: "2px solid rgba(255,255,255,0.15)",
-                      color: "#ffffff",
-                      outline: "none",
-                      width: "100%"
-                    }} 
-                  />
-                  {fieldErrors.phone ? <small style={{ color: "#ff8484", fontSize: "0.75rem", fontWeight: 600 }}>{fieldErrors.phone}</small> : null}
+              <div className="stack" style={{ gap: "24px" }}>
+                <div className="stack" style={{ gap: 14 }}>
+                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.72rem", fontWeight: 800 }}>Tus datos</span>
+                  <div className="stack" style={{ gap: "24px", padding: "18px", borderRadius: "18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div className="stack" style={{ gap: 10, flex: 1 }}>
+                      <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Nombre completo</span>
+                      <input 
+                        value={name} 
+                        onChange={(event) => setName(event.target.value)} 
+                        placeholder="Tu nombre y apellido" 
+                        style={{ 
+                          padding: "16px", 
+                          borderRadius: "12px", 
+                          fontSize: "1rem",
+                          background: "#1c1c1c",
+                          border: "2px solid rgba(255,255,255,0.15)",
+                          color: "#ffffff",
+                          outline: "none",
+                          width: "100%"
+                        }} 
+                      />
+                      {fieldErrors.name ? <small style={{ color: "#ff8484", fontSize: "0.75rem", fontWeight: 600 }}>{fieldErrors.name}</small> : null}
+                    </div>
+                    
+                    <div className="stack" style={{ gap: 10, flex: 1 }}>
+                      <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>WhatsApp</span>
+                      <input 
+                        value={phone} 
+                        onChange={(event) => setPhone(event.target.value)} 
+                        placeholder="Ej: 11 1234 5678" 
+                        style={{ 
+                          padding: "16px", 
+                          borderRadius: "12px", 
+                          fontSize: "1rem",
+                          background: "#1c1c1c",
+                          border: "2px solid rgba(255,255,255,0.15)",
+                          color: "#ffffff",
+                          outline: "none",
+                          width: "100%"
+                        }} 
+                      />
+                      {fieldErrors.phone ? <small style={{ color: "#ff8484", fontSize: "0.75rem", fontWeight: 600 }}>{fieldErrors.phone}</small> : null}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div ref={bindGuideSection("payment")} className="stack" style={{ gap: 8 }}>
-                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 800 }}>Pago</span>
-                <div className="summary-card" style={{ gap: 8, padding: "14px 16px", borderRadius: "18px" }}>
+              <div ref={bindGuideSection("payment")} className="stack" style={{ gap: 14 }}>
+                <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.72rem", fontWeight: 800 }}>Pago</span>
+                <div className="summary-card" style={{ gap: 10, padding: "18px", borderRadius: "18px" }}>
+                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Forma de pago</span>
+                  <div className="filter-row" style={{ flexWrap: "wrap", gap: 8, justifyContent: "center", width: "100%" }}>
+                    {paymentSettings?.allowPayAtStore && (
+                      <button type="button" className={`chip-button${paymentMethod === "pay_at_store" ? " active" : ""}`} onClick={() => {
+                        setPaymentMethod("pay_at_store");
+                        setDemoConfirmation("");
+                        if (date === minDate) {
+                          if (paymentNotice === payAtStoreOnlyTodayMessage) {
+                            setPaymentNotice("");
+                          }
+                        } else {
+                          setPaymentNotice(payAtStoreOnlyTodayMessage);
+                          setValidationIssues([]);
+                        }
+                      }} style={{ minHeight: "42px", flex: 1 }}>Efectivo</button>
+                    )}
+                    {paymentSettings?.allowBankTransfer && (
+                      <button type="button" className={`chip-button${paymentMethod === "bank_transfer" ? " active" : ""}`} onClick={() => {
+                        setPaymentMethod("bank_transfer");
+                        setDemoConfirmation("");
+                        if (paymentNotice === payAtStoreOnlyTodayMessage) {
+                          setPaymentNotice("");
+                        }
+                      }} style={{ minHeight: "42px", flex: 1 }}>Transferencia</button>
+                    )}
+                    {paymentSettings?.allowMercadoPago && (
+                      <button type="button" className={`chip-button${paymentMethod === "mercado_pago" ? " active" : ""}`} onClick={() => {
+                        setPaymentMethod("mercado_pago");
+                        setDemoConfirmation("");
+                        if (paymentNotice === payAtStoreOnlyTodayMessage) {
+                          setPaymentNotice("");
+                        }
+                      }} style={{ minHeight: "42px", flex: 1 }}>Mercado Pago</button>
+                    )}
+                  </div>
+
                   {!paymentMethod ? <small className="muted" style={{ fontSize: "0.72rem" }}>Elegí una forma de pago para ver cuánto pagás ahora.</small> : null}
                   {isPayAtStore ? <small className="muted" style={{ fontSize: "0.72rem" }}>En efectivo no se cobra seña online y solo podés reservar turnos para hoy.</small> : null}
+                  {paymentNotice ? (
+                    <div className="notice" style={{ fontSize: "0.8rem", padding: "12px", background: "rgba(245,200,66,0.1)", border: "1px solid rgba(245,200,66,0.28)", borderRadius: "12px", color: "rgba(255,255,255,0.9)" }}>
+                      {paymentNotice}
+                    </div>
+                  ) : null}
                   {paymentBreakdown ? (
-                    <div className="stack" style={{ gap: 6 }}>
+                    <div className="stack" style={{ gap: 6, paddingTop: "4px" }}>
                       <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
                         <small className="muted" style={{ fontSize: "0.72rem" }}>Total del servicio</small>
                         <strong style={{ fontSize: "0.8rem" }}>{selectedService ? formatCurrency(selectedService.price) : "-"}</strong>
                       </div>
                       <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
-                        <small className="muted" style={{ fontSize: "0.72rem" }}>Pagás ahora</small>
+                        <small className="muted" style={{ fontSize: "0.72rem" }}>
+                          {paymentBreakdown.amountRequiredNow > 0 && paymentBreakdown.amountRequiredNow < paymentBreakdown.totalAmount
+                            ? "Seña a pagar ahora"
+                            : paymentBreakdown.amountRequiredNow > 0
+                              ? "Pago a realizar ahora"
+                              : "Pagás hoy en el local"}
+                        </small>
                         <strong style={{ fontSize: "0.8rem", color: "var(--accent)" }}>{formatCurrency(paymentBreakdown.amountRequiredNow)}</strong>
                       </div>
+                      {paymentBreakdown.amountPendingAtStore > 0 ? (
+                        <div className="summary-row" style={{ alignItems: "center", justifyContent: "space-between", gap: 10, flexDirection: "row" }}>
+                          <small className="muted" style={{ fontSize: "0.72rem" }}>Saldo pendiente</small>
+                          <strong style={{ fontSize: "0.8rem" }}>{formatCurrency(paymentBreakdown.amountPendingAtStore)}</strong>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
-
-                  <span className="eyebrow" style={{ color: "var(--accent)", fontSize: "0.68rem", fontWeight: 800 }}>Forma de pago</span>
-                  <div className="filter-row" style={{ flexWrap: "wrap", gap: 8, justifyContent: "center", width: "100%" }}>
-                    {paymentSettings?.allowPayAtStore && (
-                      <button type="button" className={`chip-button${paymentMethod === "pay_at_store" ? " active" : ""}`} onClick={() => setPaymentMethod("pay_at_store")} style={{ minHeight: "42px", flex: 1 }}>Efectivo</button>
-                    )}
-                    {paymentSettings?.allowBankTransfer && (
-                      <button type="button" className={`chip-button${paymentMethod === "bank_transfer" ? " active" : ""}`} onClick={() => setPaymentMethod("bank_transfer")} style={{ minHeight: "42px", flex: 1 }}>Transferencia</button>
-                    )}
-                    {paymentSettings?.allowMercadoPago && (
-                      <button type="button" className={`chip-button${paymentMethod === "mercado_pago" ? " active" : ""}`} onClick={() => setPaymentMethod("mercado_pago")} style={{ minHeight: "42px", flex: 1 }}>Mercado Pago</button>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -802,10 +1028,18 @@ export function QuickBookingFlow({
                   : !paymentMethod
                     ? "Elegí una forma de pago"
                     : paymentMethod === "bank_transfer"
-                      ? `Confirmar transferencia por ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
-                      : `Confirmar reserva`}
+                      ? `${paymentBreakdown && paymentBreakdown.amountRequiredNow < paymentBreakdown.totalAmount ? "Registrar reserva y transferir seña de" : "Registrar reserva y transferir"} ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
+                      : paymentMethod === "mercado_pago"
+                        ? `${paymentBreakdown && paymentBreakdown.amountRequiredNow < paymentBreakdown.totalAmount ? "Pagar seña de" : "Pagar ahora"} ${paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : ""}`
+                        : `Confirmar reserva`}
               </button>
               
+              {isPhoneDemo && demoConfirmation ? (
+                <div className="notice" style={{ fontSize: "0.82rem", padding: "12px", background: "rgba(245,200,66,0.08)", border: "1px solid rgba(245,200,66,0.28)", borderRadius: "12px", color: "rgba(255,255,255,0.88)", textAlign: "center" }}>
+                  {demoConfirmation}
+                </div>
+              ) : null}
+
               <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
                 <Link className="btn-ghost" href={`/${slug}`} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%" }}>
                   Cancelar y volver

@@ -717,15 +717,6 @@
   .solutionsWrapper {
     padding-top: 40px;
   }
-
-  .footerGrid {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-
-  .footerBrandText {
-    max-width: none;
-  }
   
   .hugeTitle {
     font-size: 2.8rem;
