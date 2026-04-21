@@ -177,6 +177,7 @@ export function HowItWorksShowcase({ today }: HowItWorksShowcaseProps) {
                     s4: [{ id: "b3", full_name: "Maria Nails", rating: "5.0" }]
                   }}
                   paymentSettings={{
+                    requiresDeposit: false,
                     allowPayAtStore: true,
                     allowBankTransfer: true,
                     allowMercadoPago: true,

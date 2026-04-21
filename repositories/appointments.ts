@@ -3,6 +3,14 @@ import type { PoolClient } from "pg";
 import { query } from "@/lib/db";
 import type { AppointmentStatus, PaymentMethod, PaymentStatus } from "@/lib/types";
 
+type MercadoPagoSyncContext = {
+  appointment_id: string;
+  appointment_status: AppointmentStatus;
+  payment_status: PaymentStatus;
+  amount_required_now: string;
+  amount_paid: string;
+};
+
 export async function listFutureAppointmentsForBarber(
   tenantId: string,
   barberId: string,
@@ -293,4 +301,159 @@ export async function insertPayment(
       input.expiresAt?.toISOString() ?? null
     ]
   );
+}
+
+export async function getMercadoPagoPaymentSyncContext(tenantId: string, appointmentId: string) {
+  const result = await query<MercadoPagoSyncContext>(
+    `
+      SELECT
+        p.appointment_id,
+        a.status AS appointment_status,
+        p.status AS payment_status,
+        p.amount_required_now::text,
+        p.amount_paid::text
+      FROM payments p
+      INNER JOIN appointments a ON a.id = p.appointment_id AND a.tenant_id = p.tenant_id
+      WHERE p.tenant_id = $1
+        AND p.appointment_id = $2
+        AND p.method = 'mercado_pago'
+      LIMIT 1
+    `,
+    [tenantId, appointmentId]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function applyMercadoPagoPaymentApproval(
+  client: PoolClient,
+  input: {
+    tenantId: string;
+    appointmentId: string;
+    amountPaid: number;
+  }
+) {
+  await client.query(
+    `
+      UPDATE payments
+      SET status = 'approved',
+          amount_paid = $3,
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND appointment_id = $2
+        AND method = 'mercado_pago'
+    `,
+    [input.tenantId, input.appointmentId, input.amountPaid]
+  );
+
+  await client.query(
+    `
+      UPDATE appointments
+      SET status = 'confirmed',
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+        AND status IN ('pending_payment', 'pending_verification', 'scheduled', 'confirmed')
+    `,
+    [input.tenantId, input.appointmentId]
+  );
+}
+
+export async function applyMercadoPagoPaymentVerificationRequired(
+  client: PoolClient,
+  input: {
+    tenantId: string;
+    appointmentId: string;
+    amountPaid: number;
+  }
+) {
+  await client.query(
+    `
+      UPDATE payments
+      SET status = 'pending_verification',
+          amount_paid = $3,
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND appointment_id = $2
+        AND method = 'mercado_pago'
+    `,
+    [input.tenantId, input.appointmentId, input.amountPaid]
+  );
+
+  await client.query(
+    `
+      UPDATE appointments
+      SET status = 'pending_verification',
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+        AND status IN ('pending_payment', 'pending_verification')
+    `,
+    [input.tenantId, input.appointmentId]
+  );
+}
+
+export async function applyMercadoPagoPaymentStatus(
+  client: PoolClient,
+  input: {
+    tenantId: string;
+    appointmentId: string;
+    paymentStatus: Extract<PaymentStatus, "pending" | "rejected" | "cancelled" | "refunded">;
+    amountPaid: number;
+  }
+) {
+  await client.query(
+    `
+      UPDATE payments
+      SET status = $3,
+          amount_paid = $4,
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND appointment_id = $2
+        AND method = 'mercado_pago'
+    `,
+    [input.tenantId, input.appointmentId, input.paymentStatus, input.amountPaid]
+  );
+
+  if (input.paymentStatus === "rejected" || input.paymentStatus === "cancelled") {
+    await client.query(
+      `
+        UPDATE appointments
+        SET status = 'expired',
+            updated_at = now()
+        WHERE tenant_id = $1
+          AND id = $2
+          AND status = 'pending_payment'
+      `,
+      [input.tenantId, input.appointmentId]
+    );
+  }
+}
+
+export async function expirePendingMercadoPagoAppointment(tenantId: string, appointmentId: string) {
+  const result = await query<{ appointment_id: string }>(
+    `
+      WITH payment_update AS (
+        UPDATE payments
+        SET status = 'expired',
+            updated_at = now()
+        WHERE tenant_id = $1
+          AND appointment_id = $2
+          AND method = 'mercado_pago'
+          AND status = 'pending'
+        RETURNING appointment_id
+      )
+      UPDATE appointments
+      SET status = 'expired',
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+        AND status = 'pending_payment'
+        AND id IN (SELECT appointment_id FROM payment_update)
+      RETURNING id AS appointment_id
+    `,
+    [tenantId, appointmentId]
+  );
+
+  return (result.rowCount ?? 0) > 0;
 }

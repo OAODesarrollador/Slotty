@@ -31,6 +31,7 @@ async function createAppointmentWithClient(
     tenant: {
       name: string;
       slug: string;
+      requires_deposit: boolean;
       deposit_type: string;
       deposit_value: string;
       timezone: string;
@@ -200,6 +201,10 @@ export async function createAppointment(input: {
       tenantSlug: tenant.slug,
       tenantName: tenant.name,
       appointmentId,
+      serviceId: input.serviceId,
+      barberId: input.barberId,
+      scheduledAt: input.datetimeStart.toISOString(),
+      bookingDate: dateKeyInTimeZone(input.datetimeStart, tenant.timezone),
       payerName: input.customer.fullName,
       payerPhone: input.customer.phone,
       title: `${service.name} - ${tenant.name}`,
@@ -220,6 +225,7 @@ export async function createAppointment(input: {
       tenant: {
         name: tenant.name,
         slug: tenant.slug,
+        requires_deposit: tenant.requires_deposit,
         deposit_type: tenant.deposit_type,
         deposit_value: tenant.deposit_value,
         timezone: tenant.timezone

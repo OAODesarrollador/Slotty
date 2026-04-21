@@ -35,6 +35,7 @@ export default async function ServicesPage({
         services={services}
         barbersByService={Object.fromEntries(barbersByServiceEntries)}
         paymentSettings={tenantSettings ? {
+          requiresDeposit: tenantSettings.requires_deposit,
           depositType: tenantSettings.deposit_type,
           depositValue: tenantSettings.deposit_value,
           allowPayAtStore: tenantSettings.allow_pay_at_store,

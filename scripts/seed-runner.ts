@@ -74,7 +74,7 @@ export async function main() {
       `
         INSERT INTO tenants (name, slug, booking_mode, deposit_type, deposit_value, allow_mercado_pago)
         VALUES ($1, $2, 'pay_at_store', 'none', 0, false)
-        ON CONFLICT (slug) DO UPDATE SET allow_mercado_pago = EXCLUDED.allow_mercado_pago, updated_at = now()
+        ON CONFLICT (slug) DO UPDATE SET updated_at = now()
         RETURNING id
       `,
       [data.name, data.slug]

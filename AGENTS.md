@@ -37,7 +37,8 @@ y sin romper flujos críticos del sistema.
 
 ## Regla principal
 
-Analizar siempre el código real antes de concluir comportamiento o arquitectura.  
+Analizar siempre el código real antes de concluir comportamiento o arquitectura.
+
 No asumir que README o nombres de archivos reflejan el funcionamiento real.
 
 ---
@@ -71,24 +72,24 @@ Tratar como sensibles:
 
 ## Prioridad técnica
 
-1. integridad funcional  
-2. seguridad  
-3. consistencia técnica  
-4. mantenibilidad  
-5. UX  
-6. estética  
+1. integridad funcional
+2. seguridad
+3. consistencia técnica
+4. mantenibilidad
+5. UX
+6. estética
 
 ---
 
 ## Forma correcta de trabajar
 
-1. inspeccionar código real  
-2. describir flujo real  
-3. delimitar alcance  
-4. identificar riesgos  
-5. proponer cambios mínimos  
-6. ejecutar lo necesario  
-7. validar  
+1. inspeccionar código real
+2. describir flujo real
+3. delimitar alcance
+4. identificar riesgos
+5. proponer cambios mínimos
+6. ejecutar lo necesario
+7. validar
 
 ---
 
@@ -103,126 +104,130 @@ Advertir si lint no está estabilizado.
 
 ## Criterios de intervención
 
-- cambios pequeños y reversibles  
-- explicitar trade-offs  
-- advertir incertidumbre  
-- no simplificar rompiendo lógica  
+- cambios pequeños y reversibles
+- explicitar trade-offs
+- advertir incertidumbre
+- no simplificar rompiendo lógica
 
 ---
 
 ## Qué evitar
 
-- inventar comportamiento  
-- refactorizar por estética  
-- sobreingeniería  
-- mover archivos sin motivo  
-- alterar lógica crítica sin necesidad  
+- inventar comportamiento
+- refactorizar por estética
+- sobreingeniería
+- mover archivos sin motivo
+- alterar lógica crítica sin necesidad
 
 ---
 
-# 🧠 SISTEMA DE AGENTES
+## Sistema de Agentes
 
 ---
 
-## Agente principal
+### Agente principal
 
-### Nombre
-orquestador
+Nombre: `orquestador`
 
-### Rol
-Interpretar la tarea, seleccionar el agente adecuado y coordinar ejecución.
+Rol: Interpretar la tarea, seleccionar el agente adecuado y coordinar ejecución.
 
-### Responsabilidades
+Responsabilidades:
+
 - entender objetivo real del usuario
 - detectar superficie afectada
 - seleccionar agente principal
 - definir agente secundario si aplica
 - validar coherencia con memoria
 
-### Límites
+Límites:
+
 - no ejecutar cambios sensibles directamente
 - no ignorar memoria ni restricciones
 - no reemplazar criterio especializado
 
 ---
 
-## Agentes especializados
+### Agentes especializados
 
 ---
 
-### auditor
+#### `auditor`
 
-#### Rol
-Analizar repositorio real y proponer cambios seguros.
+Rol: Analizar repositorio real y proponer cambios seguros.
 
-#### Responsabilidades
+Responsabilidades:
+
 - inspección técnica
 - diagnóstico estructural
 - delimitación de alcance
 - refactor controlado
 - validación final
 
-#### Límites
+Límites:
+
 - no modificar backend/DB sin permiso
 - no refactor innecesario
 - no asumir estructura
 
 ---
 
-### seguridad
+#### `seguridad`
 
-#### Rol
-Detectar riesgos reales en autenticación, autorización y datos.
+Rol: Detectar riesgos reales en autenticación, autorización y datos.
 
-#### Responsabilidades
+Responsabilidades:
+
 - revisar auth y authz
 - validar aislamiento multi-tenant
 - detectar exposición de datos
 - revisar configuración sensible
 
-#### Límites
+Límites:
+
 - no inventar vulnerabilidades
 - no inflar severidad
 - no mezclar calidad con seguridad
 
 ---
 
-### flujo
+#### `flujo`
 
-#### Rol
-Analizar y optimizar flujo de reservas end-to-end.
+Rol: Analizar y optimizar flujo de reservas end-to-end.
 
-#### Responsabilidades
+Responsabilidades:
+
 - mapear flujo completo
 - revisar disponibilidad, booking y pagos
 - detectar fricción y riesgos
 - proponer mejoras mínimas
 
-#### Límites
+Límites:
+
 - no optimizar solo frontend
 - no romper contratos
 - no alterar estados críticos sin advertir
 
 ---
 
-### ux
+#### `ux`
 
-#### Rol
-Mejorar claridad visual sin tocar lógica crítica.
+Rol: Mejorar claridad visual sin tocar lógica crítica.
 
-#### Responsabilidades
+Responsabilidades:
+
 - mejorar jerarquía visual
 - reducir fricción
 - mejorar consistencia
 
-#### Límites
+Límites:
+
 - no tocar backend
 - no modificar contratos
 - no cambiar lógica funcional
 
 ---
 
-# ⚙️ Reglas de activación
+## Reglas de activación
 
 - usar **auditor** → análisis general, refactor seguro
 - usar **seguridad** → auth, tenant, validación, exposición
@@ -231,7 +236,7 @@ Mejorar claridad visual sin tocar lógica crítica.
 
 ---
 
-# 🔁 Reglas de delegación
+## Reglas de delegación
 
 - auditor → deriva a seguridad si detecta riesgos reales
 - auditor → deriva a flujo si el problema es de booking
@@ -242,20 +247,20 @@ Mejorar claridad visual sin tocar lógica crítica.
 
 ---
 
-# ⚔️ Resolución de conflictos
+## Resolución de conflictos
 
 Ante conflicto:
 
-1. integridad funcional  
-2. seguridad  
-3. coherencia del flujo  
-4. contratos  
-5. mantenibilidad  
-6. UX  
+1. integridad funcional
+2. seguridad
+3. coherencia del flujo
+4. contratos
+5. mantenibilidad
+6. UX
 
 ---
 
-# 🧠 Relación con memory.md
+## Relación con `memory.md`
 
 - memory define decisiones persistentes
 - los agentes NO deben contradecir memory
@@ -264,9 +269,10 @@ Ante conflicto:
 
 ---
 
-# 🧩 Relación con memory_state.json
+## Relación con `memory_state.json`
 
 - fuente de verdad para:
+
   - arquitectura
   - booking flow
   - endpoints
@@ -276,7 +282,7 @@ Ante conflicto:
 
 ---
 
-# 🧠 Relación con skills/
+## Relación con `skills/`
 
 - cada agente usa su SKILL.md
 - AGENTS.md define cuándo usar cada uno
@@ -284,18 +290,18 @@ Ante conflicto:
 
 ---
 
-# 🎯 Objetivo del sistema
+## Objetivo del sistema
 
 Evitar:
 
-- ejecuciones inconsistentes  
-- regresiones  
-- duplicación de lógica  
-- decisiones contradictorias  
+- ejecuciones inconsistentes
+- regresiones
+- duplicación de lógica
+- decisiones contradictorias
 
 Permitir:
 
-- evolución coherente  
-- cambios seguros  
-- especialización real  
-- consistencia entre capas  
+- evolución coherente
+- cambios seguros
+- especialización real
+- consistencia entre capas

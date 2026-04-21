@@ -7,6 +7,7 @@ export async function getTenantSettings(tenantId: string) {
     slug: string;
     timezone: string;
     booking_mode: string;
+    requires_deposit: boolean;
     deposit_type: string;
     deposit_value: string;
     allow_pay_at_store: boolean;
@@ -23,7 +24,7 @@ export async function getTenantSettings(tenantId: string) {
   }>(
     `
       SELECT
-        id, name, slug, timezone, booking_mode, deposit_type, deposit_value,
+        id, name, slug, timezone, booking_mode, requires_deposit, deposit_type, deposit_value,
         allow_pay_at_store, allow_bank_transfer, allow_mercado_pago,
         (allow_mercado_pago = true AND mercado_pago_public_key IS NOT NULL AND mercado_pago_access_token IS NOT NULL) AS mercado_pago_ready,
         transfer_alias, transfer_cbu, transfer_holder_name, transfer_bank_name,
@@ -44,6 +45,7 @@ export async function getTenantBookingSettings(tenantId: string) {
     name: string;
     slug: string;
     timezone: string;
+    requires_deposit: boolean;
     deposit_type: string;
     deposit_value: string;
     allow_pay_at_store: boolean;
@@ -58,7 +60,7 @@ export async function getTenantBookingSettings(tenantId: string) {
   }>(
     `
       SELECT
-        id, name, slug, timezone, deposit_type, deposit_value,
+        id, name, slug, timezone, requires_deposit, deposit_type, deposit_value,
         allow_pay_at_store, allow_bank_transfer, allow_mercado_pago,
         transfer_alias, transfer_cbu, transfer_holder_name, transfer_bank_name,
         mercado_pago_public_key, mercado_pago_access_token

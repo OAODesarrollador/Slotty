@@ -3,10 +3,15 @@ import type { PaymentMethod } from "@/lib/types";
 function getMinimumReservationAmount(
   totalAmount: number,
   tenant: {
+    requires_deposit: boolean;
     deposit_type: string;
     deposit_value: string;
   }
 ) {
+  if (!tenant.requires_deposit) {
+    return totalAmount;
+  }
+
   const depositType = tenant.deposit_type;
   const depositValue = Number(tenant.deposit_value);
 
@@ -28,6 +33,7 @@ function getMinimumReservationAmount(
 export function computePaymentBreakdown(
   totalAmount: number,
   tenant: {
+    requires_deposit: boolean;
     deposit_type: string;
     deposit_value: string;
   },

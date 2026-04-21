@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   timezone TEXT NOT NULL DEFAULT 'America/Argentina/Buenos_Aires',
   currency_code TEXT NOT NULL DEFAULT 'ARS',
   booking_mode TEXT NOT NULL DEFAULT 'pay_at_store',
+  requires_deposit BOOLEAN NOT NULL DEFAULT false,
   deposit_type TEXT NOT NULL DEFAULT 'none',
   deposit_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
   allow_pay_at_store BOOLEAN NOT NULL DEFAULT true,
@@ -62,6 +63,9 @@ CREATE TABLE IF NOT EXISTS tenants (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS requires_deposit BOOLEAN NOT NULL DEFAULT false;
 
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS mercado_pago_public_key TEXT;

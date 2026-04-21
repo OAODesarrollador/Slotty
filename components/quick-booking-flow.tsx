@@ -65,6 +65,64 @@ function addMinutesToDate(isoDateTime: string, minutes: number) {
   return next.toISOString();
 }
 
+function normalizeSlotStart(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toISOString();
+}
+
+function buildSlotId(barberId: string, start: string) {
+  return `${barberId}::${normalizeSlotStart(start)}`;
+}
+
+function parseSlotId(slotId: string) {
+  const separator = "::";
+  const separatorIndex = slotId.indexOf(separator);
+  if (separatorIndex === -1) {
+    return null;
+  }
+
+  const barberId = slotId.slice(0, separatorIndex);
+  const start = slotId.slice(separatorIndex + separator.length);
+  if (!barberId || !start) {
+    return null;
+  }
+
+  return { barberId, start };
+}
+
+function buildMercadoPagoFailureMessage(params: URLSearchParams) {
+  const explicitError = params.get("error") ?? "";
+  const paymentStatus = params.get("collection_status") ?? params.get("status") ?? "";
+  const statusDetail = params.get("status_detail") ?? "";
+  const paymentId = params.get("payment_id") ?? params.get("collection_id") ?? "";
+
+  const details: string[] = [];
+
+  if (explicitError) {
+    details.push(explicitError);
+  } else {
+    details.push("Hubo un problema al volver desde Mercado Pago.");
+  }
+
+  if (paymentStatus) {
+    details.push(`Estado informado por Mercado Pago: ${paymentStatus}.`);
+  }
+
+  if (statusDetail) {
+    details.push(`Detalle: ${statusDetail}.`);
+  }
+
+  if (paymentId) {
+    details.push(`Referencia del pago: ${paymentId}.`);
+  }
+
+  return details.join(" ");
+}
+
 function buildDemoSlots(args: {
   serviceId: string;
   barberId: string;
@@ -126,6 +184,7 @@ function buildDemoSlots(args: {
 }
 
 type PaymentSettings = {
+  requiresDeposit: boolean;
   depositType: string;
   depositValue: string;
   allowPayAtStore: boolean;
@@ -135,6 +194,18 @@ type PaymentSettings = {
   transferCbu: string | null;
   transferHolderName: string | null;
   transferBankName: string | null;
+};
+
+type BookingDraft = {
+  serviceId: string;
+  date: string;
+  barberId: string;
+  selectedSlotId: string;
+  name: string;
+  phone: string;
+  notes: string;
+  paymentMethod: PaymentMethod | null;
+  payInFull: boolean;
 };
 
 export type BookingGuideStep = "service" | "schedule" | "details" | "payment";
@@ -179,7 +250,7 @@ export function QuickBookingFlow({
   const [date, setDate] = useState(initialDate);
   const [barberId, setBarberId] = useState(initialBarberId ?? "");
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
-  const [selectedSlotId, setSelectedSlotId] = useState(initialSlotStart ? `${initialBarberId || ""}-${initialSlotStart}` : "");
+  const [selectedSlotId, setSelectedSlotId] = useState(initialSlotStart && initialBarberId ? buildSlotId(initialBarberId, initialSlotStart) : "");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
@@ -189,11 +260,17 @@ export function QuickBookingFlow({
   const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
   const [demoConfirmation, setDemoConfirmation] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityRequestVersion, setAvailabilityRequestVersion] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(initialError ?? "");
   const [paymentNotice, setPaymentNotice] = useState("");
   const [validationIssues, setValidationIssues] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
+  const [returnedFromMercadoFailure, setReturnedFromMercadoFailure] = useState(false);
+  const draftStorageKey = `booking-draft:${slug}`;
+  const hasRestoredDraftRef = useRef(false);
+  const pendingDraftRef = useRef<BookingDraft | null>(null);
+  const releasedPendingAppointmentRef = useRef(false);
   
   const step2Ref = useRef<HTMLDivElement>(null);
   const step3Ref = useRef<HTMLDivElement>(null);
@@ -212,9 +289,17 @@ export function QuickBookingFlow({
     [serviceId, services]
   );
   const barbers = serviceId ? barbersByService[serviceId] ?? [] : [];
+  const selectedBarber = barberId ? barbers.find((barber) => barber.id === barberId) ?? null : null;
   const isTodaySelected = date === minDate;
   const isPayAtStore = paymentMethod === "pay_at_store";
+  const isBankTransfer = paymentMethod === "bank_transfer";
   const payAtStoreOnlyTodayMessage = "El pago en efectivo solo está disponible para reservas de hoy. Ajustamos la fecha para que puedas continuar.";
+  const hasTransferDetails = Boolean(
+    paymentSettings?.transferAlias ||
+    paymentSettings?.transferCbu ||
+    paymentSettings?.transferHolderName ||
+    paymentSettings?.transferBankName
+  );
 
   useEffect(() => {
     if (paymentMethod === "pay_at_store" && date !== minDate) {
@@ -225,9 +310,43 @@ export function QuickBookingFlow({
     }
   }, [date, minDate, payAtStoreOnlyTodayMessage, paymentMethod]);
 
+  const uniqueSlots = useMemo(() => {
+    const unique = new Map<string, AvailabilitySlot>();
+    for (const slot of slots) {
+      unique.set(buildSlotId(slot.barberId, slot.start), slot);
+    }
+
+    return Array.from(unique.values()).sort(
+      (a, b) => a.start.localeCompare(b.start) || a.barberName.localeCompare(b.barberName)
+    );
+  }, [slots]);
+
+  const fallbackSelectedSlot = useMemo(() => {
+    if (!returnedFromMercadoFailure || !selectedSlotId || !selectedService) {
+      return null;
+    }
+
+    const parsedSlot = parseSlotId(selectedSlotId);
+    if (!parsedSlot) {
+      return null;
+    }
+
+    const alreadyVisible = uniqueSlots.some((slot) => buildSlotId(slot.barberId, slot.start) === selectedSlotId);
+    if (alreadyVisible) {
+      return null;
+    }
+
+    return {
+      barberId: parsedSlot.barberId,
+      barberName: selectedBarber?.full_name ?? "Profesional",
+      start: parsedSlot.start,
+      end: addMinutesToDate(parsedSlot.start, selectedService.duration_minutes)
+    } satisfies AvailabilitySlot;
+  }, [returnedFromMercadoFailure, selectedBarber, selectedService, selectedSlotId, uniqueSlots]);
+
   const selectedSlot = useMemo(
-    () => slots.find((slot) => `${slot.barberId}-${slot.start}` === selectedSlotId) ?? null,
-    [selectedSlotId, slots]
+    () => uniqueSlots.find((slot) => buildSlotId(slot.barberId, slot.start) === selectedSlotId) ?? fallbackSelectedSlot,
+    [fallbackSelectedSlot, selectedSlotId, uniqueSlots]
   );
   const paymentBreakdown = useMemo(() => {
     if (!selectedService || !paymentSettings) {
@@ -237,6 +356,7 @@ export function QuickBookingFlow({
     return computePaymentBreakdown(
       Number(selectedService.price),
       {
+        requires_deposit: paymentSettings.requiresDeposit,
         deposit_type: paymentSettings.depositType,
         deposit_value: paymentSettings.depositValue
       },
@@ -313,18 +433,33 @@ export function QuickBookingFlow({
       });
 
     return () => controller.abort();
-  }, [barberId, date, isPhoneDemo, minDate, selectedService?.duration_minutes, serviceId, slug]);
+  }, [availabilityRequestVersion, barberId, date, isPhoneDemo, minDate, selectedService?.duration_minutes, serviceId, slug]);
+
+  useEffect(() => {
+    if (pendingDraftRef.current?.selectedSlotId) {
+      const pendingSlotId = pendingDraftRef.current.selectedSlotId;
+      const hasPendingSlot = slots.some((slot) => buildSlotId(slot.barberId, slot.start) === pendingSlotId);
+
+      if (hasPendingSlot) {
+        setSelectedSlotId(pendingSlotId);
+        pendingDraftRef.current = null;
+      }
+    }
+  }, [slots]);
 
   useEffect(() => {
     if (!selectedSlotId) {
       return;
     }
 
-    const hasSelectedSlot = slots.some((slot) => `${slot.barberId}-${slot.start}` === selectedSlotId);
-    if (!hasSelectedSlot) {
+    if (availabilityLoading || pendingDraftRef.current?.selectedSlotId === selectedSlotId) {
+      return;
+    }
+
+    if (!selectedSlot) {
       setSelectedSlotId("");
     }
-  }, [selectedSlotId, slots]);
+  }, [availabilityLoading, selectedSlot, selectedSlotId]);
 
   useEffect(() => {
     if (!isPhoneDemo) {
@@ -340,6 +475,144 @@ export function QuickBookingFlow({
       setPayInFull(false);
     }
   }, [paymentMethod]);
+
+  useEffect(() => {
+    setCopyFeedback("");
+  }, [paymentMethod]);
+
+  useEffect(() => {
+    if (isPhoneDemo || hasRestoredDraftRef.current) {
+      return;
+    }
+
+    const currentParams = new URLSearchParams(window.location.search);
+    if (currentParams.get("mp_return") !== "failure") {
+      return;
+    }
+
+    setError(buildMercadoPagoFailureMessage(currentParams));
+
+    setReturnedFromMercadoFailure(true);
+    hasRestoredDraftRef.current = true;
+
+    try {
+      const rawDraft = window.sessionStorage.getItem(draftStorageKey);
+      if (!rawDraft) {
+        return;
+      }
+
+      const returnServiceId = currentParams.get("serviceId") ?? "";
+      const returnDate = currentParams.get("date") ?? "";
+      const returnBarberId = currentParams.get("barberId") ?? "";
+      const returnStart = currentParams.get("start") ?? "";
+
+      const draft = JSON.parse(rawDraft) as Partial<BookingDraft>;
+      const nextDraft: BookingDraft = {
+        serviceId: returnServiceId || (typeof draft.serviceId === "string" ? draft.serviceId : ""),
+        date: returnDate || (typeof draft.date === "string" ? draft.date : ""),
+        barberId: returnBarberId || (typeof draft.barberId === "string" ? draft.barberId : ""),
+        selectedSlotId:
+          returnBarberId && returnStart
+            ? buildSlotId(returnBarberId, returnStart)
+            : (typeof draft.selectedSlotId === "string" ? draft.selectedSlotId : ""),
+        name: typeof draft.name === "string" ? draft.name : "",
+        phone: typeof draft.phone === "string" ? draft.phone : "",
+        notes: typeof draft.notes === "string" ? draft.notes : "",
+        paymentMethod:
+          draft.paymentMethod === "pay_at_store" ||
+          draft.paymentMethod === "bank_transfer" ||
+          draft.paymentMethod === "mercado_pago"
+            ? draft.paymentMethod
+            : null,
+        payInFull: typeof draft.payInFull === "boolean" ? draft.payInFull : false
+      };
+
+      pendingDraftRef.current = nextDraft;
+
+      if (nextDraft.serviceId) {
+        setServiceId(nextDraft.serviceId);
+      }
+      if (nextDraft.date) {
+        setDate(nextDraft.date);
+      }
+      if (typeof nextDraft.barberId === "string") {
+        setBarberId(nextDraft.barberId);
+      }
+      if (nextDraft.selectedSlotId) {
+        setSelectedSlotId(nextDraft.selectedSlotId);
+      }
+      setName(nextDraft.name);
+      setPhone(nextDraft.phone);
+      setNotes(nextDraft.notes);
+      setPaymentMethod(nextDraft.paymentMethod);
+      setPayInFull(nextDraft.payInFull);
+    } catch {
+      pendingDraftRef.current = null;
+      window.sessionStorage.removeItem(draftStorageKey);
+    }
+  }, [draftStorageKey, isPhoneDemo]);
+
+  useEffect(() => {
+    if (isPhoneDemo || releasedPendingAppointmentRef.current) {
+      return;
+    }
+
+    const currentParams = new URLSearchParams(window.location.search);
+    if (currentParams.get("mp_return") !== "failure") {
+      return;
+    }
+
+    const appointmentId = currentParams.get("appointmentId");
+    if (!appointmentId) {
+      releasedPendingAppointmentRef.current = true;
+      return;
+    }
+
+    releasedPendingAppointmentRef.current = true;
+
+    void fetch(`/api/public/${slug}/mercado-pago/release`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ appointmentId })
+    })
+      .then(() => {
+        setAvailabilityRequestVersion((current) => current + 1);
+      })
+      .catch(() => {
+        releasedPendingAppointmentRef.current = false;
+      });
+  }, [isPhoneDemo, slug]);
+
+  const persistDraft = () => {
+    if (isPhoneDemo) {
+      return;
+    }
+
+    const draft: BookingDraft = {
+      serviceId,
+      date,
+      barberId,
+      selectedSlotId,
+      name,
+      phone,
+      notes,
+      paymentMethod,
+      payInFull
+    };
+
+    window.sessionStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  };
+
+  const clearDraft = () => {
+    if (isPhoneDemo) {
+      return;
+    }
+
+    pendingDraftRef.current = null;
+    window.sessionStorage.removeItem(draftStorageKey);
+  };
 
   const copyToClipboard = async (value: string, label: string) => {
     try {
@@ -368,7 +641,7 @@ export function QuickBookingFlow({
   };
 
   const handleSlotSelect = (slot: AvailabilitySlot) => {
-    setSelectedSlotId(`${slot.barberId}-${slot.start}`);
+    setSelectedSlotId(buildSlotId(slot.barberId, slot.start));
     setPaymentMethod(null);
     setPayInFull(false);
     setDemoConfirmation("");
@@ -495,10 +768,12 @@ export function QuickBookingFlow({
       }
 
       if (body.checkoutUrl) {
+        persistDraft();
         window.location.href = body.checkoutUrl;
         return;
       }
 
+      clearDraft();
       router.push(`/${slug}/mi-turno/${body.appointmentId}`);
       router.refresh();
     } catch (submitError: unknown) {
@@ -784,12 +1059,12 @@ export function QuickBookingFlow({
               >
                 {availabilityLoading ? (
                   <div className="muted" style={{ gridColumn: "span 3", textAlign: "center", padding: "40px" }}>Buscando espacios...</div>
-                ) : slots.length > 0 ? (
-                  slots.map((slot) => {
-                    const active = `${slot.barberId}-${slot.start}` === selectedSlotId;
+                ) : uniqueSlots.length > 0 ? (
+                  uniqueSlots.map((slot) => {
+                    const active = buildSlotId(slot.barberId, slot.start) === selectedSlotId;
                     return (
                       <button
-                        key={`${slot.barberId}-${slot.start}`}
+                        key={buildSlotId(slot.barberId, slot.start)}
                         type="button"
                         onClick={() => handleSlotSelect(slot)}
                         style={{
@@ -986,6 +1261,73 @@ export function QuickBookingFlow({
                     <div className="notice" style={{ fontSize: "0.8rem", padding: "12px", background: "rgba(245,200,66,0.1)", border: "1px solid rgba(245,200,66,0.28)", borderRadius: "12px", color: "rgba(255,255,255,0.9)" }}>
                       {paymentNotice}
                     </div>
+                  ) : null}
+                  {isBankTransfer ? (
+                    hasTransferDetails ? (
+                      <div
+                        className="stack"
+                        style={{
+                          gap: 12,
+                          padding: "16px",
+                          borderRadius: "16px",
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px solid rgba(255,255,255,0.08)"
+                        }}
+                      >
+                        <div className="stack" style={{ gap: 4 }}>
+                          <strong style={{ fontSize: "0.92rem", color: "white" }}>Datos para transferir</strong>
+                          <small className="muted" style={{ fontSize: "0.74rem" }}>
+                            Usá estos datos para enviar {paymentBreakdown ? formatCurrency(paymentBreakdown.amountRequiredNow) : "la seña"} y luego registramos tu reserva para validarla.
+                          </small>
+                        </div>
+
+                        {paymentSettings?.transferAlias ? (
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                            <div className="stack" style={{ gap: 2 }}>
+                              <small className="muted" style={{ fontSize: "0.68rem", textTransform: "uppercase" }}>Alias</small>
+                              <strong style={{ fontSize: "0.86rem", color: "white", wordBreak: "break-word" }}>{paymentSettings.transferAlias}</strong>
+                            </div>
+                            <button type="button" className="btn-ghost" onClick={() => copyToClipboard(paymentSettings.transferAlias!, "Alias")} style={{ minWidth: "92px", padding: "0 12px", height: "38px" }}>
+                              Copiar
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {paymentSettings?.transferCbu ? (
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                            <div className="stack" style={{ gap: 2 }}>
+                              <small className="muted" style={{ fontSize: "0.68rem", textTransform: "uppercase" }}>CBU / CVU</small>
+                              <strong style={{ fontSize: "0.86rem", color: "white", wordBreak: "break-word" }}>{paymentSettings.transferCbu}</strong>
+                            </div>
+                            <button type="button" className="btn-ghost" onClick={() => copyToClipboard(paymentSettings.transferCbu!, "CBU")} style={{ minWidth: "92px", padding: "0 12px", height: "38px" }}>
+                              Copiar
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {paymentSettings?.transferHolderName ? (
+                          <div className="stack" style={{ gap: 2 }}>
+                            <small className="muted" style={{ fontSize: "0.68rem", textTransform: "uppercase" }}>Titular</small>
+                            <strong style={{ fontSize: "0.86rem", color: "white" }}>{paymentSettings.transferHolderName}</strong>
+                          </div>
+                        ) : null}
+
+                        {paymentSettings?.transferBankName ? (
+                          <div className="stack" style={{ gap: 2 }}>
+                            <small className="muted" style={{ fontSize: "0.68rem", textTransform: "uppercase" }}>Banco</small>
+                            <strong style={{ fontSize: "0.86rem", color: "white" }}>{paymentSettings.transferBankName}</strong>
+                          </div>
+                        ) : null}
+
+                        {copyFeedback ? (
+                          <small style={{ color: "var(--accent)", fontSize: "0.74rem", fontWeight: 700 }}>{copyFeedback}</small>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="notice" style={{ fontSize: "0.8rem", padding: "12px", background: "rgba(255,170,64,0.08)", border: "1px solid rgba(255,170,64,0.24)", borderRadius: "12px", color: "rgba(255,255,255,0.9)" }}>
+                        La transferencia está habilitada, pero faltan cargar los datos bancarios de la empresa para mostrarlos en esta pantalla.
+                      </div>
+                    )
                   ) : null}
                   {paymentBreakdown ? (
                     <div className="stack" style={{ gap: 6, paddingTop: "4px" }}>
