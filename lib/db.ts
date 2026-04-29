@@ -12,10 +12,15 @@ function buildPool() {
     throw new Error("DATABASE_URL no esta configurada.");
   }
 
+  const requiresSsl =
+    connectionString.includes("sslmode=require") ||
+    connectionString.includes("supabase.com") ||
+    connectionString.includes("neon.tech");
+
   return new Pool({
     connectionString,
     max: 10,
-    ssl: connectionString.includes("neon.tech") ? { rejectUnauthorized: false } : false
+    ssl: requiresSsl ? { rejectUnauthorized: false } : false
   });
 }
 
