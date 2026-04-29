@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTenants } from "@/repositories/tenants";
 import { HeroScroll } from "@/components/hero-scroll";
+import { HomeHeaderContrast } from "@/components/home-header-contrast";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { RootHeader } from "@/components/root-header";
 import { ContentExplorer } from "@/components/content-explorer";
@@ -33,14 +34,17 @@ export default async function RootPage() {
   return (
     <div className={styles.rootContainer}>
       <ScrollReveal />
+      <HomeHeaderContrast />
       <RootHeader />
       
       {/* 1. HERO SCROLL */}
-      <HeroScroll tenants={tenants} />
+      <div data-header-theme="dark">
+        <HeroScroll tenants={tenants} />
+      </div>
 
-      <main className={styles.mainContent}>
+      <main className={styles.mainContent} data-header-theme="light">
         {/* 2. SOLUTIONS FOR EVERY BUSINESS (THE PAIN POINTS) */}
-        <section id="solutions" className={styles.solutionsWrapper} data-animate>
+        <section id="solutions" className={styles.solutionsWrapper} data-header-theme="light" data-animate>
           <div className={styles.sectionHeader}>
             <span className={styles.tagline}>EL PROBLEMA</span>
             <h2 className={styles.serifTitle} style={{ maxWidth: '900px' }}>
@@ -103,15 +107,19 @@ export default async function RootPage() {
         </section>
 
         {/* 3. BARBERSHOP PERFECTION (The Difference) */}
-                <HowItWorksShowcase today={today} />
+                <div data-header-theme="light">
+                  <HowItWorksShowcase today={today} />
+                </div>
 
         {/* 4. CONTENT EXPLORER (The Square PwNextContentExplorer Replica) */}
-        <ContentExplorer />
+        <div data-header-theme="dark">
+          <ContentExplorer />
+        </div>
 
 
 
         {/* 8. PARTNER SHOWCASE (Live DB Feed) */}
-        <section className={styles.directoryPartners} style={{ background: '#f9f9f9', padding: '120px 8%' }} data-animate>
+        <section className={styles.directoryPartners} data-header-theme="light" style={{ background: '#f9f9f9', padding: '120px 8%' }} data-animate>
           <div className={styles.sectionHeader}>
             <span className={styles.tagline}>Nuevos clientes</span>
             <h2 className={styles.serifTitle}>También podés recibir clientes que todavía no te conocen</h2>
@@ -166,7 +174,7 @@ export default async function RootPage() {
           </div>
         </section>
 
-        <section className={styles.finalCtaSection} data-animate>
+        <section className={styles.finalCtaSection} data-header-theme="dark" data-animate>
           <div className={styles.finalCtaShell}>
             <span className={`${styles.tagline} ${styles.finalCtaEyebrow}`}>EMPEZÁ HOY</span>
             <h2 className={styles.finalCtaTitle}>Empezá a llenar tu agenda desde hoy</h2>
@@ -185,10 +193,12 @@ export default async function RootPage() {
           </div>
         </section>
 
-        <LeadCaptureSection />
+        <div data-header-theme="light">
+          <LeadCaptureSection />
+        </div>
 
         {/* 9. FOOTER */}
-        <footer className={styles.squareFooter}>
+        <footer className={styles.squareFooter} data-header-theme="light">
           <div className={styles.footerGrid}>
             <div className={styles.footerCol}>
               <h5>Slotty</h5>

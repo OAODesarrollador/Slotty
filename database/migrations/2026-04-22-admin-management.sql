@@ -1,0 +1,17 @@
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS company_phone TEXT;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS company_email TEXT;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS address TEXT;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS instagram_url TEXT;
+
+ALTER TABLE services
+  ADD COLUMN IF NOT EXISTS is_promotion BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE barbers
+  ADD COLUMN IF NOT EXISTS photo_url TEXT;

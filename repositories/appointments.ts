@@ -153,6 +153,68 @@ export async function listOwnerAppointments(tenantId: string) {
   return result.rows;
 }
 
+export async function listAppointmentsForTenantDay(
+  tenantId: string,
+  rangeStart: Date,
+  rangeEnd: Date
+) {
+  const result = await query<{
+    id: string;
+    barber_id: string;
+    barber_name: string;
+    customer_name: string;
+    service_name: string;
+    datetime_start: string;
+    datetime_end: string;
+    status: AppointmentStatus;
+    payment_method: PaymentMethod | null;
+    payment_status: PaymentStatus | null;
+  }>(
+    `
+      SELECT
+        a.id,
+        a.barber_id,
+        b.full_name AS barber_name,
+        c.full_name AS customer_name,
+        s.name AS service_name,
+        a.datetime_start,
+        a.datetime_end,
+        a.status,
+        p.method AS payment_method,
+        p.status AS payment_status
+      FROM appointments a
+      INNER JOIN customers c ON c.id = a.customer_id AND c.tenant_id = a.tenant_id
+      INNER JOIN barbers b ON b.id = a.barber_id AND b.tenant_id = a.tenant_id
+      INNER JOIN services s ON s.id = a.service_id AND s.tenant_id = a.tenant_id
+      LEFT JOIN payments p ON p.appointment_id = a.id AND p.tenant_id = a.tenant_id
+      WHERE a.tenant_id = $1
+        AND a.datetime_start >= $2
+        AND a.datetime_start < $3
+      ORDER BY b.full_name ASC, a.datetime_start ASC
+    `,
+    [tenantId, rangeStart.toISOString(), rangeEnd.toISOString()]
+  );
+
+  return result.rows;
+}
+
+export async function updateAppointmentStatusForOwner(input: {
+  tenantId: string;
+  appointmentId: string;
+  status: AppointmentStatus;
+}) {
+  await query(
+    `
+      UPDATE appointments
+      SET status = $3,
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+    `,
+    [input.tenantId, input.appointmentId, input.status]
+  );
+}
+
 export async function upsertCustomer(
   client: PoolClient,
   tenantId: string,
@@ -300,6 +362,26 @@ export async function insertPayment(
       input.externalReference ?? null,
       input.expiresAt?.toISOString() ?? null
     ]
+  );
+}
+
+export async function updateAppointmentStatus(
+  client: PoolClient,
+  input: {
+    tenantId: string;
+    appointmentId: string;
+    status: AppointmentStatus;
+  }
+) {
+  await client.query(
+    `
+      UPDATE appointments
+      SET status = $3,
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+    `,
+    [input.tenantId, input.appointmentId, input.status]
   );
 }
 

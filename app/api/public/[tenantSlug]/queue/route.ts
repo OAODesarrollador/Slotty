@@ -1,19 +1,40 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { queuePayloadSchema } from "@/lib/validators";
-import { createWalkInQueueEntry } from "@/services/queue";
+import { getQueueEntryDetail } from "@/repositories/queue";
+import { enqueueQueueEntry } from "@/services/queue";
+
+function redirectTo(path: string, status = 303) {
+  return new NextResponse(null, {
+    status,
+    headers: {
+      Location: path
+    }
+  });
+}
 
 function payloadFromFormData(formData: FormData) {
   return {
     serviceId: String(formData.get("serviceId") ?? ""),
+    barberId: formData.get("barberId") ? String(formData.get("barberId")) : undefined,
     customer: {
       fullName: String(formData.get("fullName") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       email: String(formData.get("email") ?? "")
     }
   };
+}
+
+function revalidateQueuePages(tenantSlug: string, queueEntryId?: string) {
+  revalidatePath(`/${tenantSlug}`);
+  revalidatePath(`/${tenantSlug}/fila`);
+  revalidatePath(`/${tenantSlug}/owner/dashboard`);
+  if (queueEntryId) {
+    revalidatePath(`/${tenantSlug}/fila/${queueEntryId}`);
+  }
 }
 
 export async function POST(
@@ -32,31 +53,38 @@ export async function POST(
       return fail("Payload invalido.", 400, parsed.error.flatten());
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/fila?error=Payload%20invalido`, request.url));
+    return redirectTo(`/${tenantSlug}/fila?error=Payload%20invalido`);
   }
 
   try {
-    const result = await createWalkInQueueEntry({
+    const queueEntry = await enqueueQueueEntry({
       tenant,
       serviceId: parsed.data.serviceId,
+      barberId: parsed.data.barberId ?? null,
       customer: {
         fullName: parsed.data.customer.fullName,
         phone: parsed.data.customer.phone,
         email: parsed.data.customer.email || null
       }
     });
+    revalidateQueuePages(tenantSlug, queueEntry.id);
 
     if (isJson) {
-      return ok(result, { status: 201 });
+      const detail = await getQueueEntryDetail(tenant.tenantId, queueEntry.id);
+      return ok({
+        queueEntryId: queueEntry.id,
+        position: detail?.position ?? null,
+        estimatedTime: detail?.estimated_time ?? null
+      }, { status: 201 });
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/mi-turno/${result.appointmentId}`, request.url));
+    return redirectTo(`/${tenantSlug}/fila/${queueEntry.id}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo generar la fila.";
     if (isJson) {
       return fail(message, 400);
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/fila?error=${encodeURIComponent(message)}`, request.url));
+    return redirectTo(`/${tenantSlug}/fila?error=${encodeURIComponent(message)}`);
   }
 }

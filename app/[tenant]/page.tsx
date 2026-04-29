@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { MobileDock } from "@/components/mobile-dock";
-import { NavHeader } from "@/components/nav-header";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { formatCurrency } from "@/lib/time";
 import { listPublicServices } from "@/repositories/services";

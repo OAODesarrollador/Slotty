@@ -38,9 +38,19 @@ export const availabilityQuerySchema = z.object({
 
 export const queuePayloadSchema = z.object({
   serviceId: z.string().uuid(),
+  barberId: z.string().uuid().optional().nullable(),
   customer: z.object({
     fullName: z.string().min(2),
     phone: z.string().min(6),
     email: z.string().email().optional().or(z.literal(""))
   })
+});
+
+export const queueEligibilityQuerySchema = z.object({
+  serviceId: z.string().uuid(),
+  barberId: z.string().uuid().optional()
+});
+
+export const queueActionSchema = z.object({
+  action: z.enum(["start", "done", "no_show", "cancel", "assign"])
 });

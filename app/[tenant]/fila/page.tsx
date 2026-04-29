@@ -1,8 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 
 import { MobileDock } from "@/components/mobile-dock";
+import { QueueEntryForm } from "@/components/queue-entry-form";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { listBarbersForService } from "@/repositories/barbers";
 import { listPublicServices } from "@/repositories/services";
 
 export default async function QueuePage({
@@ -10,98 +11,54 @@ export default async function QueuePage({
   searchParams
 }: {
   params: Promise<{ tenant: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; cancelled?: string }>;
 }) {
   const { tenant: slug } = await params;
   const search = await searchParams;
   const tenant = await requireTenantBySlug(slug);
   const services = await listPublicServices(tenant.tenantId);
+  const barbersByServiceEntries = await Promise.all(
+    services.map(async (service) => [service.id, await listBarbersForService(tenant.tenantId, service.id)] as const)
+  );
 
   return (
     <>
       <main className="page">
-        <section className="shell-center">
-          <aside className="card stack" style={{ background: "var(--bg-2)", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-            <div className="hero-media">
-               <Image 
-                src="/barbero.png" 
-                alt="Queue visual" 
-                fill 
-                className="hero-image" 
-                style={{ opacity: 0.4 }}
-                sizes="(max-width: 920px) 100vw, 40vw"
-              />
-              <div className="hero-shade" />
-            </div>
-            <div className="stack" style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "20px" }}>
-              <span className="eyebrow">Sin turno previo</span>
-              <h2 style={{ fontSize: "2rem" }}>Cola Virtual Inteligente</h2>
-              <p className="muted">
-                Nuestro sistema de IA analiza la carga de trabajo actual y te asigna el primer espacio disponible automáticamente.
+        <section className="shell stack shell-center" style={{ gap: "35px", paddingTop: "0" }}>
+          <div className="header-row">
+            <div className="stack" style={{ gap: 8 }}>
+              <span className="eyebrow">Fila Virtual</span>
+              <h1 style={{ fontSize: "2.2rem" }}>Sumate a la fila sin esperar</h1>
+              <p className="page-lead" style={{ fontSize: "0.95rem" }}>
+                Elegí el servicio, entrá a la fila y listo. Seguís tu turno en tiempo real desde esta página.
               </p>
-              <div className="status-pill" style={{ marginTop: "20px" }}>
-                Atención rápida garantizada
-              </div>
             </div>
-          </aside>
+            <Link className="btn-ghost" href={`/${slug}`}>
+              Volver
+            </Link>
+          </div>
 
-          <article className="form-shell stack">
-            <div className="header-row">
-              <div className="stack" style={{ gap: 4 }}>
-                <span className="eyebrow">Join the line</span>
-                <h1>Sumarme ahora</h1>
+          <div className="notice" style={{ fontSize: "0.9rem", padding: "18px 20px", background: "rgba(255,255,255,0.03)", borderColor: "rgba(245, 200, 66, 0.14)" }}>
+            <strong style={{ display: "block", marginBottom: 6, color: "var(--accent)" }}>Como funciona</strong>
+            Entrás a la fila y podés seguir tu turno desde esta pantalla. Cuando falte poco, vas a verlo acá mismo.
+          </div>
+
+          <div className="notice" style={{ fontSize: "0.9rem", padding: "18px 20px", background: "rgba(255,255,255,0.03)", borderColor: "rgba(245, 200, 66, 0.14)" }}>
+            Dejá esta pantalla abierta y te avisamos acá cuando te toque. Podés salir de la fila en cualquier momento.
+          </div>
+
+          <article className="stack" style={{ gap: 24 }}>
+            {search.cancelled === "1" ? (
+              <div className="notice" style={{ fontSize: "0.9rem" }}>
+                Saliste de la fila. Si querés, podés volver a sumarte más tarde.
               </div>
-              <Link className="btn-ghost" href={`/${slug}`}>
-                Volver
-              </Link>
-            </div>
-            
-            <p className="muted" style={{ fontSize: "0.9rem" }}>
-              Completa tus datos para entrar en la fila virtual. Recibirás una notificación cuando debas acercarte al local.
-            </p>
-
+            ) : null}
             {search.error ? <div className="notice error">{search.error}</div> : null}
-            
-            <form method="post" action={`/api/public/${slug}/queue`} className="stack">
-              <div className="grid cols-2" style={{ gap: "16px" }}>
-                <label>
-                  Nombre completo
-                  <input name="fullName" placeholder="Ej: Juan Pérez" required />
-                </label>
-                <label>
-                  WhatsApp / Teléfono
-                  <input name="phone" placeholder="+54 9..." required />
-                </label>
-              </div>
-
-              <label>
-                Email (opcional)
-                <input type="email" name="email" placeholder="tu@email.com" />
-              </label>
-
-              <label>
-                Servicio deseado
-                <select name="serviceId" required style={{ background: "rgba(255, 255, 255, 0.03)" }}>
-                  <option value="">Seleccionar un servicio</option>
-                  {services.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name} · {service.duration_minutes} min
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div style={{ paddingTop: "12px" }}>
-                <button className="btn" type="submit" style={{ width: "100%" }}>
-                  Entrar en la fila virtual
-                </button>
-              </div>
-              
-              <p className="muted" style={{ fontSize: "0.75rem", textAlign: "center" }}>
-                Al sumarte, aceptas nuestro sistema de turnos dinámico. 
-                El tiempo de espera es una estimación.
-              </p>
-            </form>
+            <QueueEntryForm
+              tenantSlug={slug}
+              services={services}
+              barbersByService={Object.fromEntries(barbersByServiceEntries)}
+            />
           </article>
         </section>
       </main>
@@ -109,4 +66,3 @@ export default async function QueuePage({
     </>
   );
 }
-

@@ -120,7 +120,7 @@ async function findEarliestForBarber(
 
     const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), tenant.timezone);
     const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), tenant.timezone);
-    let candidate = laterThan(cursor, windowStart);
+    let candidate = roundUpToStep(laterThan(cursor, windowStart), SLOT_STEP_MINUTES);
 
     if (candidate >= windowEnd) {
       continue;
@@ -151,7 +151,7 @@ async function findEarliestForBarber(
       }
 
       if (candidate < appointmentEnd) {
-        candidate = appointmentEnd;
+        candidate = roundUpToStep(appointmentEnd, SLOT_STEP_MINUTES);
       }
     }
 
@@ -368,4 +368,16 @@ export async function findBestImmediateAssignment(
 ) {
   const result = await listAvailabilityOptions(tenant, serviceId);
   return result.options[0] ?? null;
+}
+
+export async function findBestImmediateQueueSlot(
+  tenant: { tenantId: string; timezone: string },
+  serviceId: string,
+  preferredBarberId?: string | null,
+  maxWaitMinutes = 90
+) {
+  const result = await listAvailabilityOptions(tenant, serviceId, preferredBarberId);
+  const maxStart = Date.now() + maxWaitMinutes * 60_000;
+
+  return result.options.find((option) => new Date(option.start).getTime() <= maxStart) ?? null;
 }

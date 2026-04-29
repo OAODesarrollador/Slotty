@@ -81,3 +81,27 @@ export async function requireSessionForTenant(tenantSlug: string) {
   }
   return session;
 }
+
+export async function requireSessionForTenantRole(
+  tenantSlug: string,
+  allowedRoles: Array<"owner" | "staff" | "barber" | "platform_admin">
+) {
+  const session = await requireSessionForTenant(tenantSlug);
+  if (!allowedRoles.includes(session.role)) {
+    redirect(`/${tenantSlug}/owner/dashboard?error=No%20tenes%20permisos%20para%20esta%20accion.`);
+  }
+  return session;
+}
+
+export async function getSessionForTenant(tenantSlug: string) {
+  const session = await getSession();
+  if (!session) {
+    return null;
+  }
+
+  if (session.tenantSlug !== tenantSlug && session.role !== "platform_admin") {
+    return null;
+  }
+
+  return session;
+}

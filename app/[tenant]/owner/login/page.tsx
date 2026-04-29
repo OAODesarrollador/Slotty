@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 export default async function OwnerLoginPage({
   params,
@@ -10,15 +9,18 @@ export default async function OwnerLoginPage({
 }) {
   const { tenant: slug } = await params;
   const search = await searchParams;
+  const errorMessage = search.error === "rate_limited"
+    ? "Demasiados intentos fallidos. Esperá unos minutos antes de volver a probar."
+    : "Credenciales inválidas. Por favor, verificá tus datos.";
 
   return (
-    <main className="page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
+    <main className="page admin-login-page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
       <section className="shell shadow-2xl" style={{ maxWidth: "480px", width: "100%", padding: "40px" }}>
         <section className="stack" style={{ gap: "32px" }}>
           <div style={{ textAlign: "center" }}>
             <span className="eyebrow" style={{ letterSpacing: "4px" }}>SLOTTY ADMIN</span>
             <h1 style={{ fontSize: "2rem", marginTop: "12px" }}>Centro de Operaciones</h1>
-            <p className="muted" style={{ marginTop: "8px" }}>Ingresá tus credenciales para gestionar tu sede.</p>
+            <p className="muted" style={{ marginTop: "8px" }}>Ingresá como Administrador o Recepcionista para gestionar tu sede.</p>
           </div>
 
           {search.error && (
@@ -35,7 +37,7 @@ export default async function OwnerLoginPage({
               <div style={{ color: "var(--danger)" }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
-              <small style={{ color: "var(--danger)", fontWeight: 700 }}>Credenciales inválidas. Por favor, verificá tus datos.</small>
+              <small style={{ color: "var(--danger)", fontWeight: 700 }}>{errorMessage}</small>
             </div>
           )}
 

@@ -239,5 +239,88 @@ export async function createAppointment(input: {
   };
 }
 
+export async function createManualAppointmentForAdmin(input: {
+  tenantId: string;
+  barberId: string;
+  serviceId: string;
+  datetimeStart: Date;
+  paymentMethod: PaymentMethod;
+  customer: { fullName: string; phone: string; email?: string | null; notes?: string | null };
+}) {
+  const [service, tenant, barber] = await Promise.all([
+    getServiceById(input.tenantId, input.serviceId),
+    getTenantBookingSettings(input.tenantId),
+    getBarberForService(input.tenantId, input.serviceId, input.barberId)
+  ]);
+
+  if (!service) {
+    throw new Error("Servicio no encontrado para este tenant.");
+  }
+
+  if (!tenant) {
+    throw new Error("Tenant inválido.");
+  }
+
+  if (!barber) {
+    throw new Error("El barbero no pertenece al tenant o no puede realizar este servicio.");
+  }
+
+  return withTransaction(async (client) => {
+    const { datetimeEnd } = await assertBookableAppointmentSlot({
+      tenantId: input.tenantId,
+      timezone: tenant.timezone,
+      barberId: input.barberId,
+      serviceDurationMinutes: service.duration_minutes,
+      scheduledAt: input.datetimeStart
+    });
+
+    await advisoryTenantLock(client, input.tenantId, input.barberId);
+
+    const hasConflict = await hasAppointmentConflict(client, {
+      tenantId: input.tenantId,
+      barberId: input.barberId,
+      datetimeStart: input.datetimeStart,
+      datetimeEnd
+    });
+
+    if (hasConflict) {
+      throw new Error("Este horario ya no está disponible.");
+    }
+
+    const customer = await upsertCustomer(client, input.tenantId, input.customer);
+    const appointment = await insertAppointment(client, {
+      id: randomUUID(),
+      tenantId: input.tenantId,
+      customerId: customer.id,
+      barberId: input.barberId,
+      serviceId: input.serviceId,
+      datetimeStart: input.datetimeStart,
+      datetimeEnd,
+      status: "scheduled",
+      source: "walk_in",
+      customerNotes: input.customer.notes
+    });
+
+    await insertPayment(client, {
+      tenantId: input.tenantId,
+      appointmentId: appointment.id,
+      method: input.paymentMethod,
+      status: input.paymentMethod === "bank_transfer" ? "pending_verification" : "pending",
+      totalAmount: Number(service.price),
+      amountRequiredNow: 0,
+      amountPaid: 0,
+      externalReference: null,
+      expiresAt: null
+    });
+
+    return {
+      appointmentId: appointment.id,
+      datetimeStart: input.datetimeStart.toISOString(),
+      datetimeEnd: datetimeEnd.toISOString(),
+      customerId: customer.id
+    };
+  });
+}
+
 export { createAppointmentWithClient };
 

@@ -20,7 +20,13 @@ export type PaymentStatus =
   | "cancelled"
   | "refunded";
 
-export type QueueStatus = "waiting" | "assigned" | "cancelled" | "completed";
+export type QueueStatus =
+  | "waiting"
+  | "called"
+  | "in_progress"
+  | "done"
+  | "no_show"
+  | "cancelled";
 
 export interface TenantContext {
   tenantId: string;

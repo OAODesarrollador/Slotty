@@ -1,120 +1,121 @@
-import { requireSessionForTenant } from "@/lib/auth";
-import { requireTenantBySlug } from "@/lib/tenant";
-import { formatDateTime } from "@/lib/time";
-import { listOwnerAppointments } from "@/repositories/appointments";
-import { listQueueEntries } from "@/repositories/queue";
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default async function OwnerDashboardPage({ params }: { params: Promise<{ tenant: string }> }) {
+import { AdminPageShell, Link, buildAdminPath, formatCurrency, getAdminPageData, getRoleBadgeStyle } from "./_shared";
+
+export default async function OwnerDashboardHomePage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ tenant: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; date?: string; section?: string; barberId?: string }>;
+}) {
   const { tenant: slug } = await params;
-  const tenant = await requireTenantBySlug(slug);
-  await requireSessionForTenant(slug);
+  const search = await searchParams;
 
-  const [appointments, queue] = await Promise.all([
-    listOwnerAppointments(tenant.tenantId),
-    listQueueEntries(tenant.tenantId)
-  ]);
+  if (search.section && search.section !== "overview") {
+    const legacyPathBySection: Record<string, string> = {
+      appointments: buildAdminPath(slug, "appointments", { date: search.date, barberId: search.barberId, error: search.error, notice: search.notice }),
+      services: buildAdminPath(slug, "services", { date: search.date, error: search.error, notice: search.notice }),
+      company: buildAdminPath(slug, "company", { date: search.date, error: search.error, notice: search.notice }),
+      analytics: buildAdminPath(slug, "analytics", { date: search.date, error: search.error, notice: search.notice })
+    };
+
+    const target = legacyPathBySection[search.section];
+    if (target) {
+      redirect(target);
+    }
+  }
+
+  const data = await getAdminPageData(slug, search);
 
   return (
-    <main className="page" style={{ padding: "60px 40px" }}>
-      <header className="stack" style={{ gap: "12px", marginBottom: "60px" }}>
-        <span className="eyebrow" style={{ letterSpacing: "4px" }}>CENTRO DE OPERACIONES</span>
-        <div className="header-row">
-            <h1 style={{ fontSize: "3rem" }}>{tenant.tenantName}</h1>
-            <div style={{ display: "flex", gap: "12px" }}>
-                <Link href={`/${slug}`} className="btn-secondary">Vista Pública</Link>
-                <div className="status-pill" style={{ background: "rgba(104, 208, 161, 0.1)", color: "var(--success)", borderColor: "rgba(104, 208, 161, 0.2)" }}>
-                   Sistema Activo
-                </div>
+    <AdminPageShell
+      tenantName={data.tenant.tenantName}
+      session={data.session}
+      eyebrow="Centro de administracion"
+      description="Elegí un módulo para gestionar turnos, servicios, configuración y análisis de la empresa."
+      error={data.error}
+      notice={data.notice}
+    >
+      <section className="stack" style={{ gap: 20 }}>
+        <section className="grid cols-2" style={{ gap: 24 }}>
+          <Link
+            href={buildAdminPath(slug, "appointments", { date: data.scheduleDate })}
+            className="card stack admin-home-card"
+            style={{ padding: 28, gap: 18 }}
+          >
+            <span className="eyebrow">Turnos</span>
+            <div className="stack" style={{ gap: 8 }}>
+              <h3 style={{ fontSize: "1.8rem" }}>Gestion de turnos</h3>
+              <p className="muted">Agenda del día dividida por barbero, cambios de estado y seguimiento operativo.</p>
             </div>
-        </div>
-      </header>
+            <div className="header-row" style={{ alignItems: "end" }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <small className="muted">Turnos del dia</small>
+                <strong style={{ fontSize: "2.4rem" }}>{data.analytics.appointments.today_appointments}</strong>
+              </div>
+              <span className="status-pill">Abrir modulo</span>
+            </div>
+          </Link>
 
-      <section className="grid cols-3" style={{ marginBottom: "60px" }}>
-        <div className="card stack shadow-lg" style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--line-strong)", padding: "32px", position: "relative", overflow: "hidden" }}>
-          <span className="eyebrow" style={{ fontSize: "0.65rem", opacity: 0.6 }}>TURNOS TOTALES</span>
-          <h2 style={{ fontSize: "3.5rem", marginTop: "12px", fontWeight: "900" }}>{appointments.length}</h2>
-          <small className="muted">Activos en la agenda actual</small>
-        </div>
-        <div className="card stack shadow-lg" style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--line-strong)", padding: "32px", position: "relative", overflow: "hidden" }}>
-          <span className="eyebrow" style={{ fontSize: "0.65rem", opacity: 0.6 }}>FILA VIRTUAL</span>
-          <h2 style={{ fontSize: "3.5rem", marginTop: "12px", fontWeight: "900", color: "var(--accent)" }}>{queue.length}</h2>
-          <small className="muted">Clientes esperando asignación</small>
-        </div>
-        <div className="card stack shadow-lg" style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--line-strong)", padding: "32px", position: "relative", overflow: "hidden" }}>
-          <span className="eyebrow" style={{ fontSize: "0.65rem", opacity: 0.6 }}>TIPO DE GESTIÓN</span>
-          <h2 style={{ fontSize: "1.8rem", marginTop: "34px", fontWeight: "900" }}>Full Multitenant</h2>
-          <small className="muted">Plan Platinum Edition</small>
-        </div>
+          <Link
+            href={buildAdminPath(slug, "services", { date: data.scheduleDate })}
+            className="card stack admin-home-card"
+            style={{ padding: 28, gap: 18 }}
+          >
+            <span className="eyebrow">Servicios</span>
+            <div className="stack" style={{ gap: 8 }}>
+              <h3 style={{ fontSize: "1.8rem" }}>Gestion de servicios</h3>
+              <p className="muted">Altas, edición, archivo y marcación de promociones con formato diferencial.</p>
+            </div>
+            <div className="header-row" style={{ alignItems: "end" }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <small className="muted">Servicios activos</small>
+                <strong style={{ fontSize: "2.4rem" }}>{data.services.filter((service) => service.is_active).length}</strong>
+              </div>
+              <span className="status-pill">{data.services.filter((service) => service.is_promotion && service.is_active).length} promos</span>
+            </div>
+          </Link>
+
+          <Link
+            href={buildAdminPath(slug, "company", { date: data.scheduleDate })}
+            className="card stack admin-home-card"
+            style={{ padding: 28, gap: 18 }}
+          >
+            <span className="eyebrow">Empresa</span>
+            <div className="stack" style={{ gap: 8 }}>
+              <h3 style={{ fontSize: "1.8rem" }}>Datos de la empresa</h3>
+              <p className="muted">Configuración del tenant, barberos, horarios, medios de cobro, Mercado Pago y usuarios internos.</p>
+            </div>
+            <div className="header-row" style={{ alignItems: "end" }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <small className="muted">Barberos cargados</small>
+                <strong style={{ fontSize: "2.4rem" }}>{data.barbers.length}</strong>
+              </div>
+              <span className="status-pill">{data.canEditUsers ? `${data.users.length} usuarios` : "Solo lectura"}</span>
+            </div>
+          </Link>
+
+          <Link
+            href={buildAdminPath(slug, "analytics", { date: data.scheduleDate })}
+            className="card stack admin-home-card"
+            style={{ padding: 28, gap: 18 }}
+          >
+            <span className="eyebrow">Analisis</span>
+            <div className="stack" style={{ gap: 8 }}>
+              <h3 style={{ fontSize: "1.8rem" }}>Analisis del negocio</h3>
+              <p className="muted">Lectura rápida de rendimiento, cobros, ausencias, cancelaciones y actividad general.</p>
+            </div>
+            <div className="header-row" style={{ alignItems: "end" }}>
+              <div className="stack" style={{ gap: 2 }}>
+                <small className="muted">Cobrado</small>
+                <strong style={{ fontSize: "2.1rem" }}>{formatCurrency(data.analytics.payments.paid_revenue)}</strong>
+              </div>
+              <span className="status-pill" style={getRoleBadgeStyle(true)}>{data.analytics.queue.active_queue} en fila</span>
+            </div>
+          </Link>
+        </section>
       </section>
-
-      <div className="grid cols-2" style={{ gap: "40px" }}>
-        <article className="card stack" style={{ background: "rgba(0, 0, 0, 0.2)", minHeight: "500px" }}>
-          <div className="header-row">
-            <div className="stack" style={{ gap: 4 }}>
-              <span className="eyebrow">AGENDA PRÓXIMA</span>
-              <h3 style={{ fontSize: "1.4rem" }}>Últimos turnos agendados</h3>
-            </div>
-            <span className="status-pill">{appointments.length} registros</span>
-          </div>
-          
-          <div style={{ marginTop: "24px" }}>
-            {appointments.length > 0 ? (
-                <div className="list" style={{ gap: "12px" }}>
-                    {appointments.slice(0, 10).map((app) => (
-                        <div key={app.id} className="service-card" style={{ display: "grid", gridTemplateColumns: "100px 1fr auto", alignItems: "center", padding: "20px" }}>
-                            <div className="stack" style={{ gap: 2 }}>
-                                <strong style={{ color: "var(--accent)" }}>{new Date(app.datetime_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
-                                <small style={{ fontSize: "0.65rem", textTransform: "uppercase" }}>{new Date(app.datetime_start).toLocaleDateString()}</small>
-                            </div>
-                            <div className="stack" style={{ gap: 2 }}>
-                                <strong>{app.customer_name}</strong>
-                                <small className="muted">{app.service_name} con {app.barber_name}</small>
-                            </div>
-                            <span className="status-pill" style={{ fontSize: "0.7rem", padding: "4px 10px" }}>{app.status}</span>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div style={{ textAlign: "center", padding: "100px", color: "var(--muted)" }}>
-                    No hay turnos registrados aún.
-                </div>
-            )}
-          </div>
-        </article>
-
-        <article className="card stack" style={{ background: "rgba(0, 0, 0, 0.2)", minHeight: "500px" }}>
-          <div className="header-row">
-            <div className="stack" style={{ gap: 4 }}>
-              <span className="eyebrow">FILA EN TIEMPO REAL</span>
-              <h3 style={{ fontSize: "1.4rem" }}>Clientes esperando atención</h3>
-            </div>
-            <span className="status-pill" style={{ background: "var(--accent)", color: "var(--accent-ink)" }}>{queue.length} en espera</span>
-          </div>
-
-          <div style={{ marginTop: "24px" }}>
-            {queue.length > 0 ? (
-                <div className="list" style={{ gap: "12px" }}>
-                    {queue.map((entry) => (
-                        <div key={entry.id} className="service-card" style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", padding: "20px" }}>
-                            <div className="stack" style={{ gap: 2 }}>
-                                <strong>{entry.customer_name}</strong>
-                                <small className="muted">{entry.service_name} • {entry.barber_name ?? "Cualquier Profesional"}</small>
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                                <span className="status-pill" style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--line)" }}>{entry.status}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div style={{ textAlign: "center", padding: "100px", color: "var(--muted)" }}>
-                    La fila está vacía por el momento.
-                </div>
-            )}
-          </div>
-        </article>
-      </div>
-    </main>
+    </AdminPageShell>
   );
 }

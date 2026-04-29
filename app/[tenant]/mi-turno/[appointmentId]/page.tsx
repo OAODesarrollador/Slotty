@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AppointmentReceiptActions } from "@/components/appointment-receipt-actions";
+import { buildReceiptFilename, formatAppointmentStatusLabel } from "@/lib/appointment-receipt";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { formatCurrency, formatDateTime } from "@/lib/time";
 import { expirePendingMercadoPagoAppointment, getAppointmentDetail } from "@/repositories/appointments";
@@ -257,6 +259,10 @@ export default async function AppointmentDetailPage({
       syncResult: mercadoPagoSyncResult,
       search
     });
+    const receiptAvailable = !hasFailedMercadoPagoReturn;
+    const receiptFilename = buildReceiptFilename(tenant.tenantName);
+    const receiptDownloadUrl = `/api/public/${slug}/appointments/${appointmentId}/receipt`;
+    const receiptShareText = `Te comparto el comprobante de mi reserva en ${tenant.tenantName}. Estado: ${formatAppointmentStatusLabel(appointment.status)}.`;
     const nowLabel =
       amountRequiredNow <= 0
         ? null
@@ -373,6 +379,16 @@ export default async function AppointmentDetailPage({
                 <small className="muted" style={{ fontStyle: "italic" }}>ID de Referencia: {appointmentId.split("-")[0].toUpperCase()}</small>
               </div>
             </div>
+
+            {receiptAvailable ? (
+              <AppointmentReceiptActions
+                downloadUrl={receiptDownloadUrl}
+                filename={receiptFilename}
+                shareTitle={`Comprobante de reserva - ${tenant.tenantName}`}
+                shareText={receiptShareText}
+                fallbackSharePath={`/${slug}/mi-turno/${appointmentId}`}
+              />
+            ) : null}
 
             <div className="actions" style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "24px" }}>
               {mercadoPagoReturnNotice ? (

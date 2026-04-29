@@ -50,12 +50,92 @@ const TENANTS_DATA = [
   }
 ];
 
+function splitSqlStatements(sql: string) {
+  const statements: string[] = [];
+  let current = "";
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let dollarQuoteTag: string | null = null;
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index];
+    const nextTwo = sql.slice(index, index + 2);
+
+    if (!inSingleQuote && !inDoubleQuote && char === "$") {
+      const match = sql.slice(index).match(/^\$[A-Za-z0-9_]*\$/);
+      if (match) {
+        const tag = match[0];
+        current += tag;
+        index += tag.length - 1;
+
+        if (dollarQuoteTag === tag) {
+          dollarQuoteTag = null;
+        } else if (!dollarQuoteTag) {
+          dollarQuoteTag = tag;
+        }
+
+        continue;
+      }
+    }
+
+    if (!dollarQuoteTag && !inDoubleQuote && char === "'" && sql[index - 1] !== "\\") {
+      inSingleQuote = !inSingleQuote;
+      current += char;
+      continue;
+    }
+
+    if (!dollarQuoteTag && !inSingleQuote && char === "\"" && sql[index - 1] !== "\\") {
+      inDoubleQuote = !inDoubleQuote;
+      current += char;
+      continue;
+    }
+
+    if (!dollarQuoteTag && !inSingleQuote && !inDoubleQuote && nextTwo === "--") {
+      while (index < sql.length && sql[index] !== "\n") {
+        current += sql[index];
+        index += 1;
+      }
+
+      if (index < sql.length) {
+        current += "\n";
+      }
+      continue;
+    }
+
+    if (!dollarQuoteTag && !inSingleQuote && !inDoubleQuote && char === ";") {
+      const statement = current.trim();
+      if (statement) {
+        statements.push(statement);
+      }
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  const trailing = current.trim();
+  if (trailing) {
+    statements.push(trailing);
+  }
+
+  return statements;
+}
+
+async function executeSqlFile(pool: ReturnType<typeof getPool>, filePath: string) {
+  const sql = await fs.readFile(filePath, "utf8");
+  const statements = splitSqlStatements(sql);
+
+  for (const statement of statements) {
+    await pool.query(statement);
+  }
+}
+
 export async function main() {
   const pool = getPool();
   
   // 1. Asegurar schema y constraints adicionales para el seed
-  const schema = await fs.readFile(path.join(process.cwd(), "database", "schema.sql"), "utf8");
-  await pool.query(schema);
+  await executeSqlFile(pool, path.join(process.cwd(), "database", "schema.sql"));
   
   // Agregar constraints de unicidad si no existen (para evitar duplicados en re-seed)
   await pool.query(`
