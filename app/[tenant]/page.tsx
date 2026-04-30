@@ -28,7 +28,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
             <article className="hero" style={{ padding: "30px 40px" }}>
               <div className="hero-media">
                 <Image
-                  src="/barbero.png"
+                  src="/Barbero.png"
                   alt="Interior de barberia"
                   fill
                   priority
