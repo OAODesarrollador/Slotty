@@ -52,3 +52,6 @@ pnpm-debug.log*
 # Temp
 /tmp
 /temp
+
+# local database dumps / deployment imports
+database/*import*.sql

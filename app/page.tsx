@@ -12,11 +12,47 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
+function getSafeDatabaseHost() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    return "DATABASE_URL no configurada";
+  }
+
+  try {
+    return new URL(databaseUrl).hostname;
+  } catch {
+    return "DATABASE_URL invalida";
+  }
+}
+
+function getErrorInfo(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name
+    };
+  }
+
+  return {
+    message: String(error),
+    name: "UnknownError"
+  };
+}
+
 export default async function RootPage() {
   const tenants = await getTenants().catch((error) => {
-    console.error("No se pudieron cargar los tenants para la home.", error);
+    console.error("No se pudieron cargar los tenants para la home.", {
+      ...getErrorInfo(error),
+      databaseHost: getSafeDatabaseHost()
+    });
     return [];
   });
+
+  console.log("Tenants cargados para la home.", {
+    count: tenants.length,
+    databaseHost: getSafeDatabaseHost()
+  });
+
   const today = new Date().toISOString().split("T")[0];
   const acquisitionCards = [
     {
