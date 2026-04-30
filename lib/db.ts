@@ -14,7 +14,7 @@ function buildPool() {
 
   const requiresSsl =
     connectionString.includes("sslmode=require") ||
-    connectionString.includes("supabase.com") ||
+    connectionString.includes("supabase.") ||
     connectionString.includes("neon.tech");
 
   return new Pool({
