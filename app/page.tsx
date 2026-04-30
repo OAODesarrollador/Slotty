@@ -13,7 +13,10 @@ import styles from "./page.module.css";
 export const dynamic = "force-dynamic";
 
 export default async function RootPage() {
-  const tenants = await getTenants();
+  const tenants = await getTenants().catch((error) => {
+    console.error("No se pudieron cargar los tenants para la home.", error);
+    return [];
+  });
   const today = new Date().toISOString().split("T")[0];
   const acquisitionCards = [
     {
