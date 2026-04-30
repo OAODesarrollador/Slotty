@@ -16,13 +16,25 @@ function buildPool() {
     connectionString.includes("sslmode=require") ||
     connectionString.includes("supabase.") ||
     connectionString.includes("neon.tech");
-  const poolConnectionString = new URL(connectionString);
-  poolConnectionString.searchParams.delete("sslmode");
+
+  if (requiresSsl) {
+    const databaseUrl = new URL(connectionString);
+
+    return new Pool({
+      host: databaseUrl.hostname,
+      port: databaseUrl.port ? Number(databaseUrl.port) : 5432,
+      database: databaseUrl.pathname.replace(/^\//, ""),
+      user: decodeURIComponent(databaseUrl.username),
+      password: decodeURIComponent(databaseUrl.password),
+      max: 10,
+      ssl: { rejectUnauthorized: false }
+    });
+  }
 
   return new Pool({
-    connectionString: poolConnectionString.toString(),
+    connectionString,
     max: 10,
-    ssl: requiresSsl ? { rejectUnauthorized: false } : false
+    ssl: false
   });
 }
 

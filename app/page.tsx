@@ -10,6 +10,8 @@ import { HowItWorksShowcase } from "@/components/how-it-works-showcase";
 import { LeadCaptureSection } from "@/components/lead-capture-section";
 import styles from "./page.module.css";
 
+export const dynamic = "force-dynamic";
+
 export default async function RootPage() {
   const tenants = await getTenants();
   const today = new Date().toISOString().split("T")[0];
