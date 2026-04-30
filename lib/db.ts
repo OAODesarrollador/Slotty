@@ -16,9 +16,11 @@ function buildPool() {
     connectionString.includes("sslmode=require") ||
     connectionString.includes("supabase.") ||
     connectionString.includes("neon.tech");
+  const poolConnectionString = new URL(connectionString);
+  poolConnectionString.searchParams.delete("sslmode");
 
   return new Pool({
-    connectionString,
+    connectionString: poolConnectionString.toString(),
     max: 10,
     ssl: requiresSsl ? { rejectUnauthorized: false } : false
   });
