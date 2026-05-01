@@ -18,7 +18,7 @@ export default async function OwnerLoginPage({
       <section className="shell shadow-2xl" style={{ maxWidth: "480px", width: "100%", padding: "40px" }}>
         <section className="stack" style={{ gap: "32px" }}>
           <div style={{ textAlign: "center" }}>
-            <span className="eyebrow" style={{ letterSpacing: "4px" }}>SLOTTY ADMIN</span>
+            <span className="eyebrow" style={{ letterSpacing: "4px" }}>DIBOK ADMIN</span>
             <h1 style={{ fontSize: "2rem", marginTop: "12px" }}>Centro de Operaciones</h1>
             <p className="muted" style={{ marginTop: "8px" }}>Ingresá como Administrador o Recepcionista para gestionar tu sede.</p>
           </div>
@@ -49,7 +49,7 @@ export default async function OwnerLoginPage({
                 <input 
                   name="email" 
                   type="email" 
-                  placeholder="ejemplo@slotty.com" 
+                  placeholder="ejemplo@dibok.com" 
                   required 
                   defaultValue={slug === "slotty-platinum" ? "owner@slotty-platinum.test" : (slug === "gentleman-lab" ? "owner@gentleman-lab.test" : "owner@barberia-x.test")}
                 />

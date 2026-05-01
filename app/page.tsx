@@ -207,7 +207,7 @@ export default async function RootPage() {
                 }}
               >
                 <span style={{ position: 'relative', width: 26, height: 26, borderRadius: '50%', overflow: 'hidden', background: '#f4f4f4', flexShrink: 0 }}>
-                  <Image src={t.logo_url || '/slotty-hero.png'} alt={t.name} fill style={{ objectFit: 'cover' }} />
+                  <Image src={t.logo_url || '/LogoNegroDibok.svg'} alt={t.name} fill style={{ objectFit: 'cover' }} />
                 </span>
                 <span>{t.name}</span>
               </Link>
@@ -242,7 +242,13 @@ export default async function RootPage() {
         <footer className={styles.squareFooter} data-header-theme="light">
           <div className={styles.footerGrid}>
             <div className={styles.footerCol}>
-              <h5>Slotty</h5>
+              <Image
+                src="/LogoNegroTextoDibok.svg"
+                alt="Dibok"
+                width={170}
+                height={64}
+                className={styles.footerBrandLogo}
+              />
               <p className={styles.footerBrandText}>Sistema de reservas para negocios de servicios</p>
             </div>
             <div className={styles.footerCol}>
@@ -263,7 +269,7 @@ export default async function RootPage() {
             </div>
           </div>
           <div className={styles.footerRights}>
-            © 2026 Slotty
+            © 2026 Dibok
           </div>
         </footer>
       </main>

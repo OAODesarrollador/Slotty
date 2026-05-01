@@ -557,6 +557,13 @@
   color: #111111;
 }
 
+.footerBrandLogo {
+  width: 150px;
+  height: auto;
+  display: block;
+  margin-bottom: 4px;
+}
+
 .footerBrandText {
   margin: 0;
   max-width: 220px;

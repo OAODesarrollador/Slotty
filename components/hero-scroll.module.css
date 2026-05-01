@@ -91,11 +91,11 @@
 .preText {
   display:inline;
   font-size: 0.80em;
-  opacity: 0.85; /* NUEVO: Un tono más suave que Slotty pero con presencia */
+  opacity: 0.85; /* NUEVO: Un tono más suave que Dibok pero con presencia */
   margin-bottom: 10px;
 }
 
-.slottyAccent {
+.dibokAccent {
   font-size: 1.25em; /* Mas grande que el resto */
   font-weight: 600;
   display: inline-block;

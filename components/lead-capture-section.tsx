@@ -125,7 +125,7 @@ export function LeadCaptureSection() {
       setValues(INITIAL_VALUES);
       setErrors({});
       setSubmitState("success");
-      setMessage("Recibimos tus datos. Te contactamos pronto para mostrarte Slotty en tu negocio.");
+      setMessage("Recibimos tus datos. Te contactamos pronto para mostrarte Dibok en tu negocio.");
     } catch {
       setSubmitState("error");
       setMessage("No pudimos enviar el formulario. Probá de nuevo en unos minutos.");
@@ -152,10 +152,10 @@ export function LeadCaptureSection() {
       <div className={styles.shell}>
         <div className={styles.contentColumn}>
           <div className={styles.header}>
-            <span className={styles.eyebrow}>EMPEZÁ CON SLOTTY</span>
+            <span className={styles.eyebrow}>EMPEZÁ CON DIBOK</span>
             <h2 className={styles.title}>Dejanos tus datos y te mostramos cómo funciona en tu negocio</h2>
             <p className={styles.subtitle}>
-              Completá este formulario y te contactamos para mostrarte cómo implementar Slotty de forma simple.
+              Completá este formulario y te contactamos para mostrarte cómo implementar Dibok de forma simple.
             </p>
           </div>
         </div>

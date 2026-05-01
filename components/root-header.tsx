@@ -9,11 +9,12 @@ export function RootHeader() {
       <div className="header-inner">
         <Link href="/" className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span
+            className="brand-mark"
             aria-hidden="true"
             style={{
               display: "inline-flex",
-              width: "30px",
-              height: "30px",
+              width: "118px",
+              height: "42px",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
@@ -21,16 +22,23 @@ export function RootHeader() {
             }}
           >
             <Image
-              src="/LogoSlottySolo.png"
+              className="brand-mark-logo brand-mark-logo-dark"
+              src="/LogoBlancoTextoDibok.svg"
               alt=""
-              width={30}
-              height={30}
+              width={131}
+              height={48}
               style={{ width: "100%", height: "100%", objectFit: "contain" }}
               priority
             />
-          </span>
-          <span className="brand-name" style={{ letterSpacing: "0.02em", fontWeight: 700 }}>
-            Slotty
+            <Image
+              className="brand-mark-logo brand-mark-logo-light"
+              src="/LogoNegroTextoDibok.svg"
+              alt=""
+              width={131}
+              height={48}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              priority
+            />
           </span>
         </Link>
 

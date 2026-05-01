@@ -106,7 +106,7 @@ export function HowItWorksShowcase({ today }: HowItWorksShowcaseProps) {
           <span className={sectionStyles.tagline}>CÓMO FUNCIONA</span>
           <h2 className={sectionStyles.serifTitle}>Así reservan tus clientes</h2>
           <p className={sectionStyles.impactSubtitle} style={{ textAlign: "left", margin: "24px 0 0", maxWidth: "760px" }}>
-            Explorá el flujo completo en segundos y descubrí por qué Slotty es la mejor opción para tu negocio.
+            Explorá el flujo completo en segundos y descubrí por qué Dibok es la mejor opción para tu negocio.
           </p>
         </div>
 
@@ -160,7 +160,7 @@ export function HowItWorksShowcase({ today }: HowItWorksShowcaseProps) {
               }}>
                 <QuickBookingFlow
                   slug="root"
-                  tenantName="Slotty Demo"
+                  tenantName="Dibok Demo"
                   timezone="UTC"
                   minDate={today}
                   initialDate={today}
@@ -183,9 +183,9 @@ export function HowItWorksShowcase({ today }: HowItWorksShowcaseProps) {
                     allowMercadoPago: true,
                     depositType: "none",
                     depositValue: "0",
-                    transferAlias: "SLOTTY.DEMO",
+                    transferAlias: "DIBOK.DEMO",
                     transferCbu: "00000031000987654321",
-                    transferHolderName: "Slotty Software Inc",
+                    transferHolderName: "Dibok Software Inc",
                     transferBankName: "Banco de la Nación Argentina"
                   }}
                   hideErrors={true}

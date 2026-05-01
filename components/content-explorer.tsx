@@ -52,7 +52,7 @@ export function ContentExplorer() {
       description: "Cada negocio tiene su espacio con un link propio para que los clientes reserven directamente, sin depender de terceros.",
       image: "/eco-operacion.png",
       icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l2.12-2.12a5 5 0 0 0-7.07-7.07L11.38 5.6"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.34 12.58a5 5 0 1 0 7.07 7.07l1.17-1.17"/></svg>,
-      exampleLink: "nombrenegocio.slotty.com"
+      exampleLink: "nombrenegocio.dibok.com"
     }
   ];
 
@@ -62,7 +62,7 @@ export function ContentExplorer() {
         
         {/* 1. HEADER UNIFICADO */}
         <header className={styles.headerCentered}>
-          <span className={styles.tagline}>Ecosistema Slotty</span>
+          <span className={styles.tagline}>Ecosistema Dibok</span>
           <h2 className={styles.titleCentered}>Todo funciona mejor cuando tu negocio está conectado</h2>
           <p className={styles.subtitleCentered}>
             Reservas, clientes, cobros y operación diaria en un solo sistema. Menos desorden, menos tiempo perdido y más control sobre cada turno.

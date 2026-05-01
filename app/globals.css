@@ -423,6 +423,29 @@ body.root-home-header-light .nav-link.active::after {
   transition: background 400ms ease;
 }
 
+.brand-mark {
+  position: relative;
+}
+
+.brand-mark-logo {
+  display: block;
+  transition: opacity 400ms ease;
+}
+
+.brand-mark-logo-light {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+body.root-home-header-light .brand-mark-logo-dark {
+  opacity: 0;
+}
+
+body.root-home-header-light .brand-mark-logo-light {
+  opacity: 1;
+}
+
 .brand-name {
   font-size: 1.85rem;
   font-weight: 700;

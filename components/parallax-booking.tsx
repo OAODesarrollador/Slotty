@@ -51,7 +51,7 @@ export function ParallaxBooking({ today }: { today: string }) {
           <div className={styles.bookingCard}>
               <QuickBookingFlow 
                 slug="root"
-                tenantName="Slotty"
+                tenantName="Dibok"
                 timezone="UTC"
                 minDate={today}
                 initialDate={today}
