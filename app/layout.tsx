@@ -8,7 +8,13 @@ const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-serif"
 
 export const metadata: Metadata = {
   title: "Barberia Nueva",
-  description: "Sistema SaaS multi-tenant para reservas de barberias"
+  description: "Sistema SaaS multi-tenant para reservas de barberias",
+  icons: {
+    icon: [
+      { url: "/LogoNegroDibok.svg", type: "image/svg+xml" }
+    ],
+    shortcut: "/LogoNegroDibok.svg"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

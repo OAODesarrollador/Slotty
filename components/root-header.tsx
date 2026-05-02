@@ -4,6 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function RootHeader() {
+  const handleAccessClick = () => {
+    window.dispatchEvent(new Event("dibok:request-access"));
+
+    window.requestAnimationFrame(() => {
+      document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => {
+        document.getElementById("lead-name")?.focus({ preventScroll: true });
+      }, 650);
+    });
+  };
+
   return (
     <header className="main-header">
       <div className="header-inner">
@@ -49,7 +60,7 @@ export function RootHeader() {
         </nav>
 
         <div className="nav-actions">
-          <Link href="#start" className="btn">
+          <Link href="#start" className="btn" onClick={handleAccessClick}>
             Solicitar Acceso
           </Link>
         </div>

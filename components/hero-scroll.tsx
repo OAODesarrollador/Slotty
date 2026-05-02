@@ -154,9 +154,18 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
       }
     };
 
+    const unlockHero = () => {
+      isUnlockedRef.current = true;
+      scaleRef.current = targetScale;
+      updateVisuals(targetScale);
+      setIsUnlocked(true);
+      setScrollLock(false);
+    };
+
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("dibok:request-access", unlockHero);
     
     updateVisuals(scaleRef.current);
 
@@ -164,6 +173,7 @@ export function HeroScroll({ tenants = [] }: { tenants?: Tenant[] }) {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("dibok:request-access", unlockHero);
     };
   }, [randomPositions]);
 
