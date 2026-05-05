@@ -10,33 +10,41 @@ type NavHeaderProps = {
 
 export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
   const pathname = usePathname();
-  const isAdminArea = pathname?.startsWith(`/${tenantSlug}/owner/dashboard`);
+  const usesLegacyTenantPath = pathname === `/${tenantSlug}` || pathname?.startsWith(`/${tenantSlug}/`);
+  const tenantHref = (path = "/") => {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return usesLegacyTenantPath
+      ? `/${tenantSlug}${normalizedPath === "/" ? "" : normalizedPath}`
+      : normalizedPath;
+  };
+  const isAdminArea = pathname?.startsWith(tenantHref("/owner/dashboard"));
 
   const isActive = (path: string) => {
-    if (path === `/${tenantSlug}`) return pathname === path;
-    return pathname?.startsWith(path);
+    const href = tenantHref(path);
+    if (href === tenantHref("/")) return pathname === href;
+    return pathname?.startsWith(href);
   };
 
   if (isAdminArea) {
     const adminLinks = [
-      { href: `/${tenantSlug}/owner/dashboard`, label: "Inicio" },
-      { href: `/${tenantSlug}/owner/dashboard/turnos`, label: "Turnos" },
-      { href: `/${tenantSlug}/owner/dashboard/servicios`, label: "Servicios" },
-      { href: `/${tenantSlug}/owner/dashboard/empresa`, label: "Empresa" },
-      { href: `/${tenantSlug}/owner/dashboard/analisis`, label: "Analisis" }
+      { href: tenantHref("/owner/dashboard"), label: "Inicio" },
+      { href: tenantHref("/owner/dashboard/turnos"), label: "Turnos" },
+      { href: tenantHref("/owner/dashboard/servicios"), label: "Servicios" },
+      { href: tenantHref("/owner/dashboard/empresa"), label: "Empresa" },
+      { href: tenantHref("/owner/dashboard/analisis"), label: "Analisis" }
     ];
 
     return (
       <header className="admin-main-header">
         <div className="admin-header-inner">
-          <Link href={`/${tenantSlug}/owner/dashboard`} className="admin-nav-logo">
+          <Link href={tenantHref("/owner/dashboard")} className="admin-nav-logo">
             <span className="eyebrow" style={{ letterSpacing: "0.16em" }}>Administracion</span>
             <strong className="admin-brand-name">{tenantName}</strong>
           </Link>
 
           <nav className="admin-nav-links">
             {adminLinks.map((link) => {
-              const active = link.href === `/${tenantSlug}/owner/dashboard`
+              const active = link.href === tenantHref("/owner/dashboard")
                 ? pathname === link.href
                 : pathname === link.href || pathname?.startsWith(`${link.href}/`);
 
@@ -64,26 +72,26 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
   return (
     <header className="main-header">
       <div className="header-inner">
-        <Link href={`/${tenantSlug}`} className="nav-logo">
+        <Link href={tenantHref("/")} className="nav-logo">
           <span className="brand-name">
             {tenantName}
           </span>
         </Link>
 
         <nav className="nav-links">
-          <Link href={`/${tenantSlug}`} className={`nav-link ${pathname === `/${tenantSlug}` ? "active" : ""}`}>
+          <Link href={tenantHref("/")} className={`nav-link ${pathname === tenantHref("/") ? "active" : ""}`}>
             Inicio
           </Link>
-          <Link href={`/${tenantSlug}/reservar`} className={`nav-link ${isActive(`/${tenantSlug}/reservar`) ? "active" : ""}`}>
+          <Link href={tenantHref("/reservar")} className={`nav-link ${isActive("/reservar") ? "active" : ""}`}>
             Servicios
           </Link>
-          <Link href={`/${tenantSlug}/fila`} className={`nav-link ${isActive(`/${tenantSlug}/fila`) ? "active" : ""}`}>
+          <Link href={tenantHref("/fila")} className={`nav-link ${isActive("/fila") ? "active" : ""}`}>
             Fila Virtual
           </Link>
         </nav>
 
         <div className="nav-actions">
-          <Link href={`/${tenantSlug}/reservar`} className="btn">
+          <Link href={tenantHref("/reservar")} className="btn">
             Reservar Ahora
           </Link>
         </div>

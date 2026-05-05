@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManageCompany, canManageUsers } from "@/lib/admin";
 import { hashPassword, requireSessionForTenantRole } from "@/lib/auth";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import type { AppointmentStatus, PaymentMethod } from "@/lib/types";
 import { updateAppointmentStatusForOwner } from "@/repositories/appointments";
 import {
@@ -31,11 +32,11 @@ function redirectTo(
   extraParams?: Record<string, string>
 ) {
   const pathnameBySection: Record<string, string> = {
-    overview: `/${tenantSlug}/owner/dashboard`,
-    appointments: `/${tenantSlug}/owner/dashboard/turnos`,
-    services: `/${tenantSlug}/owner/dashboard/servicios`,
-    company: `/${tenantSlug}/owner/dashboard/empresa`,
-    analytics: `/${tenantSlug}/owner/dashboard/analisis`
+    overview: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard"),
+    appointments: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard/turnos"),
+    services: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard/servicios"),
+    company: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard/empresa"),
+    analytics: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard/analisis")
   };
 
   const url = new URL(pathnameBySection[section] ?? pathnameBySection.overview, request.url);

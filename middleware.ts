@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getTenantSlugFromHost } from "@/lib/tenant-domain";
+
 const PROTECTED_PREFIX = /^\/[^/]+\/owner(?:\/.*)?$/;
+const SUBDOMAIN_PROTECTED_PREFIX = /^\/owner(?:\/.*)?$/;
 const SESSION_COOKIE = "barberia_session";
+const INTERNAL_PATH_PREFIXES = ["/api", "/_next", "/favicon.ico", "/robots.txt", "/sitemap.xml"];
 
 function base64url(input: ArrayBuffer) {
   const bytes = new Uint8Array(input);
@@ -71,6 +75,33 @@ async function isValidSessionCookie(token: string | undefined, tenantSlug: strin
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostTenantSlug = getTenantSlugFromHost(request.headers.get("host"));
+
+  if (hostTenantSlug && !INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const legacyTenantPrefix = `/${hostTenantSlug}`;
+
+    if (pathname === legacyTenantPrefix || pathname.startsWith(`${legacyTenantPrefix}/`)) {
+      const url = request.nextUrl.clone();
+      const strippedPath = pathname.slice(legacyTenantPrefix.length) || "/";
+      url.pathname = strippedPath;
+      return NextResponse.redirect(url, 308);
+    }
+
+    if (SUBDOMAIN_PROTECTED_PREFIX.test(pathname) && !pathname.endsWith("/owner/login")) {
+      const hasValidSession = await isValidSessionCookie(
+        request.cookies.get(SESSION_COOKIE)?.value,
+        hostTenantSlug
+      );
+
+      if (!hasValidSession) {
+        return NextResponse.redirect(new URL("/owner/login", request.url));
+      }
+    }
+
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `/${hostTenantSlug}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(rewriteUrl);
+  }
 
   if (!PROTECTED_PREFIX.test(pathname) || pathname.endsWith('/owner/login')) {
     return NextResponse.next();

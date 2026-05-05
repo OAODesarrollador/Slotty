@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionForTenant } from "@/lib/auth";
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { queueActionSchema } from "@/lib/validators";
 import {
   assignQueueToSlot,
@@ -69,13 +70,17 @@ export async function POST(
       return ok({ ok: true });
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/owner/dashboard`, request.url));
+    return NextResponse.redirect(
+      new URL(tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard"), request.url)
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo actualizar la fila.";
     if (isJson) {
       return fail(message, 400);
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/owner/dashboard?error=${encodeURIComponent(message)}`, request.url));
+    return NextResponse.redirect(
+      new URL(`${tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard")}?error=${encodeURIComponent(message)}`, request.url)
+    );
   }
 }

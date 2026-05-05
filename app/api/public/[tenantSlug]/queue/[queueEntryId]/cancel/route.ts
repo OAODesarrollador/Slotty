@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { cancelQueueEntry } from "@/services/queue";
 
 function revalidateQueuePages(tenantSlug: string, queueEntryId: string) {
@@ -28,13 +29,19 @@ export async function POST(
       return ok({ cancelled: true });
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/fila?cancelled=1`, request.url), 303);
+    return NextResponse.redirect(
+      new URL(`${tenantPathForHost(request.headers.get("host"), tenantSlug, "/fila")}?cancelled=1`, request.url),
+      303
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo cancelar la fila.";
     if (isJson) {
       return fail(message, 400);
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/fila/${queueEntryId}?error=${encodeURIComponent(message)}`, request.url), 303);
+    return NextResponse.redirect(
+      new URL(`${tenantPathForHost(request.headers.get("host"), tenantSlug, `/fila/${queueEntryId}`)}?error=${encodeURIComponent(message)}`, request.url),
+      303
+    );
   }
 }

@@ -8,6 +8,7 @@ import {
   recordFailedLogin
 } from "@/lib/rate-limit";
 import { getTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { getUserByCredentials } from "@/repositories/users";
 
 function getClientIp(request: NextRequest) {
@@ -17,7 +18,8 @@ function getClientIp(request: NextRequest) {
 
 function redirectToLogin(request: NextRequest, tenantSlug: string, error = "1") {
   const safeTenantSlug = tenantSlug || "login";
-  return NextResponse.redirect(new URL(`/${safeTenantSlug}/owner/login?error=${error}`, request.url));
+  const loginPath = tenantPathForHost(request.headers.get("host"), safeTenantSlug, "/owner/login");
+  return NextResponse.redirect(new URL(`${loginPath}?error=${error}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
@@ -58,5 +60,7 @@ export async function POST(request: NextRequest) {
     displayName: user.display_name
   });
 
-  return NextResponse.redirect(new URL(`/${tenantSlug}/owner/dashboard`, request.url));
+  return NextResponse.redirect(
+    new URL(tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard"), request.url)
+  );
 }

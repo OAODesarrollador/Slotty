@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { queuePayloadSchema } from "@/lib/validators";
 import { getQueueEntryDetail } from "@/repositories/queue";
 import { enqueueQueueEntry } from "@/services/queue";
@@ -53,7 +54,7 @@ export async function POST(
       return fail("Payload invalido.", 400, parsed.error.flatten());
     }
 
-    return redirectTo(`/${tenantSlug}/fila?error=Payload%20invalido`);
+    return redirectTo(`${tenantPathForHost(request.headers.get("host"), tenantSlug, "/fila")}?error=Payload%20invalido`);
   }
 
   try {
@@ -78,13 +79,13 @@ export async function POST(
       }, { status: 201 });
     }
 
-    return redirectTo(`/${tenantSlug}/fila/${queueEntry.id}`);
+    return redirectTo(tenantPathForHost(request.headers.get("host"), tenantSlug, `/fila/${queueEntry.id}`));
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo generar la fila.";
     if (isJson) {
       return fail(message, 400);
     }
 
-    return redirectTo(`/${tenantSlug}/fila?error=${encodeURIComponent(message)}`);
+    return redirectTo(`${tenantPathForHost(request.headers.get("host"), tenantSlug, "/fila")}?error=${encodeURIComponent(message)}`);
   }
 }

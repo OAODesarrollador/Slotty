@@ -8,6 +8,7 @@ import { RootHeader } from "@/components/root-header";
 import { ContentExplorer } from "@/components/content-explorer";
 import { HowItWorksShowcase } from "@/components/how-it-works-showcase";
 import { LeadCaptureSection } from "@/components/lead-capture-section";
+import { buildTenantUrl, tenantPath } from "@/lib/tenant-domain";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,17 @@ function getErrorInfo(error: unknown) {
     message: String(error),
     name: "UnknownError"
   };
+}
+
+function buildPublicTenantHref(slug: string) {
+  const appUrl = process.env.APP_URL;
+  const tenantDomainSuffix = process.env.TENANT_DOMAIN_SUFFIX || process.env.ROOT_DOMAIN;
+
+  if (!appUrl || !tenantDomainSuffix) {
+    return tenantPath(slug);
+  }
+
+  return buildTenantUrl(appUrl, slug);
 }
 
 export default async function RootPage() {
@@ -191,7 +203,7 @@ export default async function RootPage() {
             {tenants.map((t) => (
               <Link
                 key={t.id}
-                href={`/${t.slug}`}
+                href={buildPublicTenantHref(t.slug)}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

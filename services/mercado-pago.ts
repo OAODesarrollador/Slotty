@@ -6,6 +6,7 @@ import {
   getMercadoPagoPaymentSyncContext
 } from "@/repositories/appointments";
 import { addMinutes } from "@/lib/time";
+import { buildTenantUrl } from "@/lib/tenant-domain";
 
 function getAppUrl() {
   const appUrl = process.env.APP_URL;
@@ -40,7 +41,7 @@ function buildMercadoPagoReturnUrl(
   appointmentId: string,
   returnType: "success" | "pending" | "failure"
 ) {
-  const url = new URL(`${appUrl}/${tenantSlug}/mi-turno/${appointmentId}`);
+  const url = new URL(buildTenantUrl(appUrl, tenantSlug, `/mi-turno/${appointmentId}`));
   url.searchParams.set("mp_return", returnType);
   return url.toString();
 }

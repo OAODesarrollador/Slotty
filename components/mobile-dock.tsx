@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type MobileDockProps = {
   tenantSlug: string;
@@ -6,18 +9,27 @@ type MobileDockProps = {
 };
 
 const items = [
-  { key: "home", label: "Inicio", short: "Hm", href: (tenant: string) => `/${tenant}` },
-  { key: "services", label: "Servicios", short: "Sv", href: (tenant: string) => `/${tenant}/reservar` },
-  { key: "queue", label: "Fila", short: "Q", href: (tenant: string) => `/${tenant}/fila` }
+  { key: "home", label: "Inicio", short: "Hm", href: "/" },
+  { key: "services", label: "Servicios", short: "Sv", href: "/reservar" },
+  { key: "queue", label: "Fila", short: "Q", href: "/fila" }
 ] as const;
 
 export function MobileDock({ tenantSlug, active }: MobileDockProps) {
+  const pathname = usePathname();
+  const usesLegacyTenantPath = pathname === `/${tenantSlug}` || pathname?.startsWith(`/${tenantSlug}/`);
+  const tenantHref = (path = "/") => {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return usesLegacyTenantPath
+      ? `/${tenantSlug}${normalizedPath === "/" ? "" : normalizedPath}`
+      : normalizedPath;
+  };
+
   return (
     <nav className="mobile-dock" aria-label="Navegacion inferior">
       {items.map((item) => (
         <Link
           key={item.key}
-          href={item.href(tenantSlug)}
+          href={tenantHref(item.href)}
           className={`dock-item ${active === item.key ? "is-active" : ""}`}
         >
           <span className="dock-icon">{item.short}</span>

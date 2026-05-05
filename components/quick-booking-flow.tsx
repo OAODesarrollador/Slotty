@@ -2,7 +2,7 @@
 
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import type { PaymentMethod } from "@/lib/types";
 import { formatCurrency, formatDateTime, formatHour } from "@/lib/time";
@@ -246,6 +246,14 @@ export function QuickBookingFlow({
   onGuideSectionMount
 }: QuickBookingFlowProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const usesLegacyTenantPath = pathname === `/${slug}` || pathname?.startsWith(`/${slug}/`);
+  const tenantHref = (path = "/") => {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return usesLegacyTenantPath
+      ? `/${slug}${normalizedPath === "/" ? "" : normalizedPath}`
+      : normalizedPath;
+  };
   const [serviceId, setServiceId] = useState(initialServiceId ?? (services && services.length > 0 ? services[0].id : ""));
   const [date, setDate] = useState(initialDate);
   const [barberId, setBarberId] = useState(initialBarberId ?? "");
@@ -774,7 +782,7 @@ export function QuickBookingFlow({
       }
 
       clearDraft();
-      router.push(`/${slug}/mi-turno/${body.appointmentId}`);
+      router.push(tenantHref(`/mi-turno/${body.appointmentId}`));
       router.refresh();
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : "No se pudo confirmar la reserva.");
@@ -1383,7 +1391,7 @@ export function QuickBookingFlow({
               ) : null}
 
               <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                <Link className="btn-ghost" href={`/${slug}`} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%" }}>
+                <Link className="btn-ghost" href={tenantHref("/")} style={{ border: "1px solid rgba(255,255,255,0.16)", opacity: 1, fontSize: "0.82rem", color: "rgba(255,255,255,0.88)", background: "rgba(255,255,255,0.04)", padding: "0 18px", width: "100%" }}>
                   Cancelar y volver
                 </Link>
               </div>

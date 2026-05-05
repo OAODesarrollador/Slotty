@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/http";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { appointmentPayloadSchema } from "@/lib/validators";
 import { createAppointment } from "@/services/booking";
 
@@ -21,8 +22,8 @@ function payloadFromFormData(formData: FormData) {
   };
 }
 
-function resolveRedirectBase(tenantSlug: string, payload: unknown) {
-  const fallback = `/${tenantSlug}/reservar`;
+function resolveRedirectBase(request: NextRequest, tenantSlug: string, payload: unknown) {
+  const fallback = tenantPathForHost(request.headers.get("host"), tenantSlug, "/reservar");
   if (!payload || typeof payload !== "object" || !("redirectBase" in payload)) {
     return fallback;
   }
@@ -53,7 +54,7 @@ export async function POST(
       return fail("Payload inválido.", 400, parsed.error.flatten());
     }
 
-    const redirectBase = resolveRedirectBase(tenantSlug, rawPayload);
+    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=Payload%20invalido`, request.url));
   }
 
@@ -83,7 +84,9 @@ export async function POST(
       return NextResponse.redirect(result.checkoutUrl);
     }
 
-    return NextResponse.redirect(new URL(`/${tenantSlug}/mi-turno/${result.appointmentId}`, request.url));
+    return NextResponse.redirect(
+      new URL(tenantPathForHost(request.headers.get("host"), tenantSlug, `/mi-turno/${result.appointmentId}`), request.url)
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "No se pudo crear la reserva.";
     const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
@@ -93,7 +96,7 @@ export async function POST(
       return fail(message, status);
     }
 
-    const redirectBase = resolveRedirectBase(tenantSlug, rawPayload);
+    const redirectBase = resolveRedirectBase(request, tenantSlug, rawPayload);
     return NextResponse.redirect(new URL(`${redirectBase}&error=${encodeURIComponent(message)}`, request.url));
   }
 }

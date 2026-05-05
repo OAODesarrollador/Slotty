@@ -1,15 +1,19 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { MobileDock } from "@/components/mobile-dock";
 import { requireTenantBySlug } from "@/lib/tenant";
+import { tenantPathForHost } from "@/lib/tenant-domain";
 import { formatCurrency } from "@/lib/time";
 import { listPublicServices } from "@/repositories/services";
 import { listAvailabilityOptions } from "@/services/availability";
 
 export default async function TenantHome({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant: slug } = await params;
+  const headerStore = await headers();
+  const tenantHref = (path = "/") => tenantPathForHost(headerStore.get("host"), slug, path);
   const tenant = await requireTenantBySlug(slug);
   const services = await listPublicServices(tenant.tenantId);
   const firstService = services[0];
@@ -46,10 +50,10 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
                   Reservá tu espacio de distinción de forma instantánea.
                 </p>
                 <div className="actions" style={{ marginTop: "8px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
-                  <Link className="btn" href={`/${slug}/reservar`} style={{ minWidth: "200px" }}>
+                  <Link className="btn" href={tenantHref("/reservar")} style={{ minWidth: "200px" }}>
                     Reservar Turno
                   </Link>
-                  <Link className="btn-secondary" href={`/${slug}/fila`} style={{ minWidth: "200px" }}>
+                  <Link className="btn-secondary" href={tenantHref("/fila")} style={{ minWidth: "200px" }}>
                     Fila Virtual
                   </Link>
                 </div>
@@ -89,7 +93,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
                 ¿Cerca del local? Súmate a nuestra tecnología de fila en tiempo real y optimizá tu tiempo. Te avisamos por WhatsApp.
               </p>
               <div className="actions" style={{ marginTop: "12px" }}>
-                <Link className="btn" href={`/${slug}/fila`} style={{ width: "100%" }}>
+                <Link className="btn" href={tenantHref("/fila")} style={{ width: "100%" }}>
                   Súmate a la Fila de Hoy
                 </Link>
               </div>
@@ -102,7 +106,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
                 Buscamos la excelencia en cada corte. Si ya te atendiste, calificá tu experiencia y ayúdanos a seguir mejorando.
               </p>
               <div className="actions" style={{ marginTop: "12px" }}>
-                <Link className="btn-secondary" href={`/${slug}/reservar`} style={{ width: "100%" }}>
+                <Link className="btn-secondary" href={tenantHref("/reservar")} style={{ width: "100%" }}>
                   Compartir Feedback
                 </Link>
               </div>

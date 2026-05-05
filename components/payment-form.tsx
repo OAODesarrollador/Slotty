@@ -3,6 +3,7 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { formatCurrency, formatDateTime } from "@/lib/time";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface PaymentFormProps {
   slug: string;
@@ -39,6 +40,14 @@ export function PaymentForm({
   breakdown,
   initialError
 }: PaymentFormProps) {
+  const pathname = usePathname();
+  const usesLegacyTenantPath = pathname === `/${slug}` || pathname?.startsWith(`/${slug}/`);
+  const tenantHref = (path = "/") => {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return usesLegacyTenantPath
+      ? `/${slug}${normalizedPath === "/" ? "" : normalizedPath}`
+      : normalizedPath;
+  };
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(initialError || null);
   const [validating, setValidating] = useState(false);
@@ -154,7 +163,7 @@ export function PaymentForm({
           <input type="hidden" name="serviceId" value={serviceId} />
           <input type="hidden" name="barberId" value={barberId} />
           <input type="hidden" name="datetimeStart" value={start} />
-          <input type="hidden" name="redirectBase" value={`/${slug}/reservar/${serviceId}/pago?barberId=${barberId}&start=${encodeURIComponent(start)}`} />
+          <input type="hidden" name="redirectBase" value={`${tenantHref(`/reservar/${serviceId}/pago`)}?barberId=${barberId}&start=${encodeURIComponent(start)}`} />
 
           <div className="stack" style={{ gap: "24px" }}>
             <div className="stack" style={{ gap: "12px" }}>
@@ -287,7 +296,7 @@ export function PaymentForm({
           </div>
         </div>
 
-        <Link href={`/${slug}/reservar/${serviceId}/confirmar?barberId=${barberId}&start=${encodeURIComponent(start)}`} className="btn-secondary" style={{ textAlign: "center", border: "none", background: "transparent", fontStyle: "italic", fontSize: "0.9rem" }}>
+        <Link href={`${tenantHref(`/reservar/${serviceId}/confirmar`)}?barberId=${barberId}&start=${encodeURIComponent(start)}`} className="btn-secondary" style={{ textAlign: "center", border: "none", background: "transparent", fontStyle: "italic", fontSize: "0.9rem" }}>
           ← Cambiar horario o barbero
         </Link>
       </aside>

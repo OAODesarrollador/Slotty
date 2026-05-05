@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { formatDateTime } from "@/lib/time";
 import type { QueueStatus } from "@/lib/types";
@@ -44,6 +44,14 @@ export function QueueStatusPanel(input: {
   cancelled?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const usesLegacyTenantPath = pathname === `/${input.tenantSlug}` || pathname?.startsWith(`/${input.tenantSlug}/`);
+  const tenantHref = (path = "/") => {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return usesLegacyTenantPath
+      ? `/${input.tenantSlug}${normalizedPath === "/" ? "" : normalizedPath}`
+      : normalizedPath;
+  };
   const [queueEntry, setQueueEntry] = useState(input.initialEntry);
   const [error, setError] = useState(input.initialError ?? "");
   const [highlightMessage, setHighlightMessage] = useState("");
@@ -142,7 +150,7 @@ export function QueueStatusPanel(input: {
 
       setIsAlertOpen(false);
       setHighlightMessage("");
-      router.replace(`/${input.tenantSlug}/fila?cancelled=1`);
+      router.replace(`${tenantHref("/fila")}?cancelled=1`);
       router.refresh();
     } catch (cancelError) {
       setError(cancelError instanceof Error ? cancelError.message : "No se pudo salir de la fila.");
@@ -405,7 +413,7 @@ export function QueueStatusPanel(input: {
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
                 {queueEntry.assigned_appointment_id ? (
-                  <Link className="btn" href={`/${input.tenantSlug}/mi-turno/${queueEntry.assigned_appointment_id}`} style={{ minHeight: "48px" }}>
+                  <Link className="btn" href={tenantHref(`/mi-turno/${queueEntry.assigned_appointment_id}`)} style={{ minHeight: "48px" }}>
                     Ver turno
                   </Link>
                 ) : null}
@@ -489,13 +497,13 @@ export function QueueStatusPanel(input: {
         >
           {isCancelling ? "Saliendo..." : "Salir de la fila"}
         </button>
-        <Link className="btn-secondary" href={`/${input.tenantSlug}/reservar`} style={{ width: "100%" }}>
+        <Link className="btn-secondary" href={tenantHref("/reservar")} style={{ width: "100%" }}>
           Reservar turno
         </Link>
       </div>
 
       {queueEntry.assigned_appointment_id ? (
-        <Link className="btn" href={`/${input.tenantSlug}/mi-turno/${queueEntry.assigned_appointment_id}`} style={{ width: "100%" }}>
+        <Link className="btn" href={tenantHref(`/mi-turno/${queueEntry.assigned_appointment_id}`)} style={{ width: "100%" }}>
           Ver turno asignado
         </Link>
       ) : null}
