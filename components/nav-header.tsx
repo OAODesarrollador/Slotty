@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type NavHeaderProps = {
   tenantName: string;
@@ -10,6 +11,7 @@ type NavHeaderProps = {
 
 export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
   const pathname = usePathname();
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const usesLegacyTenantPath = pathname === `/${tenantSlug}` || pathname?.startsWith(`/${tenantSlug}/`);
   const tenantHref = (path = "/") => {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -24,6 +26,10 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
     if (href === tenantHref("/")) return pathname === href;
     return pathname?.startsWith(href);
   };
+
+  useEffect(() => {
+    setAdminMenuOpen(false);
+  }, [pathname]);
 
   if (isAdminArea) {
     const adminLinks = [
@@ -42,6 +48,19 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
             <strong className="admin-brand-name">{tenantName}</strong>
           </Link>
 
+          <button
+            type="button"
+            className="admin-menu-toggle"
+            aria-label={adminMenuOpen ? "Cerrar menu de administracion" : "Abrir menu de administracion"}
+            aria-expanded={adminMenuOpen}
+            aria-controls="admin-mobile-menu"
+            onClick={() => setAdminMenuOpen((current) => !current)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
           <nav className="admin-nav-links">
             {adminLinks.map((link) => {
               const active = link.href === tenantHref("/owner/dashboard")
@@ -57,6 +76,28 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
           </nav>
 
           <div className="admin-nav-actions">
+            <form method="post" action="/api/auth/logout">
+              <input type="hidden" name="tenantSlug" value={tenantSlug} />
+              <button type="submit" className="btn-ghost">
+                Salir
+              </button>
+            </form>
+          </div>
+
+          <div id="admin-mobile-menu" className={`admin-mobile-menu ${adminMenuOpen ? "is-open" : ""}`}>
+            <nav className="admin-mobile-menu__links" aria-label="Menu de administracion">
+              {adminLinks.map((link) => {
+                const active = link.href === tenantHref("/owner/dashboard")
+                  ? pathname === link.href
+                  : pathname === link.href || pathname?.startsWith(`${link.href}/`);
+
+                return (
+                  <Link key={link.href} href={link.href} className={`admin-mobile-menu__link ${active ? "active" : ""}`}>
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
             <form method="post" action="/api/auth/logout">
               <input type="hidden" name="tenantSlug" value={tenantSlug} />
               <button type="submit" className="btn-ghost">

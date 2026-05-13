@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { BarberPhotoInput } from "@/components/barber-photo-input";
 import { AdminPasswordInput, PASSWORD_PATTERN } from "@/components/admin-password-input";
 
 type ServiceOption = {
@@ -50,6 +51,16 @@ type AdminCompanyUsersTableProps = {
   users: UserOption[];
 };
 
+type BarberFormProps = {
+  tenantSlug: string;
+  intent: "barber-create" | "barber-update";
+  submitLabel: string;
+  services: ServiceOption[];
+  weekdayLabels: string[];
+  barber?: BarberRow | null;
+  onCancel?: () => void;
+};
+
 function PencilIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="admin-edit-icon">
@@ -92,7 +103,126 @@ function formatWorkingHours(barber: BarberRow) {
     return "Sin horarios";
   }
 
-  return `${barber.workingHours.length} dias`;
+  return `${new Set(barber.workingHours.map((item) => item.dayOfWeek)).size} dias`;
+}
+
+function findWorkingHourSegment(barber: BarberRow, dayOfWeek: number, segmentIndex: number) {
+  return barber.workingHours
+    .filter((item) => item.dayOfWeek === dayOfWeek)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))[segmentIndex] ?? null;
+}
+
+function RatingStars({ rating }: { rating: string | number }) {
+  const value = Number(rating);
+  const rounded = Number.isFinite(value) ? Math.round(value) : 0;
+
+  return (
+    <span className="admin-rating-stars" aria-label={`Calificacion ${rating} de 5`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span key={star} className={star <= rounded ? "is-filled" : ""} aria-hidden="true">★</span>
+      ))}
+    </span>
+  );
+}
+
+function BarberProfileForm({ tenantSlug, intent, submitLabel, services, weekdayLabels, barber, onCancel }: BarberFormProps) {
+  const rating = barber?.rating ?? "4.8";
+  const fullName = barber?.fullName ?? "";
+  const isEdit = intent === "barber-update";
+
+  return (
+    <form method="post" action={`/api/owner/${tenantSlug}/admin`} encType="multipart/form-data" className="admin-barber-edit-form">
+      <input type="hidden" name="intent" value={intent} />
+      <input type="hidden" name="section" value="company" />
+      {barber ? <input type="hidden" name="barberId" value={barber.id} /> : null}
+      {barber ? <input type="hidden" name="existingPhotoUrl" value={barber.photoUrl ?? ""} /> : null}
+      <input type="hidden" name="rating" value={rating} />
+      <input type="hidden" name="userId" value={barber?.userId ?? ""} />
+
+      <div className="admin-barber-edit-form__top">
+        <div className="admin-barber-edit-form__photo-panel">
+          <BarberPhotoInput currentPhotoUrl={barber?.photoUrl} variant="avatar" label={fullName || "Nuevo barbero"} />
+          {isEdit ? (
+            <label className="admin-barber-edit-form__active">
+              <input type="checkbox" name="isActive" defaultChecked={barber?.isActive ?? true} />
+              <span>Activo</span>
+            </label>
+          ) : null}
+        </div>
+        <div className="admin-barber-edit-form__rating" aria-label={`Calificacion ${rating}`}>
+          <RatingStars rating={rating} />
+          <strong>{rating}</strong>
+        </div>
+        <label className="admin-barber-edit-form__name">Nombre<input name="fullName" defaultValue={fullName} required /></label>
+      </div>
+
+      <div className="admin-barber-edit-form__content">
+        <div className="admin-barber-edit-form__bio-services">
+          <label className="admin-barber-edit-form__panel">Bio<textarea name="bio" rows={2} defaultValue={barber?.bio ?? ""} /></label>
+
+          <div className="admin-barber-edit-form__section admin-barber-edit-form__panel">
+            <strong>Servicios</strong>
+            <div className="admin-modal__check-grid">
+              {services.map((service) => (
+                <label key={service.id}>
+                  <input type="checkbox" name="serviceIds" value={service.id} defaultChecked={barber?.serviceIds.includes(service.id) ?? false} />
+                  <span>{service.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-barber-edit-form__section">
+          <strong>Horarios</strong>
+          <div className="admin-modal__schedule-grid">
+            {weekdayLabels.map((label, index) => {
+              const morning = barber ? findWorkingHourSegment(barber, index, 0) : null;
+              const afternoon = barber ? findWorkingHourSegment(barber, index, 1) : null;
+
+              return (
+                <div key={label} className="admin-table__schedule-day">
+                  <strong>{label}</strong>
+                  <div className="admin-table__schedule-segments">
+                    <span>Mañana</span>
+                    <input name={`schedule_${index}_morning_start`} type="time" defaultValue={morning?.startTime.slice(0, 5) ?? ""} />
+                    <input name={`schedule_${index}_morning_end`} type="time" defaultValue={morning?.endTime.slice(0, 5) ?? ""} />
+                    <span>Tarde</span>
+                    <input name={`schedule_${index}_afternoon_start`} type="time" defaultValue={afternoon?.startTime.slice(0, 5) ?? ""} />
+                    <input name={`schedule_${index}_afternoon_end`} type="time" defaultValue={afternoon?.endTime.slice(0, 5) ?? ""} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-modal__footer admin-barber-edit-form__actions">
+        {onCancel ? <button type="button" className="btn-ghost" onClick={onCancel}>Cancelar</button> : null}
+        <button type="submit" className="btn">{submitLabel}</button>
+      </div>
+    </form>
+  );
+}
+
+export function AdminBarberCreatePanel({ tenantSlug, services, weekdayLabels }: Pick<BarberFormProps, "tenantSlug" | "services" | "weekdayLabels">) {
+  return (
+    <div className="admin-barber-create-shell admin-modal--barber-edit">
+      <div className="admin-modal__header admin-barber-create-shell__header">
+        <div className="stack" style={{ gap: 4 }}>
+          <span className="eyebrow">Crear barbero</span>
+        </div>
+      </div>
+      <BarberProfileForm
+        tenantSlug={tenantSlug}
+        intent="barber-create"
+        submitLabel="Crear barbero"
+        services={services}
+        weekdayLabels={weekdayLabels}
+      />
+    </div>
+  );
 }
 
 export function AdminCompanyBarbersTable({
@@ -183,70 +313,25 @@ export function AdminCompanyBarbersTable({
       {mounted && editingBarber
         ? createPortal(
             <div className="admin-modal-backdrop" role="dialog" aria-modal="true" onClick={() => setEditingId(null)}>
-              <div className="admin-modal" onClick={(event) => event.stopPropagation()}>
+              <div className="admin-modal admin-modal--barber-edit" onClick={(event) => event.stopPropagation()}>
                 <div className="admin-modal__header">
                   <div className="stack" style={{ gap: 4 }}>
                     <span className="eyebrow">Editar barbero</span>
-                    <h3 style={{ fontSize: "1.45rem" }}>{editingBarber.fullName}</h3>
                   </div>
                   <button type="button" className="admin-modal__close" aria-label="Cerrar" onClick={() => setEditingId(null)}>
                     x
                   </button>
                 </div>
 
-                <form method="post" action={`/api/owner/${tenantSlug}/admin`} encType="multipart/form-data" className="stack" style={{ gap: 14 }}>
-                  <input type="hidden" name="intent" value="barber-update" />
-                  <input type="hidden" name="section" value="company" />
-                  <input type="hidden" name="barberId" value={editingBarber.id} />
-                  <input type="hidden" name="existingPhotoUrl" value={editingBarber.photoUrl ?? ""} />
-
-                  <div className="grid cols-2" style={{ gap: 12 }}>
-                    <label>Nombre<input name="fullName" defaultValue={editingBarber.fullName} /></label>
-                    <label>Rating<input name="rating" type="number" min="0" max="5" step="0.1" defaultValue={editingBarber.rating} /></label>
-                    <label>Usuario<select name="userId" defaultValue={editingBarber.userId ?? ""}><option value="">Sin usuario</option>{users.map((user) => <option key={user.id} value={user.id}>{user.displayName}</option>)}</select></label>
-                    <label>Foto<input name="photo" type="file" accept="image/*" /></label>
-                  </div>
-
-                  <label>Bio<textarea name="bio" rows={3} defaultValue={editingBarber.bio ?? ""} /></label>
-
-                  <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="checkbox" name="isActive" defaultChecked={editingBarber.isActive} />
-                    <span>Activo</span>
-                  </label>
-
-                  <div className="stack" style={{ gap: 8 }}>
-                    <strong>Servicios</strong>
-                    <div className="admin-modal__check-grid">
-                      {services.map((service) => (
-                        <label key={service.id}>
-                          <input type="checkbox" name="serviceIds" value={service.id} defaultChecked={editingBarber.serviceIds.includes(service.id)} />
-                          <span>{service.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="stack" style={{ gap: 8 }}>
-                    <strong>Horarios</strong>
-                    <div className="admin-modal__schedule-grid">
-                      {weekdayLabels.map((label, index) => {
-                        const row = editingBarber.workingHours.find((item) => item.dayOfWeek === index);
-                        return (
-                          <div key={label} className="admin-table__schedule-day">
-                            <strong>{label}</strong>
-                            <input name={`schedule_${index}_start`} type="time" defaultValue={row?.startTime.slice(0, 5) ?? ""} />
-                            <input name={`schedule_${index}_end`} type="time" defaultValue={row?.endTime.slice(0, 5) ?? ""} />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="admin-modal__footer">
-                    <button type="button" className="btn-ghost" onClick={() => setEditingId(null)}>Cancelar</button>
-                    <button type="submit" className="btn">Guardar barbero</button>
-                  </div>
-                </form>
+                <BarberProfileForm
+                  tenantSlug={tenantSlug}
+                  intent="barber-update"
+                  submitLabel="Guardar Datos"
+                  services={services}
+                  weekdayLabels={weekdayLabels}
+                  barber={editingBarber}
+                  onCancel={() => setEditingId(null)}
+                />
               </div>
             </div>,
             document.body

@@ -209,12 +209,16 @@ export async function main() {
         );
       }
 
+      await pool.query(
+        `DELETE FROM barber_working_hours WHERE tenant_id = $1 AND barber_id = $2`,
+        [tenantId, barberId]
+      );
+
       // Horarios (Lunes a Sabado)
       for (const day of [1, 2, 3, 4, 5, 6]) {
         await pool.query(
           `INSERT INTO barber_working_hours (tenant_id, barber_id, day_of_week, start_time, end_time)
-           VALUES ($1, $2, $3, '10:00', '20:00')
-           ON CONFLICT (tenant_id, barber_id, day_of_week) DO UPDATE SET updated_at = now()`,
+           VALUES ($1, $2, $3, '10:00', '20:00')`,
           [tenantId, barberId, day]
         );
       }

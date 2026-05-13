@@ -5,9 +5,10 @@ export async function listBarbersForService(tenantId: string, serviceId: string)
     id: string;
     full_name: string;
     rating: string;
+    photo_url: string | null;
   }>(
     `
-      SELECT b.id, b.full_name, b.rating::text AS rating
+      SELECT b.id, b.full_name, b.rating::text AS rating, b.photo_url
       FROM barbers b
       INNER JOIN barber_services bs
         ON bs.barber_id = b.id
@@ -67,9 +68,10 @@ export async function getBarberForService(tenantId: string, serviceId: string, b
     id: string;
     full_name: string;
     rating: string;
+    photo_url: string | null;
   }>(
     `
-      SELECT b.id, b.full_name, b.rating::text AS rating
+      SELECT b.id, b.full_name, b.rating::text AS rating, b.photo_url
       FROM barbers b
       INNER JOIN barber_services bs
         ON bs.barber_id = b.id
@@ -96,7 +98,7 @@ export async function listWorkingHours(tenantId: string, barberId: string) {
       SELECT day_of_week, start_time::text, end_time::text
       FROM barber_working_hours
       WHERE tenant_id = $1 AND barber_id = $2 AND is_active = true
-      ORDER BY day_of_week ASC
+      ORDER BY day_of_week ASC, start_time ASC
     `,
     [tenantId, barberId]
   );
@@ -121,7 +123,7 @@ export async function listWorkingHoursForBarbers(tenantId: string, barberIds: st
       WHERE tenant_id = $1
         AND barber_id = ANY($2::uuid[])
         AND is_active = true
-      ORDER BY barber_id ASC, day_of_week ASC
+      ORDER BY barber_id ASC, day_of_week ASC, start_time ASC
     `,
     [tenantId, barberIds]
   );

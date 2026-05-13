@@ -6,13 +6,26 @@ function stripPort(host: string) {
     return host.slice(1, host.indexOf("]")).toLowerCase();
   }
 
-  return host.split(":")[0]?.toLowerCase() ?? "";
+  return host.split(":")[0]?.toLowerCase().replace(/\.$/, "") ?? "";
+}
+
+function normalizeDomainSuffix(value: string) {
+  const trimmed = value.trim().replace(/^\*\./, "");
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    return new URL(trimmed).hostname.toLowerCase().replace(/\.$/, "");
+  } catch {
+    return stripPort(trimmed);
+  }
 }
 
 export function getTenantDomainSuffix() {
   const explicitSuffix = process.env.TENANT_DOMAIN_SUFFIX || process.env.ROOT_DOMAIN;
   if (explicitSuffix) {
-    return stripPort(explicitSuffix).replace(/^\*\./, "");
+    return normalizeDomainSuffix(explicitSuffix);
   }
 
   const appUrl = process.env.APP_URL;

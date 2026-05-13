@@ -45,8 +45,10 @@ type WorkingHourByBarberRow = WorkingHourRow & {
 
 const SLOT_STEP_MINUTES = 15;
 
-function findWorkingWindow(hours: WorkingHourRow[], dayOfWeek: number) {
-  return hours.find((item) => item.day_of_week === dayOfWeek);
+function findWorkingWindows(hours: WorkingHourRow[], dayOfWeek: number) {
+  return hours
+    .filter((item) => item.day_of_week === dayOfWeek)
+    .sort((a, b) => a.start_time.localeCompare(b.start_time));
 }
 
 function roundUpToStep(date: Date, stepMinutes: number) {
@@ -109,36 +111,55 @@ async function findEarliestForBarber(
   for (let dayOffset = 0; dayOffset < 14; dayOffset += 1) {
     const currentDay = addDays(cursor, dayOffset);
     const dateKey = dateKeyInTimeZone(currentDay, tenant.timezone);
-    const workingWindow = findWorkingWindow(
+    const workingWindows = findWorkingWindows(
       workingHours,
       weekdayFromDateKey(dateKey, tenant.timezone)
     );
 
-    if (!workingWindow) {
+    if (workingWindows.length === 0) {
       continue;
     }
 
-    const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), tenant.timezone);
-    const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), tenant.timezone);
-    let candidate = roundUpToStep(laterThan(cursor, windowStart), SLOT_STEP_MINUTES);
+    for (const workingWindow of workingWindows) {
+      const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), tenant.timezone);
+      const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), tenant.timezone);
+      let candidate = roundUpToStep(laterThan(cursor, windowStart), SLOT_STEP_MINUTES);
 
-    if (candidate >= windowEnd) {
-      continue;
-    }
+      if (candidate >= windowEnd) {
+        continue;
+      }
 
-    const appointments = await listFutureAppointmentsForBarber(
-      tenant.tenantId,
-      barber.id,
-      windowStart,
-      windowEnd
-    );
+      const appointments = await listFutureAppointmentsForBarber(
+        tenant.tenantId,
+        barber.id,
+        windowStart,
+        windowEnd
+      );
 
-    for (const appointment of appointments) {
-      const appointmentStart = new Date(appointment.datetime_start);
-      const appointmentEnd = new Date(appointment.datetime_end);
+      for (const appointment of appointments) {
+        const appointmentStart = new Date(appointment.datetime_start);
+        const appointmentEnd = new Date(appointment.datetime_end);
+        const candidateEnd = addMinutes(candidate, durationMinutes);
+
+        if (candidateEnd <= appointmentStart) {
+          return {
+            barberId: barber.id,
+            barberName: barber.full_name,
+            barberRating: Number(barber.rating),
+            start: candidate.toISOString(),
+            end: candidateEnd.toISOString(),
+            label: formatHour(candidate, tenant.timezone),
+            score: candidate.getTime() - Number(barber.rating) * 60_000
+          };
+        }
+
+        if (candidate < appointmentEnd) {
+          candidate = roundUpToStep(appointmentEnd, SLOT_STEP_MINUTES);
+        }
+      }
+
       const candidateEnd = addMinutes(candidate, durationMinutes);
-
-      if (candidateEnd <= appointmentStart) {
+      if (candidateEnd <= windowEnd) {
         return {
           barberId: barber.id,
           barberName: barber.full_name,
@@ -149,26 +170,9 @@ async function findEarliestForBarber(
           score: candidate.getTime() - Number(barber.rating) * 60_000
         };
       }
-
-      if (candidate < appointmentEnd) {
-        candidate = roundUpToStep(appointmentEnd, SLOT_STEP_MINUTES);
-      }
     }
 
-    const candidateEnd = addMinutes(candidate, durationMinutes);
-    if (candidateEnd <= windowEnd) {
-      return {
-        barberId: barber.id,
-        barberName: barber.full_name,
-        barberRating: Number(barber.rating),
-        start: candidate.toISOString(),
-        end: candidateEnd.toISOString(),
-        label: formatHour(candidate, tenant.timezone),
-        score: candidate.getTime() - Number(barber.rating) * 60_000
-      };
-    }
-
-    cursor = nextDay(windowStart);
+    cursor = nextDay(buildZonedDate(dateKey, "00:00", tenant.timezone));
   }
 
   return null;
@@ -229,28 +233,30 @@ export async function getAvailableSlotsByDate(input: {
   const slots: PublicAvailabilitySlot[] = [];
 
   for (const barber of barbers) {
-    const workingWindow = findWorkingWindow(hoursByBarber.get(barber.id) ?? [], dayOfWeek);
-    if (!workingWindow) {
+    const workingWindows = findWorkingWindows(hoursByBarber.get(barber.id) ?? [], dayOfWeek);
+    if (workingWindows.length === 0) {
       continue;
     }
 
-    const windowStart = buildZonedDate(input.date, workingWindow.start_time.slice(0, 5), input.timezone);
-    const windowEnd = buildZonedDate(input.date, workingWindow.end_time.slice(0, 5), input.timezone);
-    const appointmentsForBarber = appointmentsByBarber.get(barber.id) ?? [];
-    let cursor = isToday ? roundUpToStep(laterThan(now, windowStart), SLOT_STEP_MINUTES) : windowStart;
+    for (const workingWindow of workingWindows) {
+      const windowStart = buildZonedDate(input.date, workingWindow.start_time.slice(0, 5), input.timezone);
+      const windowEnd = buildZonedDate(input.date, workingWindow.end_time.slice(0, 5), input.timezone);
+      const appointmentsForBarber = appointmentsByBarber.get(barber.id) ?? [];
+      let cursor = isToday ? roundUpToStep(laterThan(now, windowStart), SLOT_STEP_MINUTES) : windowStart;
 
-    while (cursor < windowEnd) {
-      const candidateEnd = addMinutes(cursor, service.duration_minutes);
-      if (!overlapsExistingAppointments(cursor, candidateEnd, appointmentsForBarber) && candidateEnd <= windowEnd) {
-        slots.push({
-          start: formatSlotDate(cursor, input.timezone),
-          end: formatSlotDate(candidateEnd, input.timezone),
-          barberId: barber.id,
-          barberName: barber.full_name
-        });
+      while (cursor < windowEnd) {
+        const candidateEnd = addMinutes(cursor, service.duration_minutes);
+        if (!overlapsExistingAppointments(cursor, candidateEnd, appointmentsForBarber) && candidateEnd <= windowEnd) {
+          slots.push({
+            start: formatSlotDate(cursor, input.timezone),
+            end: formatSlotDate(candidateEnd, input.timezone),
+            barberId: barber.id,
+            barberName: barber.full_name
+          });
+        }
+
+        cursor = addMinutes(cursor, SLOT_STEP_MINUTES);
       }
-
-      cursor = addMinutes(cursor, SLOT_STEP_MINUTES);
     }
   }
 
@@ -293,24 +299,28 @@ export async function assertBookableAppointmentSlot(input: {
     )
   ]);
 
-  const workingWindow = findWorkingWindow(
+  const workingWindows = findWorkingWindows(
     workingHours,
     weekdayFromDateKey(dateKey, input.timezone)
   );
 
-  if (!workingWindow) {
+  if (workingWindows.length === 0) {
     throw new Error("El barbero no trabaja en ese día.");
   }
 
-  const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), input.timezone);
-  const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), input.timezone);
   const datetimeEnd = addMinutes(input.scheduledAt, input.serviceDurationMinutes);
+  const matchingWindow = workingWindows.find((workingWindow) => {
+    const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), input.timezone);
+    const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), input.timezone);
+    return input.scheduledAt >= windowStart && datetimeEnd <= windowEnd;
+  });
 
-  if (input.scheduledAt < windowStart || datetimeEnd > windowEnd) {
+  if (!matchingWindow) {
     throw new Error("El horario seleccionado queda fuera del horario laboral.");
   }
 
-  if (dateKeyInTimeZone(datetimeEnd, input.timezone) !== dateKey && datetimeEnd.getTime() !== windowEnd.getTime()) {
+  const matchingWindowEnd = buildZonedDate(dateKey, matchingWindow.end_time.slice(0, 5), input.timezone);
+  if (dateKeyInTimeZone(datetimeEnd, input.timezone) !== dateKey && datetimeEnd.getTime() !== matchingWindowEnd.getTime()) {
     throw new Error("El horario seleccionado no entra completo en el día solicitado.");
   }
 

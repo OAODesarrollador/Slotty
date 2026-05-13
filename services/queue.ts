@@ -55,8 +55,10 @@ async function lockQueueScope(client: PoolClient, tenantId: string) {
   );
 }
 
-function findWorkingWindow(hours: WorkingHourRow[], dayOfWeek: number) {
-  return hours.find((item) => item.day_of_week === dayOfWeek);
+function findWorkingWindows(hours: WorkingHourRow[], dayOfWeek: number) {
+  return hours
+    .filter((item) => item.day_of_week === dayOfWeek)
+    .sort((a, b) => a.start_time.localeCompare(b.start_time));
 }
 
 function overlapsExistingAppointments(
@@ -92,46 +94,48 @@ async function findEarliestStartForBarber(input: {
   for (let dayOffset = 0; dayOffset < 14; dayOffset += 1) {
     const currentDay = addDays(cursor, dayOffset);
     const dateKey = dateKeyInTimeZone(currentDay, input.tenant.timezone);
-    const workingWindow = findWorkingWindow(
+    const workingWindows = findWorkingWindows(
       workingHours,
       weekdayFromDateKey(dateKey, input.tenant.timezone)
     );
 
-    if (!workingWindow) {
+    if (workingWindows.length === 0) {
       continue;
     }
 
-    const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), input.tenant.timezone);
-    const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), input.tenant.timezone);
-    let candidate = laterThan(cursor, windowStart);
+    for (const workingWindow of workingWindows) {
+      const windowStart = buildZonedDate(dateKey, workingWindow.start_time.slice(0, 5), input.tenant.timezone);
+      const windowEnd = buildZonedDate(dateKey, workingWindow.end_time.slice(0, 5), input.tenant.timezone);
+      let candidate = laterThan(cursor, windowStart);
 
-    while (candidate < windowEnd) {
-      const candidateEnd = addMinutes(candidate, input.durationMinutes);
-      if (candidateEnd > windowEnd) {
-        break;
+      while (candidate < windowEnd) {
+        const candidateEnd = addMinutes(candidate, input.durationMinutes);
+        if (candidateEnd > windowEnd) {
+          break;
+        }
+
+        if (!overlapsExistingAppointments(candidate, candidateEnd, input.appointments)) {
+          return candidate;
+        }
+
+        const blockingAppointments = input.appointments
+          .filter((appointment) => {
+            const appointmentStart = new Date(appointment.datetime_start);
+            const appointmentEnd = new Date(appointment.datetime_end);
+            return candidateEnd > appointmentStart && candidate < appointmentEnd;
+          })
+          .sort((a, b) => toTime(a.datetime_start) - toTime(b.datetime_start));
+
+        const nextAppointment = blockingAppointments[0];
+        if (!nextAppointment) {
+          break;
+        }
+
+        candidate = new Date(nextAppointment.datetime_end);
       }
-
-      if (!overlapsExistingAppointments(candidate, candidateEnd, input.appointments)) {
-        return candidate;
-      }
-
-      const blockingAppointments = input.appointments
-        .filter((appointment) => {
-          const appointmentStart = new Date(appointment.datetime_start);
-          const appointmentEnd = new Date(appointment.datetime_end);
-          return candidateEnd > appointmentStart && candidate < appointmentEnd;
-        })
-        .sort((a, b) => toTime(a.datetime_start) - toTime(b.datetime_start));
-
-      const nextAppointment = blockingAppointments[0];
-      if (!nextAppointment) {
-        break;
-      }
-
-      candidate = new Date(nextAppointment.datetime_end);
     }
 
-    cursor = nextDay(windowStart);
+    cursor = nextDay(buildZonedDate(dateKey, "00:00", input.tenant.timezone));
   }
 
   return null;
@@ -250,21 +254,27 @@ export async function getQueueJoinEligibility(input: {
 
   for (const barber of barbers) {
     const workingHours = await listWorkingHours(input.tenant.tenantId, barber.id);
-    const workingWindow = findWorkingWindow(workingHours, dayOfWeek);
-    if (!workingWindow) {
+    const workingWindows = findWorkingWindows(workingHours, dayOfWeek);
+    if (workingWindows.length === 0) {
       continue;
     }
 
-    const windowStart = buildZonedDate(today, workingWindow.start_time.slice(0, 5), input.tenant.timezone);
-    const windowEnd = buildZonedDate(today, workingWindow.end_time.slice(0, 5), input.tenant.timezone);
-    const earliestStart = laterThan(now, windowStart);
+    for (const workingWindow of workingWindows) {
+      const windowStart = buildZonedDate(today, workingWindow.start_time.slice(0, 5), input.tenant.timezone);
+      const windowEnd = buildZonedDate(today, workingWindow.end_time.slice(0, 5), input.tenant.timezone);
+      const earliestStart = laterThan(now, windowStart);
 
-    if (earliestStart < windowEnd) {
-      hasRemainingWorkingWindow = true;
+      if (earliestStart < windowEnd) {
+        hasRemainingWorkingWindow = true;
+      }
+
+      if (addMinutes(earliestStart, input.serviceDurationMinutes) <= windowEnd) {
+        hasEnoughTimeForServiceToday = true;
+        break;
+      }
     }
 
-    if (addMinutes(earliestStart, input.serviceDurationMinutes) <= windowEnd) {
-      hasEnoughTimeForServiceToday = true;
+    if (hasEnoughTimeForServiceToday) {
       break;
     }
   }

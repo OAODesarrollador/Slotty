@@ -20,6 +20,7 @@ type BarberItem = {
   id: string;
   full_name: string;
   rating: string;
+  photo_url?: string | null;
 };
 
 type AvailabilitySlot = {
@@ -1029,9 +1030,23 @@ export function QuickBookingFlow({
                             borderColor: active ? "var(--accent)" : "rgba(255,255,255,0.1)",
                             boxShadow: active ? "0 0 20px rgba(245, 200, 66, 0.2)" : "none",
                             transition: "all 0.3s ease",
+                            overflow: "hidden",
                             color: active ? "var(--accent)" : "var(--text)"
                           }}>
-                            {initials}
+                            {barber.photo_url ? (
+                              <img
+                                src={barber.photo_url}
+                                alt={`Foto de ${barber.full_name}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  display: "block"
+                                }}
+                              />
+                            ) : (
+                              initials
+                            )}
                           </div>
                           <span style={{ 
                             fontSize: "0.75rem", 

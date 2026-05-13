@@ -470,17 +470,6 @@ body.root-home-header-light .brand-mark-logo-light {
     width: 100%;
   }
 
-  .admin-header-inner {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-  }
-
-  .admin-nav-actions {
-    width: 100%;
-    justify-content: center;
-  }
-
   .brand-name {
     font-size: 1.15rem;
     letter-spacing: 0.1em;
@@ -541,15 +530,16 @@ body.root-home-header-light .brand-mark-logo-light {
   margin: 0 auto;
   min-height: 78px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   padding: 14px 24px;
 }
 
 .admin-nav-logo {
   display: grid;
   gap: 4px;
+  min-width: 0;
   color: var(--text);
 }
 
@@ -557,6 +547,9 @@ body.root-home-header-light .brand-mark-logo-light {
   font-size: 1.2rem;
   font-family: var(--font-display);
   letter-spacing: -0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-page,
@@ -805,9 +798,10 @@ body.root-home-header-light .brand-mark-logo-light {
 
 .admin-nav-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .admin-nav-link {
@@ -815,15 +809,16 @@ body.root-home-header-light .brand-mark-logo-light {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid rgba(80, 67, 3, 0.12);
   background: rgba(255, 251, 239, 0.74);
   color: rgba(56, 27, 6, 0.72);
-  font-size: 0.83rem;
+  font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .admin-nav-link:hover {
@@ -843,6 +838,81 @@ body.root-home-header-light .brand-mark-logo-light {
 .admin-nav-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.admin-main-header .btn-ghost {
+  min-height: 44px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+.admin-menu-toggle,
+.admin-mobile-menu {
+  display: none;
+}
+
+.admin-menu-toggle {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-self: end;
+  border-radius: 999px;
+  border: 1px solid rgba(80, 67, 3, 0.16);
+  background: rgba(255, 251, 239, 0.88);
+  color: var(--admin-1);
+  box-shadow: 0 10px 24px rgba(56, 27, 6, 0.08);
+}
+
+.admin-menu-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 4px auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.admin-mobile-menu {
+  grid-column: 1 / -1;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(80, 67, 3, 0.12);
+  background: rgba(255, 251, 239, 0.92);
+}
+
+.admin-mobile-menu.is-open {
+  display: grid;
+}
+
+.admin-mobile-menu__links {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-mobile-menu__link {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(80, 67, 3, 0.1);
+  background: rgba(255, 253, 246, 0.8);
+  color: var(--admin-2);
+  font-weight: 800;
+}
+
+.admin-mobile-menu__link.active {
+  background: rgba(209, 187, 100, 0.38);
+  border-color: rgba(122, 107, 0, 0.28);
+  color: var(--admin-1);
+}
+
+@media (min-width: 1025px) {
+  .admin-mobile-menu.is-open {
+    display: none;
+  }
 }
 
 .nav-links {
@@ -1265,6 +1335,115 @@ body.root-home-header-light .brand-mark-logo-light {
   flex: 0 0 48px;
   border-radius: 999px;
   object-fit: cover;
+}
+
+.admin-photo-input {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-photo-input__row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-photo-input__preview,
+.admin-photo-input__placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(80, 67, 3, 0.12);
+  background: rgba(255, 251, 239, 0.76);
+}
+
+.admin-photo-input__preview {
+  display: block;
+  object-fit: cover;
+}
+
+.admin-photo-input__placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.admin-photo-input--avatar {
+  position: relative;
+  display: inline-grid;
+  justify-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-photo-input--avatar input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-photo-input__avatar-wrap {
+  position: relative;
+  display: block;
+  width: 92px;
+  height: 92px;
+}
+
+.admin-photo-input__avatar,
+.admin-photo-input__avatar-placeholder {
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  border: 2px solid rgba(166, 145, 38, 0.32);
+  background: rgba(255, 251, 239, 0.82);
+  box-shadow: 0 10px 24px rgba(56, 27, 6, 0.12);
+}
+
+.admin-photo-input__avatar {
+  display: block;
+  object-fit: cover;
+}
+
+.admin-photo-input__avatar-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.admin-photo-input__edit {
+  position: absolute;
+  right: 2px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid #fffdf4;
+  background: var(--admin-4);
+  color: var(--admin-1);
+  box-shadow: 0 8px 18px rgba(56, 27, 6, 0.16);
+}
+
+.admin-photo-input__icon {
+  width: 17px;
+  height: 17px;
+}
+
+.admin-photo-input__edit-text {
+  color: var(--admin-2);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .admin-table__cell-stack {
@@ -1809,6 +1988,262 @@ body.root-home-header-light .brand-mark-logo-light {
   gap: 10px;
 }
 
+.admin-modal--barber-edit {
+  width: min(1360px, 100%);
+  padding: 14px;
+}
+
+.admin-modal--barber-edit .admin-modal__header {
+  margin-bottom: 10px;
+}
+
+.admin-modal--barber-edit .admin-modal__header h3 {
+  font-size: 1.25rem !important;
+}
+
+.admin-barber-edit-form {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 7px;
+  max-height: calc(100vh - 86px);
+  overflow: visible;
+  padding-right: 0;
+}
+
+.admin-barber-create-shell {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(80, 67, 3, 0.1);
+  background: rgba(255, 251, 239, 0.42);
+}
+
+.admin-barber-create-shell .admin-barber-edit-form {
+  max-height: none;
+}
+
+.admin-barber-edit-form__main {
+  gap: 8px !important;
+}
+
+.admin-barber-edit-form__top {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-areas:
+    "photo rating"
+    "photo name";
+  gap: 8px 12px;
+  align-items: stretch;
+}
+
+.admin-barber-edit-form__photo-panel {
+  grid-area: photo;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: rgba(255, 251, 239, 0.58);
+  border: 1px solid rgba(80, 67, 3, 0.1);
+}
+
+.admin-barber-edit-form__content {
+  display: grid;
+  gap: 7px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-barber-edit-form__details {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-barber-edit-form__name {
+  grid-area: name;
+  align-self: end;
+}
+
+.admin-barber-edit-form__section {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-barber-edit-form__active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  color: var(--admin-2);
+  font-weight: 800;
+}
+
+.admin-barber-edit-form__rating {
+  grid-area: rating;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(80, 67, 3, 0.1);
+  background: rgba(255, 251, 239, 0.58);
+}
+
+.admin-barber-edit-form__rating span,
+.admin-barber-edit-form__rating small {
+  color: var(--admin-2);
+  font-size: 0.8rem;
+}
+
+.admin-barber-edit-form__rating strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 26px;
+  border-radius: 999px;
+  background: rgba(209, 187, 100, 0.22);
+  color: var(--admin-1);
+}
+
+.admin-modal--barber-edit .admin-rating-stars {
+  display: inline-flex;
+  gap: 4px;
+  color: rgba(80, 67, 3, 0.26);
+  font-size: 3.4rem !important;
+  line-height: 1;
+}
+
+.admin-modal--barber-edit .admin-rating-stars span {
+  font-size: inherit !important;
+  line-height: 1;
+}
+
+.admin-modal--barber-edit .admin-rating-stars .is-filled {
+  color: var(--admin-4);
+}
+
+.admin-barber-edit-form__bio-services {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(260px, 1.1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.admin-barber-edit-form__panel {
+  min-height: 86px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(80, 67, 3, 0.1);
+  background: rgba(255, 251, 239, 0.44);
+}
+
+.admin-barber-edit-form__panel textarea {
+  height: 100%;
+  min-height: 48px;
+}
+
+.admin-barber-edit-form__actions {
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 7px;
+  border-top: 1px solid rgba(80, 67, 3, 0.1);
+  background: linear-gradient(180deg, rgba(255, 252, 243, 0), rgba(255, 252, 243, 0.98) 34%);
+}
+
+.admin-modal--barber-edit label {
+  gap: 4px;
+}
+
+.admin-modal--barber-edit input,
+.admin-modal--barber-edit select,
+.admin-modal--barber-edit textarea {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.admin-modal--barber-edit textarea {
+  min-height: 42px;
+}
+
+.admin-modal--barber-edit .admin-photo-input__row {
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+
+.admin-modal--barber-edit .admin-photo-input__preview,
+.admin-modal--barber-edit .admin-photo-input__placeholder {
+  width: 44px;
+  height: 44px;
+}
+
+.admin-modal--barber-edit .admin-modal__check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 10px;
+}
+
+.admin-modal--barber-edit .admin-modal__check-grid label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.admin-modal--barber-edit .admin-modal__check-grid input[type="checkbox"] {
+  flex: 0 0 18px;
+}
+
+.admin-modal--barber-edit .admin-modal__check-grid span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-modal--barber-edit .admin-modal__schedule-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.admin-modal--barber-edit .admin-table__schedule-day {
+  gap: 5px;
+  padding: 6px;
+  border-radius: 10px;
+}
+
+.admin-modal--barber-edit .admin-table__schedule-day strong {
+  font-size: 0.78rem;
+}
+
+.admin-modal--barber-edit .admin-table__schedule-day input {
+  min-height: 28px;
+  padding: 3px 4px;
+  font-size: 0.76rem;
+}
+
+.admin-table__schedule-segments {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-table__schedule-segments span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-modal--barber-edit .admin-modal__footer {
+  margin: 0;
+}
+
 .admin-modal .card .admin-calendar-field__label,
 .admin-modal .notice .admin-calendar-field__label {
   color: var(--admin-2) !important;
@@ -1820,6 +2255,75 @@ body.root-home-header-light .brand-mark-logo-light {
 }
 
 @media (max-width: 640px) {
+  .admin-header-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 64px;
+    padding: 10px 12px;
+  }
+
+  .admin-nav-logo .eyebrow {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em !important;
+  }
+
+  .admin-brand-name {
+    font-size: 1rem;
+  }
+
+  .admin-menu-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-nav-links,
+  .admin-nav-actions {
+    display: none;
+  }
+
+  .admin-mobile-menu .btn-ghost {
+    width: 100%;
+  }
+
+  .admin-page {
+    padding: 18px 10px 80px !important;
+  }
+
+  .admin-page .card {
+    padding: 16px !important;
+    border-radius: 20px;
+  }
+
+  .admin-page h1 {
+    font-size: clamp(1.9rem, 12vw, 2.3rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  .admin-page h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.15;
+  }
+
+  .admin-page .page-lead {
+    font-size: 0.98rem;
+  }
+
+  .admin-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-tab {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-calendar-grid {
+    grid-template-columns: 1fr;
+  }
+
   .admin-calendar-card__time-row {
     grid-template-columns: 1fr;
   }
@@ -1854,6 +2358,10 @@ body.root-home-header-light .brand-mark-logo-light {
     padding: 16px;
   }
 
+  .admin-barber-edit-form {
+    max-height: calc(100vh - 92px);
+  }
+
   .admin-modal__footer {
     justify-content: stretch;
   }
@@ -1861,6 +2369,31 @@ body.root-home-header-light .brand-mark-logo-light {
   .admin-modal__footer .btn,
   .admin-modal__footer .btn-ghost {
     width: 100%;
+  }
+
+  .admin-modal--barber-edit .admin-modal__schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-modal--barber-edit .admin-table__schedule-day {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-barber-edit-form__top {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "photo"
+      "rating"
+      "name";
+  }
+
+  .admin-barber-edit-form__rating {
+    justify-content: flex-start;
+  }
+
+  .admin-barber-edit-form__bio-services,
+  .admin-modal--barber-edit .admin-modal__check-grid {
+    grid-template-columns: 1fr;
   }
 
   .admin-table-shell {
@@ -1873,7 +2406,54 @@ body.root-home-header-light .brand-mark-logo-light {
 }
 
 /* MOBILE OPTIMIZATIONS (Consolidated) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .admin-mobile-menu.is-open {
+    display: none;
+  }
+
+  .admin-header-inner {
+    grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.8fr) auto;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .admin-brand-name {
+    font-size: 1rem;
+  }
+
+  .admin-nav-links {
+    gap: 5px;
+  }
+
+  .admin-nav-link {
+    min-height: 40px;
+    padding: 0 9px;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+  }
+
+  .admin-main-header .btn-ghost {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 920px) {
+  .admin-modal--barber-edit .admin-modal__schedule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-modal--barber-edit .admin-table__schedule-day {
+    grid-template-columns: 1fr 82px 82px;
+  }
+}
+
 @media (max-width: 920px) {
+  .admin-barber-edit-form__bio-services {
+    grid-template-columns: 1fr;
+  }
+
   .page {
     padding: 10px 8px 160px;
   }

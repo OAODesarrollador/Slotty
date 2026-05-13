@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdminCompanyBarbersTable, AdminCompanyUsersTable } from "@/components/admin-company-tables";
+import { AdminBarberCreatePanel, AdminCompanyBarbersTable, AdminCompanyUsersTable } from "@/components/admin-company-tables";
 import { AdminCreateTogglePanel } from "@/components/admin-create-toggle-panel";
 import { AdminSensitiveCompanyFields } from "@/components/admin-sensitive-company-fields";
 import { AdminUserCreatePanel } from "@/components/admin-user-create-panel";
@@ -105,43 +105,11 @@ export default async function OwnerCompanyPage({
 
             {data.isAdmin ? (
               <AdminCreateTogglePanel closedLabel="Crear barbero" openLabel="Ocultar formulario">
-                <form method="post" action={`/api/owner/${slug}/admin`} encType="multipart/form-data" className="card stack" style={{ padding: 20, gap: 12 }}>
-                  <input type="hidden" name="intent" value="barber-create" />
-                  <input type="hidden" name="section" value="company" />
-                  <div className="grid cols-2" style={{ gap: 12 }}>
-                    <label>Nombre completo<input name="fullName" required /></label>
-                    <label>Rating<input name="rating" type="number" min="0" max="5" step="0.1" defaultValue="4.8" /></label>
-                    <label>Usuario asociado<select name="userId" defaultValue=""><option value="">Sin usuario</option>{data.users.map((user) => <option key={user.id} value={user.id}>{user.display_name}</option>)}</select></label>
-                    <label>Foto<input name="photo" type="file" accept="image/*" /></label>
-                  </div>
-                  <label>Bio<textarea name="bio" rows={3} /></label>
-                  <div className="stack" style={{ gap: 8 }}>
-                    <strong>Servicios que atiende</strong>
-                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                      {activeServices.map((service) => (
-                        <label key={service.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <input type="checkbox" name="serviceIds" value={service.id} />
-                          <span>{service.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="stack" style={{ gap: 8 }}>
-                    <strong>Horarios semanales</strong>
-                    <div className="grid cols-2" style={{ gap: 12 }}>
-                      {WEEKDAY_LABELS.map((label, index) => (
-                        <div key={label} className="service-card" style={{ padding: 12 }}>
-                          <strong>{label}</strong>
-                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <input name={`schedule_${index}_start`} type="time" />
-                            <input name={`schedule_${index}_end`} type="time" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div><button className="btn" type="submit">Crear barbero</button></div>
-                </form>
+                <AdminBarberCreatePanel
+                  tenantSlug={slug}
+                  services={activeServices.map((service) => ({ id: service.id, name: service.name }))}
+                  weekdayLabels={[...WEEKDAY_LABELS]}
+                />
               </AdminCreateTogglePanel>
             ) : null}
 

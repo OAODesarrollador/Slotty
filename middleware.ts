@@ -77,7 +77,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostTenantSlug = getTenantSlugFromHost(request.headers.get("host"));
 
-  if (hostTenantSlug && !INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.next();
+  }
+
+  if (hostTenantSlug) {
     const legacyTenantPrefix = `/${hostTenantSlug}`;
 
     if (pathname === legacyTenantPrefix || pathname.startsWith(`${legacyTenantPrefix}/`)) {

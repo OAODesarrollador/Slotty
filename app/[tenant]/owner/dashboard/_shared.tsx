@@ -176,11 +176,13 @@ export async function getAdminPageData(slug: string, search: AdminSearchParams) 
   const selectedBarber = barbers.find((barber) => barber.id === selectedBarberId) ?? null;
   const selectedBarberAppointments = selectedBarber ? (appointmentsByBarber.get(selectedBarber.id) ?? []) : [];
   const selectedBarberWorkingDay = selectedBarber
-    ? (workingHoursByBarber.get(selectedBarber.id) ?? []).find((item) => item.day_of_week === weekdayFromDateKey(scheduleDate, tenant.timezone))
-    : null;
+    ? (workingHoursByBarber.get(selectedBarber.id) ?? [])
+        .filter((item) => item.day_of_week === weekdayFromDateKey(scheduleDate, tenant.timezone))
+        .sort((a, b) => a.start_time.localeCompare(b.start_time))
+    : [];
 
   const selectedBarberSlots = (() => {
-    if (!selectedBarberWorkingDay) {
+    if (selectedBarberWorkingDay.length === 0) {
       return [];
     }
 
@@ -190,37 +192,39 @@ export async function getAdminPageData(slug: string, search: AdminSearchParams) 
       appointment: (typeof selectedBarberAppointments)[number] | null;
     }> = [];
 
-    let cursor = buildZonedDate(scheduleDate, selectedBarberWorkingDay.start_time.slice(0, 5), tenant.timezone);
-    const dayEnd = buildZonedDate(scheduleDate, selectedBarberWorkingDay.end_time.slice(0, 5), tenant.timezone);
+    for (const workingWindow of selectedBarberWorkingDay) {
+      let cursor = buildZonedDate(scheduleDate, workingWindow.start_time.slice(0, 5), tenant.timezone);
+      const dayEnd = buildZonedDate(scheduleDate, workingWindow.end_time.slice(0, 5), tenant.timezone);
 
-    while (cursor < dayEnd) {
-      const slotEnd = addMinutes(cursor, ADMIN_APPOINTMENT_SLOT_MINUTES);
-      if (slotEnd > dayEnd) {
-        break;
+      while (cursor < dayEnd) {
+        const slotEnd = addMinutes(cursor, ADMIN_APPOINTMENT_SLOT_MINUTES);
+        if (slotEnd > dayEnd) {
+          break;
+        }
+
+        const appointment = selectedBarberAppointments.find((item) => {
+          const appointmentStart = new Date(item.datetime_start);
+          const appointmentEnd = new Date(item.datetime_end);
+          return cursor >= appointmentStart && cursor < appointmentEnd;
+        }) ?? null;
+
+        if (appointment) {
+          const appointmentStart = new Date(appointment.datetime_start);
+          const appointmentEnd = new Date(appointment.datetime_end);
+
+          slots.push({
+            start: appointmentStart,
+            end: appointmentEnd,
+            appointment
+          });
+
+          cursor = appointmentEnd;
+          continue;
+        }
+
+        slots.push({ start: cursor, end: slotEnd, appointment: null });
+        cursor = slotEnd;
       }
-
-      const appointment = selectedBarberAppointments.find((item) => {
-        const appointmentStart = new Date(item.datetime_start);
-        const appointmentEnd = new Date(item.datetime_end);
-        return cursor >= appointmentStart && cursor < appointmentEnd;
-      }) ?? null;
-
-      if (appointment) {
-        const appointmentStart = new Date(appointment.datetime_start);
-        const appointmentEnd = new Date(appointment.datetime_end);
-
-        slots.push({
-          start: appointmentStart,
-          end: appointmentEnd,
-          appointment
-        });
-
-        cursor = appointmentEnd;
-        continue;
-      }
-
-      slots.push({ start: cursor, end: slotEnd, appointment: null });
-      cursor = slotEnd;
     }
 
     return slots;

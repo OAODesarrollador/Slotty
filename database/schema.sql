@@ -171,8 +171,7 @@ CREATE TABLE IF NOT EXISTS barber_working_hours (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (start_time < end_time),
-  UNIQUE (tenant_id, barber_id, day_of_week)
+  CHECK (start_time < end_time)
 );
 
 CREATE TABLE IF NOT EXISTS appointments (

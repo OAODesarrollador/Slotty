@@ -1,7 +1,6 @@
 import crypto from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 
+import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -87,35 +86,54 @@ async function saveBarberPhoto(tenantSlug: string, file: File | null) {
     return null;
   }
 
-  const extension = path.extname(file.name) || ".jpg";
+  const extensionMatch = file.name.match(/\.[a-z0-9]+$/i);
+  const extension = extensionMatch?.[0]?.toLowerCase() ?? ".jpg";
   const safeTenant = tenantSlug.replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
-  const relativeDir = path.join("public", "uploads", "barbers", safeTenant);
-  const absoluteDir = path.join(process.cwd(), relativeDir);
+  const pathname = `barbers/${safeTenant}/${fileName}`;
 
-  await mkdir(absoluteDir, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(absoluteDir, fileName), buffer);
+  const blob = await put(pathname, file, {
+    access: "public",
+    contentType: file.type || undefined
+  });
 
-  return `/uploads/barbers/${safeTenant}/${fileName}`;
+  return blob.url;
 }
 
 function readWorkingHours(formData: FormData) {
   const result: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [];
+  const segments = ["morning", "afternoon"];
 
   for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
-    const startTime = readString(formData, `schedule_${dayOfWeek}_start`);
-    const endTime = readString(formData, `schedule_${dayOfWeek}_end`);
+    const dayRanges: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [];
 
-    if (!startTime || !endTime) {
-      continue;
+    for (const segment of segments) {
+      const startTime = readString(formData, `schedule_${dayOfWeek}_${segment}_start`) || readString(formData, `schedule_${dayOfWeek}_start`);
+      const endTime = readString(formData, `schedule_${dayOfWeek}_${segment}_end`) || readString(formData, `schedule_${dayOfWeek}_end`);
+
+      if (!startTime && !endTime) {
+        continue;
+      }
+
+      if (!startTime || !endTime || startTime >= endTime) {
+        throw new Error("Hay horarios de barbero con rango inválido.");
+      }
+
+      dayRanges.push({ dayOfWeek, startTime, endTime });
+
+      if (segment === "morning" && (formData.has(`schedule_${dayOfWeek}_start`) || formData.has(`schedule_${dayOfWeek}_end`))) {
+        break;
+      }
     }
 
-    if (startTime >= endTime) {
-      throw new Error("Hay horarios de barbero con rango inválido.");
+    dayRanges.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    for (let index = 1; index < dayRanges.length; index += 1) {
+      if (dayRanges[index].startTime < dayRanges[index - 1].endTime) {
+        throw new Error("Hay horarios de barbero superpuestos.");
+      }
     }
 
-    result.push({ dayOfWeek, startTime, endTime });
+    result.push(...dayRanges);
   }
 
   return result;
