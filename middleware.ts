@@ -6,6 +6,7 @@ const PROTECTED_PREFIX = /^\/[^/]+\/owner(?:\/.*)?$/;
 const SUBDOMAIN_PROTECTED_PREFIX = /^\/owner(?:\/.*)?$/;
 const SESSION_COOKIE = "barberia_session";
 const INTERNAL_PATH_PREFIXES = ["/api", "/_next", "/favicon.ico", "/robots.txt", "/sitemap.xml"];
+const PUBLIC_FILE = /\.(?:avif|gif|ico|jpg|jpeg|mp4|png|svg|webm|webp)$/i;
 
 function base64url(input: ArrayBuffer) {
   const bytes = new Uint8Array(input);
@@ -77,7 +78,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostTenantSlug = getTenantSlugFromHost(request.headers.get("host"));
 
-  if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
 
