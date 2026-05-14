@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 
 import { MobileDock } from "@/components/mobile-dock";
+import { TenantPageReveal } from "@/components/tenant-page-reveal";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { tenantPathForHost } from "@/lib/tenant-domain";
 import { formatCurrency } from "@/lib/time";
@@ -30,7 +31,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
   }
 
   return (
-    <>
+    <TenantPageReveal imageUrl={heroImageUrl}>
       <main className="page">
         <section className="stack shell-center" style={{ gap: "40px" }}>
             <article className="hero" style={{ padding: "30px 40px" }}>
@@ -39,6 +40,9 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
                   src={heroImageUrl}
                   alt="Interior de barberia"
                   className="hero-image"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
                 <div className="hero-shade" />
                 <div className="hero-glow" />
@@ -116,7 +120,7 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
         </section>
       </main>
       <MobileDock tenantSlug={slug} active="home" />
-    </>
+    </TenantPageReveal>
   );
 }
 

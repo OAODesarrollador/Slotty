@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 type BarberPhotoInputProps = {
   name?: string;
   currentPhotoUrl?: string | null;
-  variant?: "default" | "avatar" | "cover";
+  variant?: "default" | "avatar" | "cover" | "logo";
   label?: string;
   previewAlt?: string;
   disabled?: boolean;
@@ -97,6 +97,28 @@ export function BarberPhotoInput({
             </span>
           )}
         </div>
+        {input}
+      </label>
+    );
+  }
+
+  if (variant === "logo") {
+    return (
+      <label className="admin-photo-input admin-photo-input--logo">
+        <span>{label}</span>
+        <span className="admin-photo-input__logo-wrap">
+          {displayUrl ? (
+            <img src={displayUrl} alt={previewAlt} className="admin-photo-input__logo" />
+          ) : (
+            <span className="admin-photo-input__logo-placeholder">Sin logo</span>
+          )}
+          {disabled ? null : (
+            <span className="admin-photo-input__logo-action">
+              <CameraIcon />
+              Cambiar logo
+            </span>
+          )}
+        </span>
         {input}
       </label>
     );

@@ -7,9 +7,12 @@ import { useEffect, useState } from "react";
 type NavHeaderProps = {
   tenantName: string;
   tenantSlug: string;
+  tenantLogoUrl?: string | null;
 };
 
-export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
+const SYSTEM_LOGO_URL = "/LogoNegroDibok.svg";
+
+export function NavHeader({ tenantName, tenantSlug, tenantLogoUrl }: NavHeaderProps) {
   const pathname = usePathname();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const usesLegacyTenantPath = pathname === `/${tenantSlug}` || pathname?.startsWith(`/${tenantSlug}/`);
@@ -20,6 +23,7 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
       : normalizedPath;
   };
   const isAdminArea = pathname?.startsWith(tenantHref("/owner/dashboard"));
+  const isOwnerLogin = pathname === tenantHref("/owner/login");
 
   const isActive = (path: string) => {
     const href = tenantHref(path);
@@ -44,8 +48,13 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
       <header className="admin-main-header">
         <div className="admin-header-inner">
           <Link href={tenantHref("/owner/dashboard")} className="admin-nav-logo">
-            <span className="eyebrow" style={{ letterSpacing: "0.16em" }}>Administracion</span>
-            <strong className="admin-brand-name">{tenantName}</strong>
+            <span className="admin-nav-logo__mark">
+              <img src={tenantLogoUrl || SYSTEM_LOGO_URL} alt={`Logo de ${tenantName}`} />
+            </span>
+            <span className="admin-nav-logo__text">
+              <span className="eyebrow" style={{ letterSpacing: "0.16em" }}>Administracion</span>
+              <strong className="admin-brand-name">{tenantName}</strong>
+            </span>
           </Link>
 
           <button
@@ -110,10 +119,28 @@ export function NavHeader({ tenantName, tenantSlug }: NavHeaderProps) {
     );
   }
 
+  if (isOwnerLogin) {
+    return (
+      <header className="admin-login-header">
+        <div className="admin-login-header__inner">
+          <Link href={tenantHref("/")} className="admin-login-brand">
+            <span className="admin-nav-logo__mark">
+              <img src={tenantLogoUrl || SYSTEM_LOGO_URL} alt={`Logo de ${tenantName}`} />
+            </span>
+            <strong className="admin-login-brand__name">{tenantName}</strong>
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="main-header">
       <div className="header-inner">
         <Link href={tenantHref("/")} className="nav-logo">
+          <span className="nav-logo__mark">
+            <img src={tenantLogoUrl || SYSTEM_LOGO_URL} alt={`Logo de ${tenantName}`} />
+          </span>
           <span className="brand-name">
             {tenantName}
           </span>

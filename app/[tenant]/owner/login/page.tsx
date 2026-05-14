@@ -14,12 +14,12 @@ export default async function OwnerLoginPage({
     : "Credenciales inválidas. Por favor, verificá tus datos.";
 
   return (
-    <main className="page admin-login-page" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
-      <section className="shell shadow-2xl" style={{ maxWidth: "480px", width: "100%", padding: "40px" }}>
-        <section className="stack" style={{ gap: "32px" }}>
+    <main className="page admin-login-page admin-login-page--compact">
+      <section className="shell shadow-2xl admin-login-card">
+        <section className="stack" style={{ gap: "26px" }}>
           <div style={{ textAlign: "center" }}>
             <span className="eyebrow" style={{ letterSpacing: "4px" }}>DIBOK ADMIN</span>
-            <h1 style={{ fontSize: "2rem", marginTop: "12px" }}>Centro de Operaciones</h1>
+            <h1 className="admin-login-title">Centro de Operaciones</h1>
             <p className="muted" style={{ marginTop: "8px" }}>Ingresá como Administrador o Recepcionista para gestionar tu sede.</p>
           </div>
 
@@ -41,7 +41,7 @@ export default async function OwnerLoginPage({
             </div>
           )}
 
-          <form method="post" action="/api/auth/login" className="stack" style={{ gap: "24px" }}>
+          <form method="post" action="/api/auth/login" className="stack" style={{ gap: "20px" }}>
             <input type="hidden" name="tenantSlug" value={slug} />
             <div className="stack" style={{ gap: "20px" }}>
               <label>
@@ -66,7 +66,7 @@ export default async function OwnerLoginPage({
               </label>
             </div>
             
-            <button className="btn" type="submit" style={{ width: "100%", height: "60px", fontSize: "1.1rem" }}>
+            <button className="btn" type="submit" style={{ width: "100%", height: "54px", fontSize: "1rem" }}>
               Acceder al Panel
             </button>
           </form>

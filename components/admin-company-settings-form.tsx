@@ -15,13 +15,13 @@ function getExtension(fileName: string) {
   return match?.[0]?.toLowerCase() ?? ".jpg";
 }
 
-function buildHeroPathname(tenantSlug: string, file: File) {
+function buildTenantImagePathname(tenantSlug: string, file: File, kind: "hero" | "logo") {
   const safeTenant = tenantSlug.replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const randomId = typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-  return `tenants/${safeTenant}/${Date.now()}-${randomId}${getExtension(file.name)}`;
+  return `tenants/${safeTenant}/${kind}-${Date.now()}-${randomId}${getExtension(file.name)}`;
 }
 
 export function AdminCompanySettingsForm({ tenantSlug, action, children }: AdminCompanySettingsFormProps) {
@@ -38,10 +38,21 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
     }
 
     const form = event.currentTarget;
-    const fileInput = form.elements.namedItem("heroImageFile") as HTMLInputElement | null;
-    const file = fileInput?.files?.[0] ?? null;
+    const heroFileInput = form.elements.namedItem("heroImageFile") as HTMLInputElement | null;
+    const logoFileInput = form.elements.namedItem("logoImageFile") as HTMLInputElement | null;
+    const heroFile = heroFileInput?.files?.[0] ?? null;
+    const logoFile = logoFileInput?.files?.[0] ?? null;
+    const filesToUpload = [
+      { file: logoFile, kind: "logo" as const, urlInputName: "logoUrl", fileInput: logoFileInput },
+      { file: heroFile, kind: "hero" as const, urlInputName: "heroImageUrl", fileInput: heroFileInput }
+    ].filter((item): item is {
+      file: File;
+      kind: "hero" | "logo";
+      urlInputName: "logoUrl" | "heroImageUrl";
+      fileInput: HTMLInputElement | null;
+    } => item.file !== null);
 
-    if (!file) {
+    if (filesToUpload.length === 0) {
       setIsSubmitting(true);
       return;
     }
@@ -49,35 +60,39 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
     event.preventDefault();
     setUploadError(null);
 
-    if (!file.type.startsWith("image/")) {
-      setUploadError("El archivo seleccionado debe ser una imagen.");
-      return;
+    for (const item of filesToUpload) {
+      if (!item.file.type.startsWith("image/")) {
+        setUploadError("Los archivos seleccionados deben ser imagenes.");
+        return;
+      }
     }
 
     setIsUploading(true);
 
     try {
-      const blob = await upload(buildHeroPathname(tenantSlug, file), file, {
-        access: "public",
-        contentType: file.type || undefined,
-        handleUploadUrl: `/api/owner/${tenantSlug}/hero-upload`,
-        multipart: true
-      });
+      for (const item of filesToUpload) {
+        const blob = await upload(buildTenantImagePathname(tenantSlug, item.file, item.kind), item.file, {
+          access: "public",
+          contentType: item.file.type || undefined,
+          handleUploadUrl: `/api/owner/${tenantSlug}/hero-upload`,
+          multipart: true
+        });
 
-      const heroUrlInput = form.elements.namedItem("heroImageUrl") as HTMLInputElement | null;
-      if (heroUrlInput) {
-        heroUrlInput.value = blob.url;
-      }
+        const urlInput = form.elements.namedItem(item.urlInputName) as HTMLInputElement | null;
+        if (urlInput) {
+          urlInput.value = blob.url;
+        }
 
-      if (fileInput) {
-        fileInput.disabled = true;
+        if (item.fileInput) {
+          item.fileInput.disabled = true;
+        }
       }
 
       isResubmittingRef.current = true;
       setIsSubmitting(true);
       form.requestSubmit();
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "No se pudo subir la foto de fondo.");
+      setUploadError(error instanceof Error ? error.message : "No se pudieron subir las imagenes.");
       setIsUploading(false);
     }
   }
@@ -87,7 +102,7 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
       <form ref={formRef} method="post" action={action} className="stack" style={{ gap: 14 }} onSubmit={handleSubmit}>
         {children}
         {uploadError ? <div className="notice error">{uploadError}</div> : null}
-        {isUploading ? <div className="notice">Subiendo foto de fondo...</div> : null}
+        {isUploading ? <div className="notice">Subiendo imagenes...</div> : null}
       </form>
       <AdminSubmitOverlay active={isUploading || isSubmitting} />
     </>
