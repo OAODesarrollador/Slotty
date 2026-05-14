@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminCompanySettingsForm } from "@/components/admin-company-settings-form";
 import { BarberPhotoInput } from "@/components/barber-photo-input";
 import { AdminBarberCreatePanel, AdminCompanyBarbersTable, AdminCompanyUsersTable } from "@/components/admin-company-tables";
 import { AdminCreateTogglePanel } from "@/components/admin-create-toggle-panel";
@@ -65,7 +66,7 @@ export default async function OwnerCompanyPage({
             </div>
 
             {data.tenantSettings ? (
-              <form method="post" action={`/api/owner/${slug}/admin`} encType="multipart/form-data" className="stack" style={{ gap: 14 }}>
+              <AdminCompanySettingsForm tenantSlug={slug} action={`/api/owner/${slug}/admin`}>
                 <input type="hidden" name="intent" value="company-update" />
                 <input type="hidden" name="section" value="company" />
                 <div className="grid cols-2" style={{ gap: 12 }}>
@@ -97,7 +98,7 @@ export default async function OwnerCompanyPage({
                 </div>
                 <AdminSensitiveCompanyFields tenantSlug={slug} disabled={!data.isAdmin} />
                 {data.isAdmin ? <div><button className="btn" type="submit">Guardar empresa</button></div> : null}
-              </form>
+              </AdminCompanySettingsForm>
             ) : null}
           </article>
         ) : null}

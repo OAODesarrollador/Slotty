@@ -108,10 +108,6 @@ async function saveBarberPhoto(tenantSlug: string, file: File | null) {
   return saveAdminImage(tenantSlug, "barbers", file);
 }
 
-async function saveTenantHeroImage(tenantSlug: string, file: File | null) {
-  return saveAdminImage(tenantSlug, "tenants", file);
-}
-
 function readWorkingHours(formData: FormData) {
   const result: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [];
   const segments = ["morning", "afternoon"];
@@ -245,9 +241,6 @@ export async function POST(
           throw new Error("La empresa debe tener al menos un método de pago habilitado.");
         }
 
-        const heroImageFile = formData.get("heroImageFile");
-        const uploadedHeroImageUrl = await saveTenantHeroImage(tenantSlug, heroImageFile instanceof File ? heroImageFile : null);
-
         await updateTenantAdminSettings({
           tenantId: tenant.tenantId,
           name: readString(formData, "name"),
@@ -270,7 +263,7 @@ export async function POST(
           mercadoPagoPublicKey: readOptionalString(formData, "mercadoPagoPublicKey"),
           mercadoPagoAccessToken: readOptionalString(formData, "mercadoPagoAccessToken"),
           logoUrl: readOptionalString(formData, "logoUrl"),
-          heroImageUrl: uploadedHeroImageUrl ?? readOptionalString(formData, "heroImageUrl"),
+          heroImageUrl: readOptionalString(formData, "heroImageUrl"),
           primaryColor: readString(formData, "primaryColor") || "#111111"
         });
         break;
