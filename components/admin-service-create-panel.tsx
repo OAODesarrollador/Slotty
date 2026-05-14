@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminActionForm } from "@/components/admin-submit-feedback";
 
 type AdminServiceCreatePanelProps = {
   tenantSlug: string;
@@ -18,7 +19,7 @@ export function AdminServiceCreatePanel({ tenantSlug }: AdminServiceCreatePanelP
       </div>
 
       {open ? (
-        <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="card stack" style={{ padding: 20, gap: 12 }}>
+        <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="card stack" style={{ padding: 20, gap: 12 }}>
           <input type="hidden" name="intent" value="service-create" />
           <input type="hidden" name="section" value="services" />
           <div className="grid cols-2" style={{ gap: 12 }}>
@@ -33,7 +34,7 @@ export function AdminServiceCreatePanel({ tenantSlug }: AdminServiceCreatePanelP
             <span>Marcar como promoción</span>
           </label>
           <div><button className="btn" type="submit">Guardar nuevo servicio</button></div>
-        </form>
+        </AdminActionForm>
       ) : null}
     </div>
   );

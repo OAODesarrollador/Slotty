@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { AdminActionForm } from "@/components/admin-submit-feedback";
 
 type ServiceRow = {
   id: string;
@@ -142,7 +143,7 @@ export function AdminServicesTable({ tenantSlug, services }: AdminServicesTableP
                   </button>
                 </div>
 
-                <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 14 }}>
+                <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 14 }}>
                   <input type="hidden" name="intent" value="service-update" />
                   <input type="hidden" name="section" value="services" />
                   <input type="hidden" name="serviceId" value={editingService.id} />
@@ -171,7 +172,7 @@ export function AdminServicesTable({ tenantSlug, services }: AdminServicesTableP
                     <button type="button" className="btn-ghost" onClick={() => setEditingId(null)}>Cancelar</button>
                     <button type="submit" className="btn">Guardar servicio</button>
                   </div>
-                </form>
+                </AdminActionForm>
               </div>
             </div>,
             document.body
@@ -205,12 +206,12 @@ export function AdminServicesTable({ tenantSlug, services }: AdminServicesTableP
 
                   <div className="admin-modal__footer">
                     <button type="button" className="btn-ghost" onClick={() => setDeletingId(null)}>Cancelar</button>
-                    <form method="post" action={`/api/owner/${tenantSlug}/admin`}>
+                    <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`}>
                       <input type="hidden" name="intent" value="service-delete" />
                       <input type="hidden" name="section" value="services" />
                       <input type="hidden" name="serviceId" value={deletingService.id} />
                       <button type="submit" className="btn">Confirmar borrado</button>
-                    </form>
+                    </AdminActionForm>
                   </div>
                 </div>
               </div>

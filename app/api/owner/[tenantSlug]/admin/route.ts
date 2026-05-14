@@ -28,7 +28,8 @@ function redirectTo(
   section: string,
   message?: string,
   isError = false,
-  extraParams?: Record<string, string>
+  extraParams?: Record<string, string>,
+  hash?: string
 ) {
   const pathnameBySection: Record<string, string> = {
     overview: tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard"),
@@ -48,6 +49,9 @@ function redirectTo(
   }
   if (message) {
     url.searchParams.set(isError ? "error" : "notice", message);
+  }
+  if (hash) {
+    url.hash = hash;
   }
   return NextResponse.redirect(url, 303);
 }
@@ -170,8 +174,10 @@ export async function POST(
   const section = readString(formData, "section") || "overview";
   const extraRedirectParams = {
     barberId: readString(formData, "barberId"),
-    date: readString(formData, "date")
+    date: readString(formData, "date"),
+    tab: readString(formData, "tab")
   };
+  const redirectHash = readString(formData, "redirectHash");
 
   try {
     switch (intent) {
@@ -387,9 +393,9 @@ export async function POST(
     }
 
     revalidateOwnerArea(tenantSlug);
-    return redirectTo(request, tenantSlug, section, "Cambios guardados.", false, extraRedirectParams);
+    return redirectTo(request, tenantSlug, section, "Cambios guardados.", false, extraRedirectParams, redirectHash);
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo completar la acción.";
-    return redirectTo(request, tenantSlug, section, message, true, extraRedirectParams);
+    return redirectTo(request, tenantSlug, section, message, true, extraRedirectParams, redirectHash);
   }
 }

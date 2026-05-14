@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { BarberPhotoInput } from "@/components/barber-photo-input";
 import { AdminPasswordInput, PASSWORD_PATTERN } from "@/components/admin-password-input";
+import { AdminActionForm, AdminProcessingOverlay } from "@/components/admin-submit-feedback";
 
 type ServiceOption = {
   id: string;
@@ -129,80 +130,97 @@ function BarberProfileForm({ tenantSlug, intent, submitLabel, services, weekdayL
   const rating = barber?.rating ?? "4.8";
   const fullName = barber?.fullName ?? "";
   const isEdit = intent === "barber-update";
+  const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <form method="post" action={`/api/owner/${tenantSlug}/admin`} encType="multipart/form-data" className="admin-barber-edit-form">
-      <input type="hidden" name="intent" value={intent} />
-      <input type="hidden" name="section" value="company" />
-      {barber ? <input type="hidden" name="barberId" value={barber.id} /> : null}
-      {barber ? <input type="hidden" name="existingPhotoUrl" value={barber.photoUrl ?? ""} /> : null}
-      <input type="hidden" name="rating" value={rating} />
-      <input type="hidden" name="userId" value={barber?.userId ?? ""} />
+    <>
+      <form
+        method="post"
+        action={`/api/owner/${tenantSlug}/admin`}
+        encType="multipart/form-data"
+        className="admin-barber-edit-form"
+        onSubmit={() => setIsSubmitting(true)}
+      >
+        <input type="hidden" name="intent" value={intent} />
+        <input type="hidden" name="section" value="company" />
+        <input type="hidden" name="tab" value="barberos" />
+        <input type="hidden" name="redirectHash" value="barbers-table" />
+        {barber ? <input type="hidden" name="barberId" value={barber.id} /> : null}
+        {barber ? <input type="hidden" name="existingPhotoUrl" value={barber.photoUrl ?? ""} /> : null}
+        <input type="hidden" name="rating" value={rating} />
+        <input type="hidden" name="userId" value={barber?.userId ?? ""} />
 
-      <div className="admin-barber-edit-form__top">
-        <div className="admin-barber-edit-form__photo-panel">
-          <BarberPhotoInput currentPhotoUrl={barber?.photoUrl} variant="avatar" label={fullName || "Nuevo barbero"} />
-          {isEdit ? (
-            <label className="admin-barber-edit-form__active">
-              <input type="checkbox" name="isActive" defaultChecked={barber?.isActive ?? true} />
-              <span>Activo</span>
-            </label>
-          ) : null}
+        <div className="admin-barber-edit-form__top">
+          <div className="admin-barber-edit-form__photo-panel">
+            <BarberPhotoInput currentPhotoUrl={barber?.photoUrl} variant="avatar" label={fullName || "Nuevo barbero"} />
+            {isEdit ? (
+              <label className="admin-barber-edit-form__active">
+                <input type="checkbox" name="isActive" defaultChecked={barber?.isActive ?? true} />
+                <span>Activo</span>
+              </label>
+            ) : null}
+          </div>
+          <div className="admin-barber-edit-form__rating" aria-label={`Calificacion ${rating}`}>
+            <RatingStars rating={rating} />
+            <strong>{rating}</strong>
+          </div>
+          <label className="admin-barber-edit-form__name">Nombre<input name="fullName" defaultValue={fullName} required /></label>
         </div>
-        <div className="admin-barber-edit-form__rating" aria-label={`Calificacion ${rating}`}>
-          <RatingStars rating={rating} />
-          <strong>{rating}</strong>
-        </div>
-        <label className="admin-barber-edit-form__name">Nombre<input name="fullName" defaultValue={fullName} required /></label>
-      </div>
 
-      <div className="admin-barber-edit-form__content">
-        <div className="admin-barber-edit-form__bio-services">
-          <label className="admin-barber-edit-form__panel">Bio<textarea name="bio" rows={2} defaultValue={barber?.bio ?? ""} /></label>
+        <div className="admin-barber-edit-form__content">
+          <div className="admin-barber-edit-form__bio-services">
+            <label className="admin-barber-edit-form__panel">Bio<textarea name="bio" rows={2} defaultValue={barber?.bio ?? ""} /></label>
 
-          <div className="admin-barber-edit-form__section admin-barber-edit-form__panel">
-            <strong>Servicios</strong>
-            <div className="admin-modal__check-grid">
-              {services.map((service) => (
-                <label key={service.id}>
-                  <input type="checkbox" name="serviceIds" value={service.id} defaultChecked={barber?.serviceIds.includes(service.id) ?? false} />
-                  <span>{service.name}</span>
-                </label>
-              ))}
+            <div className="admin-barber-edit-form__section admin-barber-edit-form__panel">
+              <strong>Servicios</strong>
+              <div className="admin-modal__check-grid">
+                {services.map((service) => (
+                  <label key={service.id}>
+                    <input type="checkbox" name="serviceIds" value={service.id} defaultChecked={barber?.serviceIds.includes(service.id) ?? false} />
+                    <span>{service.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="admin-barber-edit-form__section">
+            <strong>Horarios</strong>
+            <div className="admin-modal__schedule-grid">
+              {weekdayLabels.map((label, index) => {
+                const morning = barber ? findWorkingHourSegment(barber, index, 0) : null;
+                const afternoon = barber ? findWorkingHourSegment(barber, index, 1) : null;
+
+                return (
+                  <div key={label} className="admin-table__schedule-day">
+                    <strong>{label}</strong>
+                    <div className="admin-table__schedule-segments">
+                      <span>Mañana</span>
+                      <input name={`schedule_${index}_morning_start`} type="time" defaultValue={morning?.startTime.slice(0, 5) ?? ""} />
+                      <input name={`schedule_${index}_morning_end`} type="time" defaultValue={morning?.endTime.slice(0, 5) ?? ""} />
+                      <span>Tarde</span>
+                      <input name={`schedule_${index}_afternoon_start`} type="time" defaultValue={afternoon?.startTime.slice(0, 5) ?? ""} />
+                      <input name={`schedule_${index}_afternoon_end`} type="time" defaultValue={afternoon?.endTime.slice(0, 5) ?? ""} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="admin-barber-edit-form__section">
-          <strong>Horarios</strong>
-          <div className="admin-modal__schedule-grid">
-            {weekdayLabels.map((label, index) => {
-              const morning = barber ? findWorkingHourSegment(barber, index, 0) : null;
-              const afternoon = barber ? findWorkingHourSegment(barber, index, 1) : null;
-
-              return (
-                <div key={label} className="admin-table__schedule-day">
-                  <strong>{label}</strong>
-                  <div className="admin-table__schedule-segments">
-                    <span>Mañana</span>
-                    <input name={`schedule_${index}_morning_start`} type="time" defaultValue={morning?.startTime.slice(0, 5) ?? ""} />
-                    <input name={`schedule_${index}_morning_end`} type="time" defaultValue={morning?.endTime.slice(0, 5) ?? ""} />
-                    <span>Tarde</span>
-                    <input name={`schedule_${index}_afternoon_start`} type="time" defaultValue={afternoon?.startTime.slice(0, 5) ?? ""} />
-                    <input name={`schedule_${index}_afternoon_end`} type="time" defaultValue={afternoon?.endTime.slice(0, 5) ?? ""} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="admin-modal__footer admin-barber-edit-form__actions">
+          {onCancel ? <button type="button" className="btn-ghost" onClick={onCancel} disabled={isSubmitting}>Cancelar</button> : null}
+          <button type="submit" className="btn" disabled={isSubmitting}>{submitLabel}</button>
         </div>
-      </div>
-
-      <div className="admin-modal__footer admin-barber-edit-form__actions">
-        {onCancel ? <button type="button" className="btn-ghost" onClick={onCancel}>Cancelar</button> : null}
-        <button type="submit" className="btn">{submitLabel}</button>
-      </div>
-    </form>
+      </form>
+      {mounted && isSubmitting ? createPortal(<AdminProcessingOverlay />, document.body) : null}
+    </>
   );
 }
 
@@ -236,9 +254,19 @@ export function AdminCompanyBarbersTable({
   const [mounted, setMounted] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const tableShellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash !== "#barbers-table") {
+      return;
+    }
+
+    tableShellRef.current?.focus({ preventScroll: true });
+    tableShellRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, []);
 
   useModalLock(Boolean(editingId || deletingId));
@@ -248,7 +276,7 @@ export function AdminCompanyBarbersTable({
 
   return (
     <>
-      <div className="admin-table-shell">
+      <div id="barbers-table" ref={tableShellRef} className="admin-table-shell" tabIndex={-1}>
         <table className="admin-table">
           <thead>
             <tr>
@@ -356,12 +384,12 @@ export function AdminCompanyBarbersTable({
                   <div className="notice error">El barbero dejará de estar disponible para nuevas operaciones administrativas.</div>
                   <div className="admin-modal__footer">
                     <button type="button" className="btn-ghost" onClick={() => setDeletingId(null)}>Cancelar</button>
-                    <form method="post" action={`/api/owner/${tenantSlug}/admin`}>
+                    <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`}>
                       <input type="hidden" name="intent" value="barber-delete" />
                       <input type="hidden" name="section" value="company" />
                       <input type="hidden" name="barberId" value={deletingBarber.id} />
                       <button type="submit" className="btn">Confirmar archivo</button>
-                    </form>
+                    </AdminActionForm>
                   </div>
                 </div>
               </div>
@@ -470,7 +498,7 @@ export function AdminCompanyUsersTable({ tenantSlug, canEdit, users }: AdminComp
                   </button>
                 </div>
 
-                <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 14 }}>
+                <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 14 }}>
                   <input type="hidden" name="intent" value="user-update" />
                   <input type="hidden" name="section" value="company" />
                   <input type="hidden" name="userId" value={editingUser.id} />
@@ -519,7 +547,7 @@ export function AdminCompanyUsersTable({ tenantSlug, canEdit, users }: AdminComp
                     <button type="button" className="btn-ghost" onClick={() => setEditingId(null)}>Cancelar</button>
                     <button type="submit" className="btn" disabled={!editPasswordIsValid}>Guardar usuario</button>
                   </div>
-                </form>
+                </AdminActionForm>
               </div>
             </div>,
             document.body
@@ -544,12 +572,12 @@ export function AdminCompanyUsersTable({ tenantSlug, canEdit, users }: AdminComp
                   <div className="notice error">El usuario dejará de tener acceso activo al panel.</div>
                   <div className="admin-modal__footer">
                     <button type="button" className="btn-ghost" onClick={() => setDeletingId(null)}>Cancelar</button>
-                    <form method="post" action={`/api/owner/${tenantSlug}/admin`}>
+                    <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`}>
                       <input type="hidden" name="intent" value="user-delete" />
                       <input type="hidden" name="section" value="company" />
                       <input type="hidden" name="userId" value={deletingUser.id} />
                       <button type="submit" className="btn">Confirmar desactivacion</button>
-                    </form>
+                    </AdminActionForm>
                   </div>
                 </div>
               </div>

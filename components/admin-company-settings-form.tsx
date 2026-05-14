@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { upload } from "@vercel/blob/client";
+import { AdminSubmitOverlay } from "@/components/admin-submit-feedback";
 
 type AdminCompanySettingsFormProps = {
   tenantSlug: string;
@@ -27,10 +28,12 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
   const formRef = useRef<HTMLFormElement>(null);
   const isResubmittingRef = useRef(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     if (isResubmittingRef.current) {
+      setIsSubmitting(true);
       return;
     }
 
@@ -39,6 +42,7 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
     const file = fileInput?.files?.[0] ?? null;
 
     if (!file) {
+      setIsSubmitting(true);
       return;
     }
 
@@ -70,6 +74,7 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
       }
 
       isResubmittingRef.current = true;
+      setIsSubmitting(true);
       form.requestSubmit();
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "No se pudo subir la foto de fondo.");
@@ -78,10 +83,13 @@ export function AdminCompanySettingsForm({ tenantSlug, action, children }: Admin
   }
 
   return (
-    <form ref={formRef} method="post" action={action} className="stack" style={{ gap: 14 }} onSubmit={handleSubmit}>
-      {children}
-      {uploadError ? <div className="notice error">{uploadError}</div> : null}
-      {isUploading ? <div className="notice">Subiendo foto de fondo...</div> : null}
-    </form>
+    <>
+      <form ref={formRef} method="post" action={action} className="stack" style={{ gap: 14 }} onSubmit={handleSubmit}>
+        {children}
+        {uploadError ? <div className="notice error">{uploadError}</div> : null}
+        {isUploading ? <div className="notice">Subiendo foto de fondo...</div> : null}
+      </form>
+      <AdminSubmitOverlay active={isUploading || isSubmitting} />
+    </>
   );
 }

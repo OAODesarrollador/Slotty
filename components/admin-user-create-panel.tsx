@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { AdminPasswordInput, PASSWORD_HELP, PASSWORD_PATTERN } from "@/components/admin-password-input";
 import { AdminCreateTogglePanel } from "@/components/admin-create-toggle-panel";
+import { AdminActionForm } from "@/components/admin-submit-feedback";
 
 type AdminUserCreatePanelProps = {
   tenantSlug: string;
@@ -29,7 +30,7 @@ export function AdminUserCreatePanel({ tenantSlug }: AdminUserCreatePanelProps) 
 
   return (
     <AdminCreateTogglePanel closedLabel="Crear usuario" openLabel="Ocultar formulario">
-      <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="card stack" style={{ padding: 20, gap: 12 }} onSubmit={handleSubmit}>
+      <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="card stack" style={{ padding: 20, gap: 12 }} onSubmit={handleSubmit}>
         <input type="hidden" name="intent" value="user-create" />
         <input type="hidden" name="section" value="company" />
         <div className="grid cols-2" style={{ gap: 12 }}>
@@ -49,7 +50,7 @@ export function AdminUserCreatePanel({ tenantSlug }: AdminUserCreatePanelProps) 
         </div>
         {error ? <div className="notice error" style={{ padding: 12 }}>{error}</div> : null}
         <div><button className="btn" type="submit" disabled={!canSubmit}>Crear usuario</button></div>
-      </form>
+      </AdminActionForm>
     </AdminCreateTogglePanel>
   );
 }

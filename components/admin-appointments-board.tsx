@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { AdminActionForm } from "@/components/admin-submit-feedback";
 
 type StatusOption = {
   value: string;
@@ -148,7 +149,7 @@ export function AdminAppointmentsBoard({ tenantSlug, slots, statusOptions, servi
                 </div>
 
                 {activeSlot.kind === "occupied" ? (
-                  <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 16 }}>
+                  <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 16 }}>
                     <input type="hidden" name="intent" value="appointment-status-update" />
                     <input type="hidden" name="section" value="appointments" />
                     <input type="hidden" name="appointmentId" value={activeSlot.appointmentId} />
@@ -185,10 +186,10 @@ export function AdminAppointmentsBoard({ tenantSlug, slots, statusOptions, servi
                       <button type="button" className="btn-ghost" onClick={() => setActiveSlotKey(null)}>Cerrar</button>
                       <button type="submit" className="btn">Guardar cambios</button>
                     </div>
-                  </form>
+                  </AdminActionForm>
                 ) : (
                   serviceOptions.length > 0 && paymentOptions.length > 0 ? (
-                    <form method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 16 }}>
+                    <AdminActionForm method="post" action={`/api/owner/${tenantSlug}/admin`} className="stack" style={{ gap: 16 }}>
                       <input type="hidden" name="intent" value="appointment-create-manual" />
                       <input type="hidden" name="section" value="appointments" />
                       <input type="hidden" name="barberId" value={activeSlot.barberId} />
@@ -240,7 +241,7 @@ export function AdminAppointmentsBoard({ tenantSlug, slots, statusOptions, servi
                         <button type="button" className="btn-ghost" onClick={() => setActiveSlotKey(null)}>Cerrar</button>
                         <button type="submit" className="btn">Reservar horario</button>
                       </div>
-                    </form>
+                    </AdminActionForm>
                   ) : (
                     <div className="stack" style={{ gap: 16 }}>
                       <div className="card stack" style={{ padding: 18, gap: 8 }}>
