@@ -169,6 +169,10 @@ textarea::placeholder {
 }
 
 .hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   transition: transform 20s linear;
 }
@@ -1444,6 +1448,64 @@ body.root-home-header-light .brand-mark-logo-light {
   color: var(--admin-2);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.admin-photo-input--cover {
+  cursor: pointer;
+}
+
+.admin-photo-input--cover input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-photo-input__cover-wrap {
+  position: relative;
+  min-height: 180px;
+  overflow: hidden;
+  border: 1px solid rgba(80, 67, 3, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 251, 239, 0.76);
+}
+
+.admin-photo-input__cover,
+.admin-photo-input__cover-placeholder {
+  width: 100%;
+  height: 180px;
+}
+
+.admin-photo-input__cover {
+  display: block;
+  object-fit: cover;
+}
+
+.admin-photo-input__cover-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.admin-photo-input__cover-action {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 253, 244, 0.94);
+  color: var(--admin-1);
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(56, 27, 6, 0.18);
 }
 
 .admin-table__cell-stack {

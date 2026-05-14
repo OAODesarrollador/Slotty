@@ -81,16 +81,20 @@ function assertSecurePassword(password: string) {
   }
 }
 
-async function saveBarberPhoto(tenantSlug: string, file: File | null) {
+async function saveAdminImage(tenantSlug: string, folder: "barbers" | "tenants", file: File | null) {
   if (!file || file.size === 0) {
     return null;
+  }
+
+  if (file.type && !file.type.startsWith("image/")) {
+    throw new Error("El archivo seleccionado debe ser una imagen.");
   }
 
   const extensionMatch = file.name.match(/\.[a-z0-9]+$/i);
   const extension = extensionMatch?.[0]?.toLowerCase() ?? ".jpg";
   const safeTenant = tenantSlug.replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
-  const pathname = `barbers/${safeTenant}/${fileName}`;
+  const pathname = `${folder}/${safeTenant}/${fileName}`;
 
   const blob = await put(pathname, file, {
     access: "public",
@@ -98,6 +102,14 @@ async function saveBarberPhoto(tenantSlug: string, file: File | null) {
   });
 
   return blob.url;
+}
+
+async function saveBarberPhoto(tenantSlug: string, file: File | null) {
+  return saveAdminImage(tenantSlug, "barbers", file);
+}
+
+async function saveTenantHeroImage(tenantSlug: string, file: File | null) {
+  return saveAdminImage(tenantSlug, "tenants", file);
 }
 
 function readWorkingHours(formData: FormData) {
@@ -233,6 +245,9 @@ export async function POST(
           throw new Error("La empresa debe tener al menos un método de pago habilitado.");
         }
 
+        const heroImageFile = formData.get("heroImageFile");
+        const uploadedHeroImageUrl = await saveTenantHeroImage(tenantSlug, heroImageFile instanceof File ? heroImageFile : null);
+
         await updateTenantAdminSettings({
           tenantId: tenant.tenantId,
           name: readString(formData, "name"),
@@ -255,7 +270,7 @@ export async function POST(
           mercadoPagoPublicKey: readOptionalString(formData, "mercadoPagoPublicKey"),
           mercadoPagoAccessToken: readOptionalString(formData, "mercadoPagoAccessToken"),
           logoUrl: readOptionalString(formData, "logoUrl"),
-          heroImageUrl: readOptionalString(formData, "heroImageUrl"),
+          heroImageUrl: uploadedHeroImageUrl ?? readOptionalString(formData, "heroImageUrl"),
           primaryColor: readString(formData, "primaryColor") || "#111111"
         });
         break;

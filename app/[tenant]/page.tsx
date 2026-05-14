@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -8,6 +7,7 @@ import { requireTenantBySlug } from "@/lib/tenant";
 import { tenantPathForHost } from "@/lib/tenant-domain";
 import { formatCurrency } from "@/lib/time";
 import { listPublicServices } from "@/repositories/services";
+import { getTenantSettings } from "@/repositories/tenants";
 import { listAvailabilityOptions } from "@/services/availability";
 
 export default async function TenantHome({ params }: { params: Promise<{ tenant: string }> }) {
@@ -15,8 +15,12 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
   const headerStore = await headers();
   const tenantHref = (path = "/") => tenantPathForHost(headerStore.get("host"), slug, path);
   const tenant = await requireTenantBySlug(slug);
-  const services = await listPublicServices(tenant.tenantId);
+  const [services, tenantSettings] = await Promise.all([
+    listPublicServices(tenant.tenantId),
+    getTenantSettings(tenant.tenantId)
+  ]);
   const firstService = services[0];
+  const heroImageUrl = tenantSettings?.hero_image_url || "/Barbero.png";
   const availability = firstService
     ? await listAvailabilityOptions(tenant, firstService.id).catch(() => ({ options: [] as never[] }))
     : { options: [] as never[] };
@@ -31,13 +35,10 @@ export default async function TenantHome({ params }: { params: Promise<{ tenant:
         <section className="stack shell-center" style={{ gap: "40px" }}>
             <article className="hero" style={{ padding: "30px 40px" }}>
               <div className="hero-media">
-                <Image
-                  src="/Barbero.png"
+                <img
+                  src={heroImageUrl}
                   alt="Interior de barberia"
-                  fill
-                  priority
                   className="hero-image"
-                  sizes="(max-width: 920px) 100vw, 80vw"
                 />
                 <div className="hero-shade" />
                 <div className="hero-glow" />

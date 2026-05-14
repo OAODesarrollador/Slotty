@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 type BarberPhotoInputProps = {
   name?: string;
   currentPhotoUrl?: string | null;
-  variant?: "default" | "avatar";
+  variant?: "default" | "avatar" | "cover";
   label?: string;
+  previewAlt?: string;
+  disabled?: boolean;
 };
 
 function CameraIcon() {
@@ -20,7 +22,14 @@ function CameraIcon() {
   );
 }
 
-export function BarberPhotoInput({ name = "photo", currentPhotoUrl, variant = "default", label = "Editar foto" }: BarberPhotoInputProps) {
+export function BarberPhotoInput({
+  name = "photo",
+  currentPhotoUrl,
+  variant = "default",
+  label = "Editar foto",
+  previewAlt = "Vista previa de la foto",
+  disabled = false
+}: BarberPhotoInputProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,6 +47,7 @@ export function BarberPhotoInput({ name = "photo", currentPhotoUrl, variant = "d
       name={name}
       type="file"
       accept="image/*"
+      disabled={disabled}
       onChange={(event) => {
         const file = event.currentTarget.files?.[0] ?? null;
         setPreviewUrl((current) => {
@@ -56,7 +66,7 @@ export function BarberPhotoInput({ name = "photo", currentPhotoUrl, variant = "d
       <label className="admin-photo-input admin-photo-input--avatar">
         <span className="admin-photo-input__avatar-wrap">
           {displayUrl ? (
-            <img src={displayUrl} alt="Vista previa de la foto del barbero" className="admin-photo-input__avatar" />
+            <img src={displayUrl} alt={previewAlt} className="admin-photo-input__avatar" />
           ) : (
             <span className="admin-photo-input__avatar-placeholder">Sin foto</span>
           )}
@@ -70,12 +80,34 @@ export function BarberPhotoInput({ name = "photo", currentPhotoUrl, variant = "d
     );
   }
 
+  if (variant === "cover") {
+    return (
+      <label className="admin-photo-input admin-photo-input--cover">
+        <span>{label}</span>
+        <div className="admin-photo-input__cover-wrap">
+          {displayUrl ? (
+            <img src={displayUrl} alt={previewAlt} className="admin-photo-input__cover" />
+          ) : (
+            <span className="admin-photo-input__cover-placeholder">Sin foto de fondo</span>
+          )}
+          {disabled ? null : (
+            <span className="admin-photo-input__cover-action">
+              <CameraIcon />
+              Cambiar imagen
+            </span>
+          )}
+        </div>
+        {input}
+      </label>
+    );
+  }
+
   return (
     <label className="admin-photo-input">
       <span>Foto</span>
       <div className="admin-photo-input__row">
         {displayUrl ? (
-          <img src={displayUrl} alt="Vista previa de la foto del barbero" className="admin-photo-input__preview" />
+          <img src={displayUrl} alt={previewAlt} className="admin-photo-input__preview" />
         ) : (
           <span className="admin-photo-input__placeholder">Sin foto</span>
         )}

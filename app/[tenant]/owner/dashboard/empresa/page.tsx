@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BarberPhotoInput } from "@/components/barber-photo-input";
 import { AdminBarberCreatePanel, AdminCompanyBarbersTable, AdminCompanyUsersTable } from "@/components/admin-company-tables";
 import { AdminCreateTogglePanel } from "@/components/admin-create-toggle-panel";
 import { AdminSensitiveCompanyFields } from "@/components/admin-sensitive-company-fields";
@@ -64,7 +65,7 @@ export default async function OwnerCompanyPage({
             </div>
 
             {data.tenantSettings ? (
-              <form method="post" action={`/api/owner/${slug}/admin`} className="stack" style={{ gap: 14 }}>
+              <form method="post" action={`/api/owner/${slug}/admin`} encType="multipart/form-data" className="stack" style={{ gap: 14 }}>
                 <input type="hidden" name="intent" value="company-update" />
                 <input type="hidden" name="section" value="company" />
                 <div className="grid cols-2" style={{ gap: 12 }}>
@@ -78,8 +79,16 @@ export default async function OwnerCompanyPage({
                   <label>Tipo de adelanto<input name="depositType" defaultValue={data.tenantSettings.deposit_type} disabled={!data.isAdmin} /></label>
                   <label>Monto de adelanto<input name="depositValue" type="number" step="0.01" defaultValue={data.tenantSettings.deposit_value} disabled={!data.isAdmin} /></label>
                   <label>Logo URL<input name="logoUrl" defaultValue={data.tenantSettings.logo_url ?? ""} disabled={!data.isAdmin} /></label>
-                  <label>Hero URL<input name="heroImageUrl" defaultValue={data.tenantSettings.hero_image_url ?? ""} disabled={!data.isAdmin} /></label>
+                  <label>URL de fondo<input name="heroImageUrl" defaultValue={data.tenantSettings.hero_image_url ?? ""} disabled={!data.isAdmin} /></label>
                 </div>
+                <BarberPhotoInput
+                  name="heroImageFile"
+                  currentPhotoUrl={data.tenantSettings.hero_image_url}
+                  variant="cover"
+                  label="Foto de fondo de la pagina principal"
+                  previewAlt={`Foto de fondo de ${data.tenantSettings.name}`}
+                  disabled={!data.isAdmin}
+                />
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 8 }}><input type="checkbox" name="requiresDeposit" defaultChecked={data.tenantSettings.requires_deposit} disabled={!data.isAdmin} /><span>Cobra adelanto</span></label>
                   <label style={{ display: "flex", alignItems: "center", gap: 8 }}><input type="checkbox" name="allowPayAtStore" defaultChecked={data.tenantSettings.allow_pay_at_store} disabled={!data.isAdmin} /><span>Pagar en local</span></label>
