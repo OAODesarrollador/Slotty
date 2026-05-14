@@ -11,9 +11,11 @@ export const metadata: Metadata = {
   description: "Sistema SaaS multi-tenant para reservas de barberias",
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
       { url: "/LogoNegroDibok.svg", type: "image/svg+xml" }
     ],
-    shortcut: "/LogoNegroDibok.svg"
+    shortcut: "/favicon.svg"
   }
 };
 
