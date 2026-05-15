@@ -273,7 +273,7 @@ export function AdminPageShell({
   children: ReactNode;
 }) {
   return (
-    <main className="page admin-page" style={{ padding: "40px 24px 80px" }}>
+    <main className="page admin-page" style={{ padding: "140px 24px 80px" }}>
       <AdminFormValidation />
       <section className="shell stack" style={{ gap: 28 }}>
         <header className="stack" style={{ gap: 16 }}>

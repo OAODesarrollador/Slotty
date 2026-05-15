@@ -595,8 +595,10 @@ body.root-home-header-light .brand-mark-logo-light {
 }
 
 .admin-main-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 2100;
   background: rgba(255, 249, 232, 0.8);
   border-bottom: 1px solid rgba(80, 67, 3, 0.14);
@@ -2911,7 +2913,7 @@ body.root-home-header-light .brand-mark-logo-light {
   }
 
   .admin-page {
-    padding: 18px 10px 80px !important;
+    padding: 118px 10px 80px !important;
   }
 
   .admin-page .card {
