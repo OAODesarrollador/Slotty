@@ -171,6 +171,41 @@ textarea::placeholder {
   opacity: 1;
 }
 
+.tenant-page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  align-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 66, 0.14), transparent 34%),
+    #050505;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.tenant-page-loader__spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(245, 200, 66, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 999px;
+  animation: tenant-loader-spin 800ms linear infinite;
+}
+
+@keyframes tenant-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .hero-media {
   position: absolute;
   inset: 0;

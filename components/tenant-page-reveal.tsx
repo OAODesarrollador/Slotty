@@ -44,8 +44,16 @@ export function TenantPageReveal({ imageUrl, children }: TenantPageRevealProps) 
   }, [imageUrl]);
 
   return (
-    <div className={`tenant-page-reveal${isReady ? " is-ready" : ""}`}>
-      {children}
-    </div>
+    <>
+      {!isReady ? (
+        <div className="tenant-page-loader" role="status" aria-live="polite">
+          <span className="tenant-page-loader__spinner" aria-hidden="true" />
+          <span>Cargando experiencia...</span>
+        </div>
+      ) : null}
+      <div className={`tenant-page-reveal${isReady ? " is-ready" : ""}`}>
+        {children}
+      </div>
+    </>
   );
 }
