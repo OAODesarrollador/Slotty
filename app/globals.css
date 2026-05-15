@@ -1845,6 +1845,13 @@ body.root-home-header-light .brand-mark-logo-light {
   color: var(--accent);
 }
 
+.tenant-footer__admin-link {
+  width: fit-content;
+  margin-top: 6px;
+  opacity: 0.72;
+  font-size: 0.86rem;
+}
+
 .tenant-footer__map {
   display: grid;
   gap: 12px;

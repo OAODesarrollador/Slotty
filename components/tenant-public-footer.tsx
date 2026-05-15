@@ -42,6 +42,9 @@ export function TenantPublicFooter({
   const mapQuery = address || tenantName;
   const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+  const adminLoginHref = pathname?.startsWith(`/${tenantSlug}/`) || pathname === `/${tenantSlug}`
+    ? `/${tenantSlug}/owner/login`
+    : "/owner/login";
 
   return (
     <footer className="tenant-footer">
@@ -63,6 +66,7 @@ export function TenantPublicFooter({
             {phone ? <a href={`tel:${phone}`}>{phone}</a> : <span>Teléfono no cargado</span>}
             {email ? <a href={`mailto:${email}`}>{email}</a> : <span>Email no cargado</span>}
             {instagramUrl ? <a href={normalizeExternalUrl(instagramUrl)} target="_blank" rel="noreferrer">Instagram</a> : null}
+            <Link href={adminLoginHref} className="tenant-footer__admin-link">Panel Negocio</Link>
           </div>
         </section>
 

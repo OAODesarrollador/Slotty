@@ -199,29 +199,17 @@ export default async function RootPage() {
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '28px' }}>
+          <div className={styles.tenantLogoGrid}>
             {tenants.map((t) => (
               <Link
                 key={t.id}
                 href={buildPublicTenantHref(t.slug)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '12px 18px',
-                  borderRadius: '999px',
-                  background: '#fff',
-                  border: '1px solid #e7e7e7',
-                  color: '#111',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.95rem'
-                }}
+                className={styles.tenantLogoCard}
               >
-                <span style={{ position: 'relative', width: 26, height: 26, borderRadius: '50%', overflow: 'hidden', background: '#f4f4f4', flexShrink: 0 }}>
-                  <Image src={t.logo_url || '/LogoNegroDibok.svg'} alt={t.name} fill style={{ objectFit: 'cover' }} />
+                <span className={styles.tenantLogoImage}>
+                  <Image src={t.logo_url || '/LogoNegroDibok.svg'} alt={t.name} fill style={{ objectFit: 'contain' }} />
                 </span>
-                <span>{t.name}</span>
+                <span className={styles.tenantLogoName}>{t.name}</span>
               </Link>
             ))}
           </div>
