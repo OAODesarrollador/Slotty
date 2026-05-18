@@ -136,6 +136,15 @@ export async function main() {
   
   // 1. Asegurar schema y constraints adicionales para el seed
   await executeSqlFile(pool, path.join(process.cwd(), "database", "schema.sql"));
+
+  await pool.query(
+    `
+      INSERT INTO platform_users (role, email, password_hash, display_name)
+      VALUES ('platform_admin', $1, $2, $3)
+      ON CONFLICT (email) DO UPDATE SET updated_at = now()
+    `,
+    ["platform@dibok.test", hashPassword("admin1234"), "Admin Plataforma"]
+  );
   
   // Agregar constraints de unicidad si no existen (para evitar duplicados en re-seed)
   await pool.query(`

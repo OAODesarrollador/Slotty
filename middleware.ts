@@ -5,6 +5,8 @@ import { getTenantSlugFromHost } from "@/lib/tenant-domain";
 const PROTECTED_PREFIX = /^\/[^/]+\/owner(?:\/.*)?$/;
 const SUBDOMAIN_PROTECTED_PREFIX = /^\/owner(?:\/.*)?$/;
 const SESSION_COOKIE = "barberia_session";
+const PLATFORM_PROTECTED_PREFIX = /^\/platform(?:\/.*)?$/;
+const PLATFORM_SESSION_COOKIE = "barberia_platform_session";
 const INTERNAL_PATH_PREFIXES = ["/api", "/_next", "/favicon.ico", "/robots.txt", "/sitemap.xml"];
 const PUBLIC_FILE = /\.(?:avif|gif|ico|jpg|jpeg|mp4|png|svg|webm|webp)$/i;
 
@@ -74,12 +76,60 @@ async function isValidSessionCookie(token: string | undefined, tenantSlug: strin
   }
 }
 
+async function isValidPlatformSessionCookie(token: string | undefined) {
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!token || !sessionSecret) {
+    return false;
+  }
+
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) {
+    return false;
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(sessionSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const expectedSignature = base64url(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))
+  );
+
+  if (!safeEqual(signature, expectedSignature)) {
+    return false;
+  }
+
+  try {
+    const session = JSON.parse(decodeBase64url(payload)) as {
+      role?: string;
+    };
+    return session.role === "platform_admin"
+      || session.role === "platform_support"
+      || session.role === "platform_readonly";
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostTenantSlug = getTenantSlugFromHost(request.headers.get("host"));
 
   if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
+  }
+
+  if (PLATFORM_PROTECTED_PREFIX.test(pathname) && pathname !== "/platform/login") {
+    const hasValidPlatformSession = await isValidPlatformSessionCookie(
+      request.cookies.get(PLATFORM_SESSION_COOKIE)?.value
+    );
+
+    if (!hasValidPlatformSession) {
+      return NextResponse.redirect(new URL("/platform/login", request.url));
+    }
   }
 
   if (hostTenantSlug) {

@@ -70,6 +70,12 @@ CREATE TABLE IF NOT EXISTS tenants (
   hero_image_url TEXT,
   primary_color TEXT NOT NULL DEFAULT '#111111',
   is_active BOOLEAN NOT NULL DEFAULT true,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('trial', 'active', 'suspended', 'cancelled')),
+  plan TEXT NOT NULL DEFAULT 'starter' CHECK (plan IN ('starter', 'pro', 'enterprise')),
+  billing_status TEXT NOT NULL DEFAULT 'ok' CHECK (billing_status IN ('ok', 'pending', 'overdue')),
+  suspended_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+  trial_ends_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -95,6 +101,24 @@ ALTER TABLE tenants
 ALTER TABLE tenants
   ADD COLUMN IF NOT EXISTS instagram_url TEXT;
 
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'starter';
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS billing_status TEXT NOT NULL DEFAULT 'ok';
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+
+ALTER TABLE tenants
+  ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -106,6 +130,28 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, email)
+);
+
+CREATE TABLE IF NOT EXISTS platform_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role TEXT NOT NULL CHECK (role IN ('platform_admin', 'platform_support', 'platform_readonly')),
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS platform_audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_platform_user_id UUID REFERENCES platform_users(id) ON DELETE SET NULL,
+  actor_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id UUID,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -307,3 +353,7 @@ CREATE INDEX IF NOT EXISTS idx_payments_tenant_appointment ON payments(tenant_id
 CREATE INDEX IF NOT EXISTS idx_queue_tenant_status_created ON queue_entries(tenant_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_queue_tenant_waiting_joined ON queue_entries(tenant_id, status, joined_at);
 CREATE INDEX IF NOT EXISTS idx_queue_tenant_position ON queue_entries(tenant_id, position);
+CREATE INDEX IF NOT EXISTS idx_platform_users_active ON platform_users(is_active, role);
+CREATE INDEX IF NOT EXISTS idx_platform_audit_logs_target ON platform_audit_logs(target_type, target_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_platform_audit_logs_actor ON platform_audit_logs(actor_platform_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tenants_platform_status ON tenants(status, billing_status, plan);
