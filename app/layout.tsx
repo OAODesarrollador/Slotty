@@ -7,8 +7,55 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-serif" });
 
 export const metadata: Metadata = {
-  title: "Barberia Nueva",
-  description: "Sistema SaaS multi-tenant para reservas de barberias",
+  metadataBase: new URL("https://dibok.app"),
+  title: {
+    default: "Dibok | Sistema de reservas online para barberías",
+    template: "%s | Dibok"
+  },
+  description: "Sistema SaaS de reservas online, agenda y fila espontánea para barberías y negocios de servicios.",
+  applicationName: "Dibok",
+  keywords: [
+    "software para barberías",
+    "sistema de reservas online",
+    "agenda online para barberías",
+    "fila virtual para barberías",
+    "turnos online"
+  ],
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Dibok",
+    url: "https://dibok.app",
+    title: "Dibok | Sistema de reservas online para barberías",
+    description: "Sistema SaaS de reservas online, agenda y fila espontánea para barberías y negocios de servicios.",
+    images: [
+      {
+        url: "/LogoNegroTextoDibok.svg",
+        width: 1200,
+        height: 630,
+        alt: "Dibok"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dibok | Sistema de reservas online para barberías",
+    description: "Sistema SaaS de reservas online, agenda y fila espontánea para barberías y negocios de servicios.",
+    images: ["/LogoNegroTextoDibok.svg"]
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1
+    }
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

@@ -1,10 +1,32 @@
 import { MobileDock } from "@/components/mobile-dock";
 import { QuickBookingFlow } from "@/components/quick-booking-flow";
+import type { Metadata } from "next";
 import { dateKeyInTimeZone, nowInTimeZone } from "@/lib/time";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { listBarbersForService } from "@/repositories/barbers";
 import { listPublicServices } from "@/repositories/services";
 import { getTenantSettings } from "@/repositories/tenants";
+
+export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
+  const { tenant: slug } = await params;
+  const tenant = await requireTenantBySlug(slug);
+  const title = `Reservar turno en ${tenant.tenantName}`;
+  const description = `Elegí servicio, barbero y horario disponible para reservar online en ${tenant.tenantName}.`;
+  const url = `https://${tenant.tenantSlug}.dibok.app/reservar`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url
+    },
+    openGraph: {
+      title,
+      description,
+      url
+    }
+  };
+}
 
 export default async function ServicesPage({
   params,

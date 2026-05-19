@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { MobileDock } from "@/components/mobile-dock";
 import { QueueStatusPanel } from "@/components/queue-status-panel";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { getQueueEntryDetail } from "@/repositories/queue";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 export default async function QueueDetailPage({
   params,

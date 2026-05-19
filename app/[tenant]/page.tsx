@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { headers } from "next/headers";
+import type { Metadata } from "next";
 
 import { MobileDock } from "@/components/mobile-dock";
 import { TenantPageReveal } from "@/components/tenant-page-reveal";
@@ -10,6 +11,27 @@ import { formatCurrency } from "@/lib/time";
 import { listPublicServices } from "@/repositories/services";
 import { getTenantSettings } from "@/repositories/tenants";
 import { listAvailabilityOptions } from "@/services/availability";
+
+export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
+  const { tenant: slug } = await params;
+  const tenant = await requireTenantBySlug(slug);
+  const title = `${tenant.tenantName} | Reservas online`;
+  const description = `Reservá turnos online en ${tenant.tenantName}. Elegí servicio, horario y seguí la disponibilidad desde Dibok.`;
+  const url = `https://${tenant.tenantSlug}.dibok.app/`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url
+    },
+    openGraph: {
+      title,
+      description,
+      url
+    }
+  };
+}
 
 export default async function TenantHome({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant: slug } = await params;

@@ -179,3 +179,21 @@ export async function getTenants() {
 
   return result.rows;
 }
+
+export async function listPublicActiveTenantSlugs() {
+  const result = await query<{
+    slug: string;
+    updated_at: string;
+  }>(
+    `
+      SELECT slug, updated_at
+      FROM tenants
+      WHERE is_active = true
+        AND status <> 'suspended'
+        AND status <> 'cancelled'
+      ORDER BY slug ASC
+    `
+  );
+
+  return result.rows;
+}

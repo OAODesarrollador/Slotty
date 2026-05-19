@@ -1,10 +1,32 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { MobileDock } from "@/components/mobile-dock";
 import { QueueEntryForm } from "@/components/queue-entry-form";
 import { requireTenantBySlug } from "@/lib/tenant";
 import { listBarbersForService } from "@/repositories/barbers";
 import { listPublicServices } from "@/repositories/services";
+
+export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
+  const { tenant: slug } = await params;
+  const tenant = await requireTenantBySlug(slug);
+  const title = `Fila virtual de ${tenant.tenantName}`;
+  const description = `Sumate a la fila virtual de ${tenant.tenantName} desde tu celular y seguí tu turno online.`;
+  const url = `https://${tenant.tenantSlug}.dibok.app/fila`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url
+    },
+    openGraph: {
+      title,
+      description,
+      url
+    }
+  };
+}
 
 export default async function QueuePage({
   params,

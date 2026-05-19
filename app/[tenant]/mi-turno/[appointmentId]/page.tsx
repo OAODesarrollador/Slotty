@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AppointmentReceiptActions } from "@/components/appointment-receipt-actions";
@@ -8,6 +9,13 @@ import { formatCurrency, formatDateTime } from "@/lib/time";
 import { expirePendingMercadoPagoAppointment, getAppointmentDetail } from "@/repositories/appointments";
 import { getTenantBookingSettings } from "@/repositories/tenants";
 import { syncMercadoPagoPayment } from "@/services/mercado-pago";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 function formatMercadoPagoStatus(status: string) {
   const statusMap: Record<string, string> = {

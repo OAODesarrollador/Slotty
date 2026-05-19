@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getTenants } from "@/repositories/tenants";
 import { HeroScroll } from "@/components/hero-scroll";
 import { HomeHeaderContrast } from "@/components/home-header-contrast";
@@ -12,6 +13,19 @@ import { buildTenantUrl, tenantPath } from "@/lib/tenant-domain";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Sistema de reservas online para barberías",
+  description: "Dibok organiza turnos online, agenda, pagos y fila virtual para barberías y negocios de servicios.",
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    title: "Dibok | Sistema de reservas online para barberías",
+    description: "Organizá reservas online, agenda y fila espontánea desde una plataforma SaaS para negocios de servicios.",
+    url: "https://dibok.app/"
+  }
+};
 
 function getSafeDatabaseHost() {
   const databaseUrl = process.env.DATABASE_URL;
