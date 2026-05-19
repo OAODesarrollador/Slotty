@@ -5,7 +5,8 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(16),
   APP_URL: z.string().url().optional().default("http://localhost:3000"),
   ROOT_DOMAIN: z.string().optional(),
-  TENANT_DOMAIN_SUFFIX: z.string().optional()
+  TENANT_DOMAIN_SUFFIX: z.string().optional(),
+  PLATFORM_ADMIN_HOST: z.string().optional()
 });
 
 export function getEnv() {
@@ -14,6 +15,7 @@ export function getEnv() {
     SESSION_SECRET: process.env.SESSION_SECRET,
     APP_URL: process.env.APP_URL,
     ROOT_DOMAIN: process.env.ROOT_DOMAIN,
-    TENANT_DOMAIN_SUFFIX: process.env.TENANT_DOMAIN_SUFFIX
+    TENANT_DOMAIN_SUFFIX: process.env.TENANT_DOMAIN_SUFFIX,
+    PLATFORM_ADMIN_HOST: process.env.PLATFORM_ADMIN_HOST
   });
 }

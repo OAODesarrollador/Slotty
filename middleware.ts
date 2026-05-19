@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTenantSlugFromHost } from "@/lib/tenant-domain";
+import { isLocalHost, isPlatformAdminHost, getTenantSlugFromHost } from "@/lib/tenant-domain";
 
 const PROTECTED_PREFIX = /^\/[^/]+\/owner(?:\/.*)?$/;
 const SUBDOMAIN_PROTECTED_PREFIX = /^\/owner(?:\/.*)?$/;
 const SESSION_COOKIE = "barberia_session";
 const PLATFORM_PROTECTED_PREFIX = /^\/platform(?:\/.*)?$/;
+const PLATFORM_API_PREFIX = /^\/api\/platform(?:\/.*)?$/;
 const PLATFORM_SESSION_COOKIE = "barberia_platform_session";
 const INTERNAL_PATH_PREFIXES = ["/api", "/_next", "/favicon.ico", "/robots.txt", "/sitemap.xml"];
 const PUBLIC_FILE = /\.(?:avif|gif|ico|jpg|jpeg|mp4|png|svg|webm|webp)$/i;
@@ -116,13 +117,31 @@ async function isValidPlatformSessionCookie(token: string | undefined) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hostTenantSlug = getTenantSlugFromHost(request.headers.get("host"));
+  const host = request.headers.get("host");
+  const hostTenantSlug = getTenantSlugFromHost(host);
+  const isPlatformHost = isPlatformAdminHost(host) || isLocalHost(host);
+  const isPlatformRoute = PLATFORM_PROTECTED_PREFIX.test(pathname);
+  const isPlatformApi = PLATFORM_API_PREFIX.test(pathname);
+
+  if ((isPlatformRoute || isPlatformApi) && !isPlatformHost) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (isPlatformAdminHost(host)) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/platform", request.url));
+    }
+
+    if (pathname === "/login") {
+      return NextResponse.redirect(new URL("/platform/login", request.url));
+    }
+  }
 
   if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
 
-  if (PLATFORM_PROTECTED_PREFIX.test(pathname) && pathname !== "/platform/login") {
+  if (isPlatformRoute && pathname !== "/platform/login") {
     const hasValidPlatformSession = await isValidPlatformSessionCookie(
       request.cookies.get(PLATFORM_SESSION_COOKIE)?.value
     );

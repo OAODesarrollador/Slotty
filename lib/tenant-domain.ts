@@ -1,5 +1,6 @@
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
-const ROOT_HOST_PREFIXES = new Set(["www", "api"]);
+const ROOT_HOST_PREFIXES = new Set(["www", "api", "admin", "platform", "yoadministro"]);
+const DEFAULT_PLATFORM_ADMIN_HOST = "yoadministro.dibok.app";
 
 function stripPort(host: string) {
   if (host.startsWith("[") && host.includes("]")) {
@@ -7,6 +8,10 @@ function stripPort(host: string) {
   }
 
   return host.split(":")[0]?.toLowerCase().replace(/\.$/, "") ?? "";
+}
+
+export function getHostname(host: string | null | undefined) {
+  return stripPort(host ?? "");
 }
 
 function normalizeDomainSuffix(value: string) {
@@ -38,6 +43,28 @@ export function getTenantDomainSuffix() {
   } catch {
     return "";
   }
+}
+
+export function getPlatformAdminHost() {
+  const configuredHost = process.env.PLATFORM_ADMIN_HOST;
+  if (configuredHost) {
+    return stripPort(configuredHost);
+  }
+
+  const suffix = getTenantDomainSuffix();
+  return suffix === "dibok.app"
+    ? `yoadministro.${suffix}`
+    : DEFAULT_PLATFORM_ADMIN_HOST;
+}
+
+export function isLocalHost(host: string | null | undefined) {
+  return LOCAL_HOSTS.has(stripPort(host ?? ""));
+}
+
+export function isPlatformAdminHost(host: string | null | undefined) {
+  const hostname = stripPort(host ?? "");
+  const platformAdminHost = getPlatformAdminHost();
+  return Boolean(hostname && platformAdminHost && hostname === platformAdminHost);
 }
 
 export function getTenantSlugFromHost(host: string | null | undefined) {
