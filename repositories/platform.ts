@@ -561,6 +561,7 @@ export async function resetPlatformTenantUserPassword(input: {
   tenantId: string;
   userId: string;
   passwordHash: string;
+  reason: string;
   actor: PlatformSessionUser;
 }) {
   return withTransaction(async (client) => {
@@ -572,6 +573,9 @@ export async function resetPlatformTenantUserPassword(input: {
       `
         UPDATE users
         SET password_hash = $3,
+            must_change_password = true,
+            password_reset_required_at = now(),
+            temporary_password_expires_at = now() + interval '24 hours',
             updated_at = now()
         WHERE tenant_id = $1
           AND id = $2
@@ -594,7 +598,9 @@ export async function resetPlatformTenantUserPassword(input: {
       metadata: {
         tenantUserId: user.id,
         tenantUserEmail: user.email,
-        tenantUserRole: user.role
+        tenantUserRole: user.role,
+        reason: input.reason,
+        temporaryPasswordExpiresInHours: 24
       }
     });
 

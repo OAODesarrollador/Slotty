@@ -8,10 +8,21 @@ export async function getUserByCredentials(tenantId: string, email: string) {
     display_name: string;
     role: "owner" | "staff" | "barber" | "platform_admin";
     password_hash: string;
+    must_change_password: boolean;
+    temporary_password_expires_at: string | null;
     slug: string;
   }>(
     `
-      SELECT u.id, u.tenant_id, u.email, u.display_name, u.role, u.password_hash, t.slug
+      SELECT
+        u.id,
+        u.tenant_id,
+        u.email,
+        u.display_name,
+        u.role,
+        u.password_hash,
+        u.must_change_password,
+        u.temporary_password_expires_at,
+        t.slug
       FROM users u
       INNER JOIN tenants t ON t.id = u.tenant_id
       WHERE u.tenant_id = $1
@@ -90,6 +101,31 @@ export async function createTenantUser(input: {
     `,
     [input.tenantId, input.role, input.email, input.passwordHash, input.displayName]
   );
+}
+
+export async function updateTenantUserPasswordAfterForcedChange(input: {
+  tenantId: string;
+  userId: string;
+  passwordHash: string;
+}) {
+  const result = await query<{ id: string }>(
+    `
+      UPDATE users
+      SET password_hash = $3,
+          must_change_password = false,
+          password_reset_required_at = NULL,
+          temporary_password_expires_at = NULL,
+          password_changed_at = now(),
+          updated_at = now()
+      WHERE tenant_id = $1
+        AND id = $2
+        AND is_active = true
+      RETURNING id
+    `,
+    [input.tenantId, input.userId, input.passwordHash]
+  );
+
+  return result.rows[0] ?? null;
 }
 
 export async function updateTenantUser(input: {

@@ -42,4 +42,5 @@ export interface SessionUser {
   role: "owner" | "staff" | "barber" | "platform_admin";
   email: string;
   displayName: string;
+  mustChangePassword?: boolean;
 }

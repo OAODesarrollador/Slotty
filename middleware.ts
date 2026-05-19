@@ -77,6 +77,49 @@ async function isValidSessionCookie(token: string | undefined, tenantSlug: strin
   }
 }
 
+async function getValidTenantSession(token: string | undefined, tenantSlug: string) {
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!token || !sessionSecret) {
+    return null;
+  }
+
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) {
+    return null;
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(sessionSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const expectedSignature = base64url(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))
+  );
+
+  if (!safeEqual(signature, expectedSignature)) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(decodeBase64url(payload)) as {
+      tenantSlug?: string;
+      role?: string;
+      mustChangePassword?: boolean;
+    };
+
+    if (session.tenantSlug !== tenantSlug && session.role !== "platform_admin") {
+      return null;
+    }
+
+    return session;
+  } catch {
+    return null;
+  }
+}
+
 async function isValidPlatformSessionCookie(token: string | undefined) {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!token || !sessionSecret) {
@@ -135,6 +178,13 @@ export async function middleware(request: NextRequest) {
     if (pathname === "/login") {
       return NextResponse.redirect(new URL("/platform/login", request.url));
     }
+
+    const platformShortPaths = new Set(["/tenants", "/tenants/new", "/users", "/audit"]);
+    if (platformShortPaths.has(pathname) || pathname.startsWith("/tenants/")) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/platform${pathname}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   if (INTERNAL_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || PUBLIC_FILE.test(pathname)) {
@@ -162,13 +212,14 @@ export async function middleware(request: NextRequest) {
     }
 
     if (SUBDOMAIN_PROTECTED_PREFIX.test(pathname) && !pathname.endsWith("/owner/login")) {
-      const hasValidSession = await isValidSessionCookie(
-        request.cookies.get(SESSION_COOKIE)?.value,
-        hostTenantSlug
-      );
+      const session = await getValidTenantSession(request.cookies.get(SESSION_COOKIE)?.value, hostTenantSlug);
 
-      if (!hasValidSession) {
+      if (!session) {
         return NextResponse.redirect(new URL("/owner/login", request.url));
+      }
+
+      if (session.mustChangePassword && pathname !== "/owner/change-password") {
+        return NextResponse.redirect(new URL("/owner/change-password", request.url));
       }
     }
 
@@ -182,13 +233,14 @@ export async function middleware(request: NextRequest) {
   }
 
   const tenantSlug = pathname.split('/').filter(Boolean)[0];
-  const hasValidSession = await isValidSessionCookie(
-    request.cookies.get(SESSION_COOKIE)?.value,
-    tenantSlug
-  );
+  const session = await getValidTenantSession(request.cookies.get(SESSION_COOKIE)?.value, tenantSlug);
 
-  if (!hasValidSession) {
+  if (!session) {
     return NextResponse.redirect(new URL(`/${tenantSlug}/owner/login`, request.url));
+  }
+
+  if (session.mustChangePassword && pathname !== `/${tenantSlug}/owner/change-password`) {
+    return NextResponse.redirect(new URL(`/${tenantSlug}/owner/change-password`, request.url));
   }
 
   return NextResponse.next();

@@ -23,6 +23,12 @@ export async function POST(
   try {
     const password = readString(formData, "password");
     const passwordConfirm = readString(formData, "passwordConfirm");
+    const reason = readString(formData, "reason");
+
+    if (reason.length < 10) {
+      throw new Error("El motivo del reset debe tener al menos 10 caracteres.");
+    }
+
     assertSecurePassword(password);
     if (password !== passwordConfirm) {
       throw new Error("Las contraseñas no coinciden.");
@@ -32,6 +38,7 @@ export async function POST(
       tenantId,
       userId,
       passwordHash: hashPassword(password),
+      reason,
       actor: session
     });
 

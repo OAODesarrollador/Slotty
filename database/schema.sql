@@ -127,10 +127,26 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT true,
+  must_change_password BOOLEAN NOT NULL DEFAULT false,
+  password_reset_required_at TIMESTAMPTZ,
+  temporary_password_expires_at TIMESTAMPTZ,
+  password_changed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, email)
 );
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS password_reset_required_at TIMESTAMPTZ;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS temporary_password_expires_at TIMESTAMPTZ;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS platform_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

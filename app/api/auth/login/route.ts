@@ -50,6 +50,15 @@ export async function POST(request: NextRequest) {
     return redirectToLogin(request, tenantSlug);
   }
 
+  if (
+    user.must_change_password
+    && user.temporary_password_expires_at
+    && new Date(user.temporary_password_expires_at) <= new Date()
+  ) {
+    recordFailedLogin(rateLimitKey);
+    return redirectToLogin(request, tenantSlug, "temporary_expired");
+  }
+
   clearLoginRateLimit(rateLimitKey);
   await createSession({
     userId: user.id,
@@ -57,10 +66,18 @@ export async function POST(request: NextRequest) {
     tenantSlug,
     role: user.role,
     email: user.email,
-    displayName: user.display_name
+    displayName: user.display_name,
+    mustChangePassword: user.must_change_password
   });
 
   return NextResponse.redirect(
-    new URL(tenantPathForHost(request.headers.get("host"), tenantSlug, "/owner/dashboard"), request.url)
+    new URL(
+      tenantPathForHost(
+        request.headers.get("host"),
+        tenantSlug,
+        user.must_change_password ? "/owner/change-password" : "/owner/dashboard"
+      ),
+      request.url
+    )
   );
 }

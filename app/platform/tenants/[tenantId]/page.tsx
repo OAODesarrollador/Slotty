@@ -269,6 +269,7 @@ export default async function PlatformTenantDetailPage({
                       <form method="post" action={`/api/platform/tenants/${tenant.id}/users/${user.id}/password`} className="grid cols-2" style={{ gap: 8, minWidth: 360 }}>
                         <input name="password" type="password" placeholder="Nueva contraseña" required />
                         <input name="passwordConfirm" type="password" placeholder="Repetir contraseña" required />
+                        <input name="reason" placeholder="Motivo del reset" required />
                         <button className="btn-secondary" type="submit">Resetear</button>
                       </form>
                     ) : "Solo lectura"}
